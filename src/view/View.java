@@ -99,7 +99,7 @@ public class View extends Applet implements ViewInterface {
 
         // create an Appearance and load a texture
         Appearance app = new Appearance( );
-        Texture tex = new TextureLoader( "C:\\Users\\JanaJ\\IdeaProjects\\Java3D_test\\src\\dirt.jpg", this ).getTexture( );
+        Texture tex = new TextureLoader( View.class.getClassLoader().getResource("dirt.jpg").getPath(), this ).getTexture( );
         app.setTexture( tex );
 
         int nItem = 0;
