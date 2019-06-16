@@ -13,6 +13,7 @@ import javax.vecmath.*;
 import java.awt.*;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.Stack;
 
 class Application {
@@ -21,8 +22,8 @@ class Application {
     private static float attPointNodeSize = 0.015f;
     private static ViewInterface view;
 
-    private static int step = 5; //every x step is visualized
-    private static int steps = 50; //number of space colonization iterations
+    private static int step = 1; //every x step is visualized
+    private static int steps = 10; //number of space colonization iterations
     private static Appearance branchAppearance;
 
     public static void main(String[] args) throws InterruptedException {
@@ -31,7 +32,6 @@ class Application {
 
         view = new View((int)(screenSize.getWidth()),(int)(screenSize.getHeight()));
         new MainFrame( (View)view, (int) (screenSize.getWidth()), (int) (screenSize.getHeight()) );
-
 
         branchAppearance = new Appearance();
         Color3f brown = new Color3f(0.318f, 0.212f, 0.051f);
@@ -75,36 +75,61 @@ class Application {
     }
 
     // berücksichtigt Dicke
-    private static void putBranchesTopDown(Tree tree) {
+    private static void putBranchesTopDown(Tree tree) throws InterruptedException {
         KDParentTree branches = tree.getNodes();
         BranchGroup bg = new BranchGroup();
+        bg.setCapability(BranchGroup.ALLOW_DETACH);//TODO weg nach dem debug
 
         Iterator<List<KDParentTreeNode>> iterator = branches.iterator();
 
         float thickness = 0.001f;
 
+        view.resetTree();//TODO weg nach debug
+
         for(KDParentTreeNode branch : branches.getLeaves()){
             bg.addChild(buildCylinder(branch,thickness));
         }
+        view.addToTree(bg);//TODO weg nach debug
+        Thread.sleep(1000);//TODO weg nach debug
+
         thickness += 0.0019f;
 
         List<KDParentTreeNode> layer;
         int i = 0;
         int countBranches = 0;
+
+        Random random = new Random();
+        Color3f black = new Color3f(0, 0, 0);
+
         while(iterator.hasNext()){
+            bg = new BranchGroup();//TODO weg nach debug
+            bg.setCapability(BranchGroup.ALLOW_DETACH);//TODO weg nach dem debug
+
+            Appearance debugAppearance = new Appearance();
+            Color3f rand = new Color3f(random.nextFloat(), random.nextFloat(), random.nextFloat());
+            debugAppearance.setMaterial(new Material(rand,rand,rand,black,70f));
+
             layer = iterator.next();
             countBranches += layer.size();
             i++;
             for(KDParentTreeNode branch : layer){
-                bg.addChild(buildCylinder(branch,thickness));
+                bg.addChild(debugBuildCylinder(branch,thickness,debugAppearance));
             }
             thickness += 0.0019f;
+            view.addToTree(bg);//TODO weg nach debug
+            Thread.sleep(1000);//TODO weg nach debug
+
+
+
+
+
 
         }
-        log("      processed " + i + " layers with " + countBranches + " branches");
-        view.resetTree();
-        bg.setCapability(BranchGroup.ALLOW_DETACH);
-        view.addToTree(bg);
+//        log("      processed " + i + " layers with " + countBranches + " branches");
+//        view.resetTree();
+//        bg.setCapability(BranchGroup.ALLOW_DETACH);
+//        view.addToTree(bg);
+//        log("      displayed " + i + " layers with " + countBranches + " branches");
     }
 
     /**
@@ -221,6 +246,75 @@ class Application {
         }
 
         view.addToTree(bg);
+    }
+
+    private static TransformGroup debugBuildCylinder(KDParentTreeNode node, float thickness, Appearance appearance) {
+
+        TransformGroup tg = new TransformGroup();
+
+        KDParentTreeNode parent = node.getParent();
+        if(parent==null)
+            return tg;
+
+
+        Point3D parentPoint = parent.getPoint();
+        Point3D nodePoint = node.getPoint();
+
+        Point3D vector = nodePoint.subtract(parentPoint);
+
+        Transform3D t = new Transform3D();
+
+        if(nodePoint.toString().equals(parentPoint.toString())) {
+            System.out.println("parent and node were equal");
+            return tg;
+        }
+//        System.out.println("node" + nodePoint.toSTring());
+//        System.out.println("parent" + parentPoint.toSTring());
+
+        Point3D newYAxis = new Point3D(nodePoint.getX() - parentPoint.getX(), nodePoint.getY() - parentPoint.getY(), nodePoint.getZ() - parentPoint.getZ());
+
+        //calculate new X and Z vector (orthogonal)
+        Point3D newXAxis;
+        Point3D newZAxis;
+        //check if newY is parallel to one of the old axis
+        if(newYAxis.getX()==0 && newYAxis.getY()==0){
+            //Y axis is now Z axis
+            newXAxis = new Point3D(0,1.0f,0);
+            newZAxis = new Point3D(1.0f,0,0);
+        }else if(newYAxis.getY()==0 && newYAxis.getZ()==0){
+            //Y axis is now X axis
+            newXAxis = new Point3D(0,0,1.0f);
+            newZAxis = new Point3D(0,1.0f,0);
+        }else if(newYAxis.getZ()==0 && newYAxis.getX()==0){
+            //Y axis is still Y axis
+            newXAxis = new Point3D(1.0f,0,0);
+            newZAxis = new Point3D(0,0,1.0f);
+        }else{
+            //höchstens eine 0 im vektor der neuen y Achse
+            newXAxis = new Point3D(-newYAxis.getY(), newYAxis.getX(), 0);
+            newZAxis = new Point3D(newYAxis.getY()*newXAxis.getZ() - newYAxis.getZ()*newXAxis.getY(),
+                    newYAxis.getZ()*newXAxis.getX() - newYAxis.getX()*newXAxis.getZ(),
+                    newYAxis.getX()*newXAxis.getY() -newYAxis.getY()*newXAxis.getX());
+        }
+
+        //build matrix
+
+        Matrix3f matrix = new Matrix3f(newXAxis.getX()/newXAxis.vectorLength(), newYAxis.getX()/newYAxis.vectorLength(), newZAxis.getX()/newZAxis.vectorLength(),
+                newXAxis.getY()/newXAxis.vectorLength(), newYAxis.getY()/newYAxis.vectorLength(), newZAxis.getY()/newZAxis.vectorLength(),
+                newXAxis.getZ()/newXAxis.vectorLength(), newYAxis.getZ()/newYAxis.vectorLength(), newZAxis.getZ()/newZAxis.vectorLength());
+        t.set(matrix, new Vector3f((float)(node.getParent().getPoint().getX() + 0.5*vector.getX()), (float)(node.getParent().getPoint().getY() + 0.5*vector.getY()), (float)(node.getParent().getPoint().getZ() + 0.5*vector.getZ())),1.0f);
+
+//        System.out.println("new y axis" + newYAxis.toSTring());
+//        System.out.println(matrix.toString());
+
+        tg.setTransform(t);
+
+        Cylinder branch = new Cylinder(thickness,(float)(node.getPoint().distance(node.getParent().getPoint())));
+        branch.setAppearance(appearance);
+
+        tg.addChild(branch);
+
+        return tg;
     }
 
     /**
