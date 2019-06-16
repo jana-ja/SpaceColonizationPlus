@@ -55,10 +55,10 @@ package view;
  * press and key release) and computes a new transform based on the
  * accumulated events and elapsed time.
  */
-public class FPKeyNavigator extends KeyNavigator {
+class FPKeyNavigator extends KeyNavigator {
 
     //TODO rechts links rotiert um globale y achse
-    //TODO bewegungen nur auf globales x z ebene
+    //TODO bewegungen nur auf globaler x z ebene
 
     private	Vector3d	navVec;
     private	long		time;

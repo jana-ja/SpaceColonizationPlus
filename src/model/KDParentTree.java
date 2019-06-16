@@ -2,18 +2,18 @@ package model;
 
 import view.Point3D;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
-public class KDParentTree {
-
+public class KDParentTree implements Iterable<List<KDParentTreeNode>> {
 
     private KDParentTreeNode root;
+
+    private List<KDParentTreeNode> leaves;
 
 
     KDParentTree(KDParentTreeNode root){
      this.root = root;
+     this.leaves = new ArrayList<>();
     }
 
     public KDParentTreeNode getRoot() {
@@ -30,9 +30,8 @@ public class KDParentTree {
         return contains(root, point, Level.X);
     }
 
-    public List<KDParentTreeNode> getLeafs(){
-        //TODO
-        return new ArrayList<>();
+    public List<KDParentTreeNode> getLeaves(){
+        return leaves;
     }
 
     public KDParentTreeNode nearestInRange(Point3D center, double radius){
@@ -128,14 +127,16 @@ public class KDParentTree {
 
     private KDParentTreeNode insert(KDParentTreeNode node, Point3D point, KDParentTreeNode parent, Level lvl, double[] coords) {
         if (node == null) {
-
-            return new KDParentTreeNode(point, coords, parent);
+            KDParentTreeNode newNode = new KDParentTreeNode(point, coords, parent);
+            this.leaves.add(newNode);
+            this.leaves.removeIf(parentNode -> parentNode.equals(newNode.getParent()));
+            return newNode;
         }
 
         double cmp = comparePoints(point, node, lvl); //1.-2.
 
         if(node.getPoint().equals(point)){
-            //TODO
+            //TODO point existiert bereits
         }
         // left
         else if (cmp < 0 && lvl==Level.X){
@@ -246,6 +247,40 @@ public class KDParentTree {
         }
     }
 
+    @Override
+    public Iterator<List<KDParentTreeNode>> iterator() {
+        return new TreeIterator(leaves);
+    }
+
+    private static final class TreeIterator implements Iterator<List<KDParentTreeNode>>{
+
+        private List<KDParentTreeNode> current;
+
+        public TreeIterator(List<KDParentTreeNode> leaves){
+            this.current = leaves;
+        }
+
+        @Override
+        public boolean hasNext() {
+            for(KDParentTreeNode node : current){
+                if(node.hasParent()){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public List<KDParentTreeNode> next() {
+            if(!this.hasNext()){
+                throw new NoSuchElementException();
+            }
+            List<KDParentTreeNode> next = new ArrayList<>();
+            current.forEach(node -> {if(node.hasParent()) next.add(node.getParent());});
+            current = next;
+            return next;
+        }
+    }
     private enum Level{
         X, Y, Z;
 

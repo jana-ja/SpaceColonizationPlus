@@ -2,7 +2,8 @@ package model;
 
 public enum TreeType {
     // radOfInf, nodeDist, killRad, topPercentage, nodesPerHeight, widthPerHeight
-    TREE(0.35,0.08, 2*0.08,70.0,300,0.8); //killRad = 2*nodeDist
+    TREE(0.5,0.2, 2*0.2,70.0,400,1.0), //killRad = 2*nodeDist
+    TREE2(0.51,0.21, 2*0.21,70.1,301,1.1);
 
     //max neighbors - ????
 

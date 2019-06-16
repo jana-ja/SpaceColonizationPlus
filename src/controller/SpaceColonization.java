@@ -12,30 +12,31 @@ class SpaceColonization {
     /**
      * Performs one step of space colonization.
      * Adds nodes to the tree according to influence of attraction points from the point cloud.
+     *
      * @param tree
      * @param pointCloud
      */
-    void spaceColonize(Tree tree, PointCloud pointCloud){
+    boolean spaceColonize(Tree tree, PointCloud pointCloud) {
 
 
-        if(pointCloud.isEmpty())
-            return;
+        if (pointCloud.isEmpty())
+            return false;
 
-        Map<KDParentTreeNode,List<Point3D>> attractionMap = new HashMap<>();
+        Map<KDParentTreeNode, List<Point3D>> attractionMap = new HashMap<>();
 
 
-    //one step
+        //one step
 
         //ich muss zum baum gehen und sagen "hey hier ist ein attractionpoint, welches ist das nächstgelegene node?"
         //für alle attractionPoints
 
         //first step: map nodes to their influencing attraction points
 
-        pointCloud.getAttractionPoints().forEach(attractionPoint ->{
+        pointCloud.getAttractionPoints().forEach(attractionPoint -> {
             KDParentTreeNode node = tree.getNodes().nearestInRange(attractionPoint, tree.getType().getRadOfInf());
 
             if (node != null) {
-                if(!attractionMap.containsKey(node))
+                if (!attractionMap.containsKey(node))
                     attractionMap.put(node, new ArrayList<>());
 
                 attractionMap.get(node).add(attractionPoint);
@@ -43,9 +44,14 @@ class SpaceColonization {
 
         });
 
+        //if attractionMap is empty -> space colonization is finished
+        if(attractionMap.isEmpty()){
+            return false;
+        }
+
         //second step: caculate new node for every node in map
 
-        attractionMap.forEach((node, attractionPoints) -> tree.getNodes().insert(calculateNewNode(node,attractionPoints, tree.getType().getNodeDist()),node));
+        attractionMap.forEach((node, attractionPoints) -> tree.getNodes().insert(calculateNewNode(node, attractionPoints, tree.getType().getNodeDist()), node));
 
 
         //third step: remove attraction points that have a node in kill radius distance or less
@@ -53,29 +59,31 @@ class SpaceColonization {
         pointCloud.getAttractionPoints().removeIf(attractionPoint ->
                 tree.getNodes().hasInRange(attractionPoint, tree.getType().getKillRad()));
 
+        return true;
     }
 
     /**
      * Returns point of new node given the parent node and all its influencing attraction points.
+     *
      * @param node
      * @param attractionPoints
      * @return
      */
     private Point3D calculateNewNode(KDParentTreeNode node, List<Point3D> attractionPoints, double nodeDist) {
 
-        final Point3D infVec = new Point3D(0,0,0);
+        final Point3D infVec = new Point3D(0, 0, 0);
 
         attractionPoints.forEach(point -> {
             //get vector from point of node to attraction point
             Point3D vec = point.subtract(node.getPoint());
             //normalize vector
-            Point3D vecNorm = vec.divide(vec.distance(new Point3D(0,0,0)));
+            Point3D vecNorm = vec.divide(vec.distance(new Point3D(0, 0, 0)));
             //add vector to vector of influence of node
             infVec.addTo(vecNorm);
         });
 
         //normalize influence vector
-        Point3D infVecNorm = infVec.divide(infVec.distance(new Point3D(0,0,0)));
+        Point3D infVecNorm = infVec.divide(infVec.distance(new Point3D(0, 0, 0)));
 
         //multiply with node distance
         Point3D f = infVecNorm.mult(nodeDist);
@@ -86,18 +94,54 @@ class SpaceColonization {
 
     /**
      * Returns a pointcloud fitting the tree type and height.
+     *
      * @param type
      * @param treeHeight
      * @return
      */
-    PointCloud generatePointCloud(TreeType type, double treeHeight){
+    PointCloud generatePointCloud(TreeType type, double treeHeight) {
 
         PointCloud pointCloud = new PointCloud();
 
         List<Point3D> envelope = new ArrayList<>();//generateEnvelope(type);
 
-        switch(type){
+        switch (type) {
             case TREE:
+                Random random = new Random();
+
+
+                //kugel
+                double radius = (type.getTopPercentage() / 100 * treeHeight) / 2;
+
+                //calculate sphere center
+                double center = treeHeight - radius;
+
+                Point3D vec;
+
+                System.out.println(center);
+
+                for (int i = 1; i <= (int) (type.getNodesPerHeight() * treeHeight); i++) {
+                    //random 3d vector
+                    vec = new Point3D(random.nextFloat()-0.5f, random.nextFloat()-0.5f, random.nextFloat()-0.5f);
+//                    System.out.println("random " + vec);
+
+                    //normalize
+                    vec.divideFrom(vec.vectorLength());
+//                    System.out.println("normalized " + vec);
+
+                    //random magnitude(?) die nicht radius überschreitet
+                    vec.multTo(random.nextFloat() * (float)(radius));
+//                    System.out.println("random länge " + vec);
+                    vec.addTo(new Point3D(0, (float) (center), 0));
+
+//                    System.out.println("addiert auf center " + vec);
+
+                    envelope.add(vec);
+                }
+
+
+                //würfel
+                /*
                 float xzMin = -(float)(type.getWidthPerHeight() * treeHeight)/2;
                 float xzMax = (float)(type.getWidthPerHeight() * treeHeight)/2;
 
@@ -109,16 +153,17 @@ class SpaceColonization {
 
                 System.out.println("yMin "+yMin);
 
-                Random random = new Random();
-
 
                 for(int i = 1; i <= (int)(type.getNodesPerHeight()*treeHeight); i++){
                     float x = random.nextFloat() * (xzMax - xzMin) + xzMin;
                     float y = random.nextFloat() * (yMax - yMin) + yMin;
                     float z = random.nextFloat() * (xzMax - xzMin) + xzMin;
 
+
                     envelope.add(new Point3D(x,y,z));
                 }
+                */
+
                 break;
         }
 
@@ -127,9 +172,9 @@ class SpaceColonization {
         return pointCloud;
     }
 
-    private List<Point3D> generateEnvelope(TreeType type){
+    private List<Point3D> generateEnvelope(TreeType type) {
 
-        switch(type){
+        switch (type) {
             case TREE:
 
 

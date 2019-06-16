@@ -60,7 +60,7 @@ package view;
  * This class is a simple behavior that invokes the KeyNavigator
  * to modify the view platform transform.
  */
-public class FPKeyNavigatorBehavior extends Behavior implements KeyListener {
+class FPKeyNavigatorBehavior extends Behavior implements KeyListener {
     private WakeupCriterion w1 = new WakeupOnAWTEvent(KeyEvent.KEY_PRESSED);
     private WakeupCriterion w2 = new WakeupOnAWTEvent(KeyEvent.KEY_RELEASED);
     private WakeupOnElapsedFrames w3 = new WakeupOnElapsedFrames(0);

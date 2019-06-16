@@ -32,6 +32,10 @@ public class KDParentTreeNode {
         this.coords = coords;
     }
 
+    public boolean hasParent(){
+        return parent!=null;
+    }
+
     public KDParentTreeNode getParent() {
         return parent;
     }

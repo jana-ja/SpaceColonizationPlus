@@ -1,6 +1,7 @@
 package view;
 
 import java.applet.Applet;
+import java.awt.*;
 
 import javax.media.j3d.*;
 import javax.vecmath.*;
@@ -24,15 +25,16 @@ public class View extends Applet implements ViewInterface {
     private final BranchGroup bgTree;
     private final BranchGroup bgNodes;
 
+    private final TextArea text;
 
     private BoundingSphere bounds = new BoundingSphere( new Point3d( 0, 0, 0 ), 100 );
 
 
-    public View() {
+    public View(int screenWidth, int screenHeight) {
 
         //create View1
         Canvas3D birdsEye = new Canvas3D( SimpleUniverse.getPreferredConfiguration() );
-        birdsEye.setSize(cWidth, cHeight);
+        birdsEye.setSize((int)(0.4*screenWidth), (int)(0.4*screenWidth));
         add(birdsEye);
 
         // create a ViewingPlatform with 2 TransformGroups above the ViewPlatform
@@ -45,7 +47,7 @@ public class View extends Applet implements ViewInterface {
         Transform3D t3d = new Transform3D( );
 //        t3d.lookAt(0,0,0);
         t3d.rotX( -Math.PI / 8.0 );
-        t3d.setTranslation( new Vector3d( 0, 3, 7 ) );
+        t3d.setTranslation( new Vector3d( 0, 3, 6 ) );
 
         MultiTransformGroup mtg = vp.getMultiTransformGroup( );
         mtg.getTransformGroup( 0 ).setTransform( t3d );
@@ -55,11 +57,18 @@ public class View extends Applet implements ViewInterface {
 
         //create View2
         Canvas3D firstPerson = new Canvas3D( SimpleUniverse.getPreferredConfiguration() );
-        firstPerson.setSize(cWidth, cHeight);
+        firstPerson.setSize((int)(0.4*screenWidth), (int)(0.4*screenWidth));
         add(firstPerson);
 
 
-        u.getLocale().addBranchGraph(createViewer(firstPerson, 0,1, 10));
+        text = new TextArea();
+        text.setPreferredSize(new Dimension((int)(0.8*screenWidth),(int)(0.8 * (screenHeight - (0.4*screenWidth)))));
+        text.setFont(new Font("Lucida Console", Font.PLAIN, 18));
+        Panel panel = new Panel();
+        panel.add(text);
+        add(panel);
+
+        u.getLocale().addBranchGraph(createViewer(firstPerson, 0,1, 6)); //TODO sinnvolle location vom viewer aus baummaßen berechnen
 
 
         // create background with floor and lights
@@ -68,17 +77,33 @@ public class View extends Applet implements ViewInterface {
         //create SceneGraph for tree
         bgTree = new BranchGroup();
         bgTree.setCapability(Group.ALLOW_CHILDREN_EXTEND);
+        bgTree.setCapability(Group.ALLOW_CHILDREN_READ);
+        bgTree.setCapability(Group.ALLOW_CHILDREN_WRITE);
         u.addBranchGraph(bgTree);
         bgNodes = new BranchGroup();
         bgNodes.setCapability(Group.ALLOW_CHILDREN_EXTEND);
+        bgNodes.setCapability(Group.ALLOW_CHILDREN_READ);
+        bgNodes.setCapability(Group.ALLOW_CHILDREN_WRITE);
         u.addBranchGraph(bgNodes);
     }
 
     @Override
+    public void log(String s){
+        text.append(s);
+        text.append("\r\n");
+    }
+    @Override
+    public void resetTree(){
+        this.bgTree.removeAllChildren();
+    }
+    @Override
     public void addToTree(BranchGroup bg){
         this.bgTree.addChild(bg);
     }
-
+    @Override
+    public void resetNodes(){
+        this.bgNodes.removeAllChildren();
+    }
     @Override
     public void addToNodes(BranchGroup bg){
         this.bgNodes.addChild(bg);
@@ -132,7 +157,7 @@ public class View extends Applet implements ViewInterface {
         GeometryInfo gi = new GeometryInfo( GeometryInfo.QUAD_ARRAY );
 
         gi.setCoordinates( coordArray );
-        gi.setTextureCoordinates( texCoordArray );
+        gi.setTextureCoordinates( texCoordArray ); //TODO deprecated alternative suchen
 
         NormalGenerator normalGenerator = new NormalGenerator( );
         normalGenerator.generateNormals( gi );
@@ -182,7 +207,7 @@ public class View extends Applet implements ViewInterface {
         key.setEnable( true );
 
         // add the KeyNavigatorBehavior to the ViewingPlatform
-        vp2.addChild( key ); //TODO
+        vp2.addChild( key );
         //c.addKeyListener(new FirstPersonCamera(vp2.getViewPlatformTransform()));
 
         // set the ViewingPlatform for the Viewer
@@ -197,7 +222,7 @@ public class View extends Applet implements ViewInterface {
     }
 
     private void addLights(BranchGroup bg) {
-        //TODO
+
         Color3f dlColor = new Color3f( 0.7f, 0.7f, 0.7f );
         Vector3f dir  = new Vector3f( -1.0f, -1.0f, -1.0f );
         Color3f alColor = new Color3f( 0.2f, 0.2f, 0.2f );

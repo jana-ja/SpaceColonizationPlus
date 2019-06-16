@@ -2,8 +2,6 @@ package model;
 
 import view.Point3D;
 
-import java.util.List;
-
 public class Tree {
 
     private TreeType type;
@@ -11,7 +9,7 @@ public class Tree {
 
     private KDParentTree nodes;
 
-    //stammkorrdinate //TODO bei der pointcloud
+    //TODO stammkoordinate //TODO bei der pointcloud
 
     public Tree(TreeType type, double height){
         this.type = type;
@@ -24,9 +22,11 @@ public class Tree {
 
     //TODO dummy
     private void generateStem(){
+        double stemHeight = height - type.getTopPercentage()/100 * height;
+        int count = (int)(stemHeight/0.1);
         //5 inserten
         KDParentTreeNode tmp = nodes.getRoot();
-        for(int i = 1; i<6 ; i++){
+        for(int i = 1; i<count ; i++){
             nodes.insert(new Point3D(0,i*0.1f,0), tmp);
             tmp = tmp.getRbfChild();
         }

@@ -2,7 +2,6 @@ package view;
 
 public class Point3D {
 
-    //TODO float geeignet?
     private float x;
     private float y;
     private float z;
@@ -31,7 +30,16 @@ public class Point3D {
     public Point3D divide(double div){
         return new Point3D((float)(x/div), (float)(y/div), (float)(z/div));
     }
-
+    public void divideFrom(float div){
+        this.x /= div;
+        this.y /= div;
+        this.z /= div;
+    }
+    public void multTo(float mul){
+        this.x *= mul;
+        this.y *= mul;
+        this.z *= mul;
+    }
     public Point3D mult(double mul){
         return new Point3D((float)(x*mul), (float)(y*mul), (float)(z*mul));
     }
@@ -65,7 +73,7 @@ public class Point3D {
         this.z = z;
     }
 
-    public String toSTring(){
+    public String toString(){
         return (x + " " + y + " " + z);
     }
 }

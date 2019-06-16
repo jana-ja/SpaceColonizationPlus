@@ -3,10 +3,7 @@ package controller;
 import com.sun.j3d.utils.applet.MainFrame;
 import com.sun.j3d.utils.geometry.Cylinder;
 import com.sun.j3d.utils.geometry.Sphere;
-import model.KDParentTreeNode;
-import model.PointCloud;
-import model.Tree;
-import model.TreeType;
+import model.*;
 import view.Point3D;
 import view.View;
 import view.ViewInterface;
@@ -14,52 +11,108 @@ import view.ViewInterface;
 import javax.media.j3d.*;
 import javax.vecmath.*;
 import java.awt.*;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
-public class Application {
+class Application {
 
     private static float treeNodeSize = 0.01f;
     private static float attPointNodeSize = 0.015f;
     private static ViewInterface view;
 
+    private static int step = 5; //every x step is visualized
+    private static int steps = 50; //number of space colonization iterations
     private static Appearance branchAppearance;
 
-    public static void main(String[] args){
+    public static void main(String[] args) throws InterruptedException {
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
-        view = new View();
+        view = new View((int)(screenSize.getWidth()),(int)(screenSize.getHeight()));
         new MainFrame( (View)view, (int) (screenSize.getWidth()), (int) (screenSize.getHeight()) );
 
 
         branchAppearance = new Appearance();
         Color3f brown = new Color3f(0.318f, 0.212f, 0.051f);
-        branchAppearance.setMaterial(new Material(brown,brown,brown,brown,70f));
+        Color3f black = new Color3f(0, 0, 0);
+        branchAppearance.setMaterial(new Material(brown,brown,brown,black,70f));
 
 
-        Tree tree = new Tree(TreeType.TREE, 2.0);
+        Tree tree = new Tree(TreeType.TREE, 5.0);
 
         SpaceColonization colo = new SpaceColonization();
+        log("generating point cloud");
         PointCloud cloud = colo.generatePointCloud(tree.getType(),tree.getHeight());
-        for(int i = 0; i < 30; i++){
-            colo.spaceColonize(tree,cloud);
-        }
 
-        //putDummy();
-        putNodes(tree);
-        putBranches(tree);
-        putAttractionPoints(cloud);
+        log("starting space colonization");
+        int i = 1;
+        while(colo.spaceColonize(tree,cloud)){
+
+            log("   step " + i + "/" + steps);
+            if(i%step==0) {
+                putBranchesTopDown(tree);
+
+//                putAttractionPoints(cloud);
+            }
+            Thread.sleep(1000);
+
+            if(i >= steps)
+                break;
+
+            i++;
+
+        }
+        log("finished");
+
+//        putDummy();
+//        putNodes(tree);
+//        putBranches(tree);
+//        putBranchesTopDown(tree);
+//        putAttractionPoints(cloud);
 
 //        test();
     }
 
+    // berücksichtigt Dicke
+    private static void putBranchesTopDown(Tree tree) {
+        KDParentTree branches = tree.getNodes();
+        BranchGroup bg = new BranchGroup();
+
+        Iterator<List<KDParentTreeNode>> iterator = branches.iterator();
+
+        float thickness = 0.001f;
+
+        for(KDParentTreeNode branch : branches.getLeaves()){
+            bg.addChild(buildCylinder(branch,thickness));
+        }
+        thickness += 0.0019f;
+
+        List<KDParentTreeNode> layer;
+        int i = 0;
+        int countBranches = 0;
+        while(iterator.hasNext()){
+            layer = iterator.next();
+            countBranches += layer.size();
+            i++;
+            for(KDParentTreeNode branch : layer){
+                bg.addChild(buildCylinder(branch,thickness));
+            }
+            thickness += 0.0019f;
+
+        }
+        log("      processed " + i + " layers with " + countBranches + " branches");
+        view.resetTree();
+        bg.setCapability(BranchGroup.ALLOW_DETACH);
+        view.addToTree(bg);
+    }
 
     /**
      * Creates Sphere for every attraction point of the pointcloud and passes them to the view.
      * @param cloud
      */
     private static void putAttractionPoints(PointCloud cloud){
+
         List<Point3D> nodes = cloud.getAttractionPoints();
         BranchGroup bg = new BranchGroup();
 
@@ -81,6 +134,8 @@ public class Application {
             bg.addChild(tg);
         });
 
+        view.resetNodes();
+        bg.setCapability(BranchGroup.ALLOW_DETACH);
         view.addToNodes(bg);
     }
 
@@ -155,7 +210,7 @@ public class Application {
 
             KDParentTreeNode tmp = nodes.pop();
 
-            bg.addChild(buildCylinder(tmp));
+            bg.addChild(buildCylinder(tmp,0.01f));
 
             if (tmp.getLtbChild() != null) {
                 nodes.push(tmp.getLtbChild());
@@ -174,7 +229,7 @@ public class Application {
      * @param node
      * @return
      */
-    private static TransformGroup buildCylinder(KDParentTreeNode node) {
+    private static TransformGroup buildCylinder(KDParentTreeNode node, float thickness) {
 
         TransformGroup tg = new TransformGroup();
 
@@ -190,7 +245,7 @@ public class Application {
 
         Transform3D t = new Transform3D();
 
-        if(nodePoint.toSTring().equals(parentPoint.toSTring())) {
+        if(nodePoint.toString().equals(parentPoint.toString())) {
             System.out.println("parent and node were equal");
             return tg;
         }
@@ -235,7 +290,7 @@ public class Application {
 
         tg.setTransform(t);
 
-        Cylinder branch = new Cylinder(0.01f,(float)(node.getPoint().distance(node.getParent().getPoint())));
+        Cylinder branch = new Cylinder(thickness,(float)(node.getPoint().distance(node.getParent().getPoint())));
         branch.setAppearance(branchAppearance);
 
         tg.addChild(branch);
@@ -243,6 +298,7 @@ public class Application {
         return tg;
     }
 
+    @Deprecated
     private static void putDummy(){
 
         final float stemLength = 0.9f;
@@ -285,6 +341,7 @@ public class Application {
      * Test of transformation with a matrix.
      * Transforms y axis to vector of two given points.
      */
+    @Deprecated
     private static void test() {
 
         BranchGroup bg = new BranchGroup();
@@ -342,6 +399,10 @@ public class Application {
 
         bg.addChild(tg);
         view.addToNodes(bg);
+    }
+
+    private static void log(String s){
+        view.log(s);
     }
 
 }
