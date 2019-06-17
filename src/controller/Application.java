@@ -23,7 +23,7 @@ class Application {
     private static ViewInterface view;
 
     private static int step = 1; //every x step is visualized
-    private static int steps = 10; //number of space colonization iterations
+    private static int steps = 50; //number of space colonization iterations
     private static Appearance branchAppearance;
 
     public static void main(String[] args) throws InterruptedException {
@@ -51,11 +51,10 @@ class Application {
 
             log("   step " + i + "/" + steps);
             if(i%step==0) {
-                putBranchesTopDown(tree);
-
+                putBranches(tree);
 //                putAttractionPoints(cloud);
             }
-            Thread.sleep(1000);
+            Thread.sleep(10);
 
             if(i >= steps)
                 break;
@@ -74,7 +73,7 @@ class Application {
 //        test();
     }
 
-    // berücksichtigt Dicke
+    @Deprecated
     private static void putBranchesTopDown(Tree tree) throws InterruptedException {
         KDParentTree branches = tree.getNodes();
         BranchGroup bg = new BranchGroup();
@@ -169,6 +168,7 @@ class Application {
      * @param tree
      */
     private static void putNodes(Tree tree){
+
         KDParentTreeNode node = tree.getNodes().getRoot();
         BranchGroup bg = new BranchGroup();
 
@@ -221,6 +221,10 @@ class Application {
      * @param tree
      */
     private static void putBranches(Tree tree){
+
+        tree.getNodes().calculateThicknesses(0.0025f, 2.5); //TODO parameter
+
+
         KDParentTreeNode node = tree.getNodes().getRoot();
         BranchGroup bg = new BranchGroup();
 
@@ -229,23 +233,35 @@ class Application {
         }
 
         Stack<KDParentTreeNode> nodes = new Stack<>();
+
         nodes.push(node);
+
+        int nodeCounter = 1;
 
         while (!nodes.isEmpty()) {
 
             KDParentTreeNode tmp = nodes.pop();
 
-            bg.addChild(buildCylinder(tmp,0.01f));
+            bg.addChild(buildCylinder(tmp,tmp.getThickness()));
 
             if (tmp.getLtbChild() != null) {
                 nodes.push(tmp.getLtbChild());
+                nodeCounter++;
             }
             if (tmp.getRbfChild() != null) {
                 nodes.push(tmp.getRbfChild());
+                nodeCounter++;
+
             }
         }
+        log("      processed " + nodeCounter + " nodes");
 
+        view.resetTree();
+        bg.setCapability(BranchGroup.ALLOW_DETACH);
         view.addToTree(bg);
+
+//        log("      displayed " + nodeCounter + " nodes");
+
     }
 
     private static TransformGroup debugBuildCylinder(KDParentTreeNode node, float thickness, Appearance appearance) {
@@ -390,109 +406,6 @@ class Application {
         tg.addChild(branch);
 
         return tg;
-    }
-
-    @Deprecated
-    private static void putDummy(){
-
-        final float stemLength = 0.9f;
-        final float stemRadius = 0.1f;
-
-        Transform3D tf = new Transform3D();
-
-        tf.setTranslation(new Vector3d(0,stemLength/2,0));
-
-        TransformGroup tg = new TransformGroup(tf);
-
-        Appearance app = new Appearance();
-
-        Color3f objColor = new Color3f(0.8f, 0.2f, 1.0f);
-        Color3f black = new Color3f(0.0f, 0.0f, 0.0f);
-
-        //ambient, emissive, diffuse, specular, shininess
-        app.setMaterial(new Material(objColor, black, objColor, black, 80.0f));
-
-
-        Cylinder cylinder = new Cylinder(stemRadius, stemLength);
-
-        tg.addChild(cylinder);
-
-        TransformGroup tg2 = new TransformGroup();
-        Transform3D t = new Transform3D();
-
-        t.setTranslation(new Vector3d(0,1.0,0));
-        tg.setTransform(t);
-
-        tg.addChild(new Sphere(0.2f));
-
-        BranchGroup bg = new BranchGroup();
-        bg.addChild(tg);
-        bg.addChild(tg2);
-        view.addToTree(bg);
-    }
-
-    /**
-     * Test of transformation with a matrix.
-     * Transforms y axis to vector of two given points.
-     */
-    @Deprecated
-    private static void test() {
-
-        BranchGroup bg = new BranchGroup();
-
-        Point3D parent = new Point3D(2,5,4);
-        Point3D node = new Point3D(3,6,2);
-
-        Point3D vector = node.subtract(parent);
-
-
-        TransformGroup tg1 = new TransformGroup();
-        Transform3D t1 = new Transform3D();
-
-        t1.setTranslation(new Vector3d(parent.getX(),parent.getY(),parent.getZ()));
-        tg1.setTransform(t1);
-
-        tg1.addChild(new Sphere(0.04f));
-        bg.addChild(tg1);
-
-
-
-
-
-        TransformGroup tg2 = new TransformGroup();
-        Transform3D t2 = new Transform3D();
-
-        t2.setTranslation(new Vector3d(node.getX(),node.getY(),node.getZ()));
-        tg2.setTransform(t2);
-
-        tg2.addChild(new Sphere(0.04f));
-        bg.addChild(tg2);
-
-
-
-
-        TransformGroup tg = new TransformGroup();
-        Transform3D tr = new Transform3D();
-//        tr.setTranslation(new Vector3d(0.0,0.1,0.0));
-
-//        Matrix3d matrix = new Matrix3d(-1,1,0,1,1,-2,2,2,2);
-        Matrix3d matrix = new Matrix3d(-1/Math.sqrt(2),1/Math.sqrt(6),2/Math.sqrt(12),1/Math.sqrt(2),1/Math.sqrt(6),2/Math.sqrt(12),0/Math.sqrt(2),-2/Math.sqrt(6),2/Math.sqrt(12));
-
-        tr.set(new Matrix3f(matrix),new Vector3d(parent.getX() + 0.5*vector.getX(), parent.getY() + 0.5*vector.getY(), parent.getZ() + 0.5*vector.getZ()),1.0f);
-
-
-        tg.setTransform(tr);
-
-        Cylinder cy = new Cylinder(0.05f,(float)node.distance(parent));
-        tg.addChild(cy);
-
-
-
-
-        bg.addChild(new Cylinder(0.05f,0.08f));
-
-        bg.addChild(tg);
-        view.addToNodes(bg);
     }
 
     private static void log(String s){

@@ -22,6 +22,8 @@ public class Tree {
 
     //TODO dummy
     private void generateStem(){
+
+        //idee: attraction radius hoch setzen und nach und nach runter
         double stemHeight = height - type.getTopPercentage()/100 * height;
         int count = (int)(stemHeight/0.1);
         //5 inserten

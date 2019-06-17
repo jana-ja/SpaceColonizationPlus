@@ -128,6 +128,7 @@ public class KDParentTree implements Iterable<List<KDParentTreeNode>> {
     private KDParentTreeNode insert(KDParentTreeNode node, Point3D point, KDParentTreeNode parent, Level lvl, double[] coords) {
         if (node == null) {
             KDParentTreeNode newNode = new KDParentTreeNode(point, coords, parent);
+            parent.addTreeChild(newNode);
             this.leaves.add(newNode);
             this.leaves.removeIf(parentNode -> parentNode.equals(newNode.getParent()));
             return newNode;
@@ -248,15 +249,17 @@ public class KDParentTree implements Iterable<List<KDParentTreeNode>> {
     }
 
     @Override
+    @Deprecated
     public Iterator<List<KDParentTreeNode>> iterator() {
         return new TreeIterator(leaves);
     }
 
+    @Deprecated
     private static final class TreeIterator implements Iterator<List<KDParentTreeNode>>{
 
         private List<KDParentTreeNode> current;
 
-        public TreeIterator(List<KDParentTreeNode> leaves){
+        TreeIterator(List<KDParentTreeNode> leaves){
             this.current = leaves;
         }
 
@@ -281,6 +284,7 @@ public class KDParentTree implements Iterable<List<KDParentTreeNode>> {
             return next;
         }
     }
+
     private enum Level{
         X, Y, Z;
 
@@ -292,6 +296,30 @@ public class KDParentTree implements Iterable<List<KDParentTreeNode>> {
                 default: return null;
             }
         }
+    }
+
+    public void calculateThicknesses(float r0, double n){
+
+        calculateThickness(root, r0, n);
+
+        int i;
+    }
+
+    private float calculateThickness(KDParentTreeNode node, float r0, double n){
+        if(leaves.contains(node)){
+            node.setThickness(r0);
+            return r0;
+        }
+        float thickness = ((float)(Math.pow((double)(calculateThicknessSum(node, r0, n)), 1/n)));
+        node.setThickness(thickness);
+        return thickness;
+    }
+
+    private float calculateThicknessSum(KDParentTreeNode node, float r0, double n){
+    node.setThicknessHelpSum(0.0f);
+        node.getTreeChildren().forEach(child -> node.addToThicknessSum((float)(Math.pow((double)(calculateThickness(child,r0,n)),n))));
+
+        return node.getThicknessHelpSum();
     }
 
 
