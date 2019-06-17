@@ -4,10 +4,10 @@ import view.Point3D;
 
 public class Tree {
 
-    private TreeType type;
-    private double height;
+    private final TreeType type;
+    private final double height;
 
-    private KDParentTree nodes;
+    private final KDParentTree nodes;
 
     //TODO stammkoordinate //TODO bei der pointcloud
 

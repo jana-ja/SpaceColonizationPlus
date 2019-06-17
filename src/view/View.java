@@ -27,7 +27,7 @@ public class View extends Applet implements ViewInterface {
 
     private final TextArea text;
 
-    private BoundingSphere bounds = new BoundingSphere( new Point3d( 0, 0, 0 ), 100 );
+    private final BoundingSphere bounds = new BoundingSphere( new Point3d( 0, 0, 0 ), 100 );
 
 
     public View(int screenWidth, int screenHeight) {

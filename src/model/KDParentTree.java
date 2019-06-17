@@ -4,11 +4,11 @@ import view.Point3D;
 
 import java.util.*;
 
-public class KDParentTree implements Iterable<List<KDParentTreeNode>> {
+public class KDParentTree {
 
     private KDParentTreeNode root;
 
-    private List<KDParentTreeNode> leaves;
+    private final List<KDParentTreeNode> leaves;
 
 
     KDParentTree(KDParentTreeNode root){
@@ -245,43 +245,6 @@ public class KDParentTree implements Iterable<List<KDParentTreeNode>> {
             default:
                 return -1;
 
-        }
-    }
-
-    @Override
-    @Deprecated
-    public Iterator<List<KDParentTreeNode>> iterator() {
-        return new TreeIterator(leaves);
-    }
-
-    @Deprecated
-    private static final class TreeIterator implements Iterator<List<KDParentTreeNode>>{
-
-        private List<KDParentTreeNode> current;
-
-        TreeIterator(List<KDParentTreeNode> leaves){
-            this.current = leaves;
-        }
-
-        @Override
-        public boolean hasNext() {
-            for(KDParentTreeNode node : current){
-                if(node.hasParent()){
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public List<KDParentTreeNode> next() {
-            if(!this.hasNext()){
-                throw new NoSuchElementException();
-            }
-            List<KDParentTreeNode> next = new ArrayList<>();
-            current.forEach(node -> {if(node.hasParent()) next.add(node.getParent());});
-            current = next;
-            return next;
         }
     }
 

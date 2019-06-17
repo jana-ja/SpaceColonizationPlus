@@ -63,11 +63,11 @@ package view;
 class FPKeyNavigatorBehavior extends Behavior implements KeyListener {
     private WakeupCriterion w1 = new WakeupOnAWTEvent(KeyEvent.KEY_PRESSED);
     private WakeupCriterion w2 = new WakeupOnAWTEvent(KeyEvent.KEY_RELEASED);
-    private WakeupOnElapsedFrames w3 = new WakeupOnElapsedFrames(0);
-    private WakeupCriterion[] warray = { w1, w2, w3 };
+    private final WakeupOnElapsedFrames w3 = new WakeupOnElapsedFrames(0);
+    private final WakeupCriterion[] warray = { w1, w2, w3 };
     private WakeupCondition w = new WakeupOr(warray);
     private KeyEvent eventKey;
-    private FPKeyNavigator keyNavigator;
+    private final FPKeyNavigator keyNavigator;
     private boolean listener = false;
 
     private LinkedList eventq;

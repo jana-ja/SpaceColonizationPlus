@@ -60,52 +60,52 @@ class FPKeyNavigator extends KeyNavigator {
     //TODO rechts links rotiert um globale y achse
     //TODO bewegungen nur auf globaler x z ebene
 
-    private	Vector3d	navVec;
+    private final Vector3d	navVec;
     private	long		time;
 
-    private	Vector3d	fwdAcc;
-    private	Vector3d	bwdAcc;
-    private	Vector3d	leftAcc;
-    private	Vector3d	rightAcc;
-    private	Vector3d	upAcc;
-    private	Vector3d	downAcc;
+    private final Vector3d	fwdAcc;
+    private final Vector3d	bwdAcc;
+    private final Vector3d	leftAcc;
+    private final Vector3d	rightAcc;
+    private final Vector3d	upAcc;
+    private final Vector3d	downAcc;
 
-    private	Vector3d	fwdDrag;
-    private	Vector3d	bwdDrag;
-    private	Vector3d	leftDrag;
-    private	Vector3d	rightDrag;
-    private	Vector3d	upDrag;
-    private	Vector3d	downDrag;
+    private final Vector3d	fwdDrag;
+    private final Vector3d	bwdDrag;
+    private final Vector3d	leftDrag;
+    private final Vector3d	rightDrag;
+    private final Vector3d	upDrag;
+    private final Vector3d	downDrag;
 
-    private	double		fwdVMax;
-    private	double		bwdVMax;
-    private	double		leftVMax;
-    private	double		rightVMax;
-    private	double		upVMax;
-    private	double		downVMax;
+    private final double		fwdVMax;
+    private final double		bwdVMax;
+    private final double		leftVMax;
+    private final double		rightVMax;
+    private final double		upVMax;
+    private final double		downVMax;
 
-    private	float		leftRotAngle;
-    private	float		rightRotAngle;
-    private	float		upRotAngle;
-    private	float		downRotAngle;
+    private final float		leftRotAngle;
+    private final float		rightRotAngle;
+    private final float		upRotAngle;
+    private final float		downRotAngle;
 
-    private	double		mmx;
+    private final double		mmx;
 
-    private	Vector3d	a	= new Vector3d();
-    private	Vector3d	dv	= new Vector3d();
-    private	Point3d		dp	= new Point3d();
-    private	Quat4d		udQuat	= new Quat4d();
-    private	Quat4d		lrQuat	= new Quat4d();
-    private	Vector3d	vpPos	= new Vector3d();
+    private final Vector3d	a	= new Vector3d();
+    private final Vector3d	dv	= new Vector3d();
+    private final Point3d		dp	= new Point3d();
+    private final Quat4d		udQuat	= new Quat4d();
+    private final Quat4d		lrQuat	= new Quat4d();
+    private final Vector3d	vpPos	= new Vector3d();
     private	double		vpScale;
-    private	Quat4d		vpQuat	= new Quat4d();
+    private final Quat4d		vpQuat	= new Quat4d();
     private	Matrix4d	vpMatrix = new Matrix4d();
-    private	Transform3D	vpTrans	= new Transform3D();
-    private	Matrix4d	mat	= new Matrix4d();
-    private	Vector3d	nda	= new Vector3d();
+    private final Transform3D	vpTrans	= new Transform3D();
+    private final Matrix4d	mat	= new Matrix4d();
+    private final Vector3d	nda	= new Vector3d();
     private	Vector3d	temp	= new Vector3d();
-    private	Transform3D	nominal = new Transform3D();
-    private	TransformGroup	targetTG;
+    private final Transform3D	nominal = new Transform3D();
+    private final TransformGroup	targetTG;
 
 
     private	static	final	int CHAR_W = (1<<0);

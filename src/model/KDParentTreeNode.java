@@ -17,7 +17,7 @@ public class KDParentTreeNode {
     private KDParentTreeNode parent;
     private KDParentTreeNode ltbChild;
     private KDParentTreeNode rbfChild;
-    private List<KDParentTreeNode> treeChildren;
+    private final List<KDParentTreeNode> treeChildren;
 
     KDParentTreeNode(Point3D point, double[] coords, KDParentTreeNode parent){
         this.point = point; this.coords = coords; this.parent=parent;
