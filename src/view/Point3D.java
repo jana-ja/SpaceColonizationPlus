@@ -76,4 +76,8 @@ public class Point3D {
     public String toString(){
         return (x + " " + y + " " + z);
     }
+
+    public boolean equals(Point3D point){
+        return ( this.x == point.getX() && this.y == point.getY() && this.z == point.getZ());
+    }
 }

@@ -29,15 +29,16 @@ public class KDParentTreeNode {
         this.treeChildren.add(child);
     }
 
+
     float getThicknessHelpSum() {
         return thicknessHelpSum;
     }
 
-    void setThicknessHelpSum(float thicknessHelpSum) {
-        this.thicknessHelpSum = thicknessHelpSum;
+    void resetThicknessHelpSum() {
+        this.thicknessHelpSum = 0.0f;
     }
 
-    List<KDParentTreeNode> getTreeChildren() {
+    public List<KDParentTreeNode> getTreeChildren() {
         return treeChildren;
     }
 

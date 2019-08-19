@@ -1,6 +1,7 @@
 package model;
 
 import view.Point3D;
+import view.ViewInterface;
 
 import java.util.*;
 
@@ -10,10 +11,13 @@ public class KDParentTree {
 
     private final List<KDParentTreeNode> leaves;
 
+    //TODO debug
+    private final List<KDParentTreeNode> all;
 
     KDParentTree(KDParentTreeNode root){
      this.root = root;
      this.leaves = new ArrayList<>();
+     this.all = new ArrayList<>();
     }
 
     public KDParentTreeNode getRoot() {
@@ -42,6 +46,10 @@ public class KDParentTree {
         if (root == null) return null;
 
         Stack<KDParentTreeNode> nodes = new Stack<>();
+        KDParentTreeNode candidate = null;
+        double candidateDistance = Double.MAX_VALUE;
+        double tmpDistance;
+
         nodes.push(root);
         while (!nodes.isEmpty()) {
 
@@ -49,7 +57,11 @@ public class KDParentTree {
             KDParentTreeNode tmp = nodes.pop();
 
             // Add contained points to our points stack
-            if (inRange(center, radius, tmp.getPoint())) return tmp;
+            tmpDistance = tmp.getPoint().distance(center);
+            if (inRange(center, radius, tmp.getPoint()) && tmpDistance < candidateDistance ){
+                candidate = tmp;
+                candidateDistance = tmpDistance;
+            }
 
             Point3D topleft = new Point3D((float)(center.getX()-radius), (float)(center.getY()-radius), (float)(center.getZ()-radius));
             if (tmp.getLtbChild() != null && intersectsWith(topleft, 2*radius, tmp.getLtbChild().getCoords())) {
@@ -59,7 +71,7 @@ public class KDParentTree {
                 nodes.push(tmp.getRbfChild());
             }
         }
-        return null;
+        return candidate;
     }
 
     public boolean hasInRange(Point3D center, double radius){
@@ -128,6 +140,8 @@ public class KDParentTree {
     private KDParentTreeNode insert(KDParentTreeNode node, Point3D point, KDParentTreeNode parent, Level lvl, double[] coords) {
         if (node == null) {
             KDParentTreeNode newNode = new KDParentTreeNode(point, coords, parent);
+            //TODO debug
+            all.add(newNode);
             parent.addTreeChild(newNode);
             this.leaves.add(newNode);
             this.leaves.removeIf(parentNode -> parentNode.equals(newNode.getParent()));
@@ -137,7 +151,7 @@ public class KDParentTree {
         double cmp = comparePoints(point, node, lvl); //1.-2.
 
         if(node.getPoint().equals(point)){
-            //TODO point existiert bereits
+            ViewInterface.log("a node with the same coordinates does already exist");
         }
         // left
         else if (cmp < 0 && lvl==Level.X){
@@ -264,8 +278,6 @@ public class KDParentTree {
     public void calculateThicknesses(float r0, double n){
 
         calculateThickness(root, r0, n);
-
-        int i;
     }
 
     private float calculateThickness(KDParentTreeNode node, float r0, double n){
@@ -279,11 +291,13 @@ public class KDParentTree {
     }
 
     private float calculateThicknessSum(KDParentTreeNode node, float r0, double n){
-    node.setThicknessHelpSum(0.0f);
+    node.resetThicknessHelpSum(); //auf 0.0f
         node.getTreeChildren().forEach(child -> node.addToThicknessSum((float)(Math.pow((double)(calculateThickness(child,r0,n)),n))));
 
         return node.getThicknessHelpSum();
     }
 
-
+    public List<KDParentTreeNode> getAll() {
+        return all;
+    }
 }

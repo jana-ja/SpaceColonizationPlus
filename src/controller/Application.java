@@ -12,6 +12,7 @@ import javax.media.j3d.*;
 import javax.vecmath.*;
 import java.awt.*;
 import java.util.List;
+import java.util.Random;
 import java.util.Stack;
 
 class Application {
@@ -20,8 +21,11 @@ class Application {
     private static ViewInterface view;
 
     private static final int STEP = 1; //every x STEP is visualized
-    private static final int STEPS = 50; //number of space colonization iterations
+    private static final int STEPS = 200; //number of space colonization iterations
+    private static final long DELAY = 0;
+    private  static final boolean DEBUG = false;
     private static Appearance branchAppearance;
+
 
     public static void main(String[] args) throws InterruptedException {
 
@@ -36,22 +40,24 @@ class Application {
         branchAppearance.setMaterial(new Material(brown,brown,brown,black,70f));
 
 
-        Tree tree = new Tree(TreeType.TREE, 5.0);
+        Tree tree = new Tree(TreeType.TREE, 4.0);
 
         SpaceColonization colo = new SpaceColonization();
-        log("generating point cloud");
+        ViewInterface.log("generating point cloud");
+//        PointCloud cloud = colo.debugGeneratePointCloud(); //TODO deprecated
         PointCloud cloud = colo.generatePointCloud(tree.getType(),tree.getHeight());
 
-        log("starting space colonization");
+        ViewInterface.log("starting space colonization");
         int i = 1;
+
         while(colo.spaceColonize(tree,cloud)){
 
-            log("   STEP " + i + "/" + STEPS);
+            ViewInterface.log("   step " + i + "/" + STEPS);
             if(i% STEP ==0) {
                 putBranches(tree);
-//                putAttractionPoints(cloud);
+                putAttractionPoints(cloud);
             }
-            Thread.sleep(10);
+            Thread.sleep(DELAY);
 
             if(i >= STEPS)
                 break;
@@ -59,7 +65,7 @@ class Application {
             i++;
 
         }
-        log("finished");
+        ViewInterface.log("finished");
 
 //        putBranches(tree);
 //        putAttractionPoints(cloud);
@@ -105,7 +111,7 @@ class Application {
      */
     private static void putBranches(Tree tree){
 
-        tree.getNodes().calculateThicknesses(0.0025f, 2.5); //TODO parameter
+        tree.getNodes().calculateThicknesses(0.0025f, 2.0); //TODO parameter
 
 
         KDParentTreeNode node = tree.getNodes().getRoot();
@@ -127,6 +133,7 @@ class Application {
 
             bg.addChild(buildCylinder(tmp,tmp.getThickness()));
 
+
             if (tmp.getLtbChild() != null) {
                 nodes.push(tmp.getLtbChild());
                 nodeCounter++;
@@ -137,8 +144,7 @@ class Application {
 
             }
         }
-        log("      processed " + nodeCounter + " nodes");
-
+        ViewInterface.log("      processed " + nodeCounter + " nodes");
         view.resetTree();
         bg.setCapability(BranchGroup.ALLOW_DETACH);
         view.addToTree(bg);
@@ -146,7 +152,6 @@ class Application {
 //        log("      displayed " + nodeCounter + " nodes");
 
     }
-
     /**
      * Returns Transformgroup containing one cylinder which represents the branch between node and its parent.
      *
@@ -155,6 +160,15 @@ class Application {
      */
     private static TransformGroup buildCylinder(KDParentTreeNode node, float thickness) {
 
+        Appearance debugAppearance;
+        if(DEBUG){
+            Random random = new Random();
+            Color3f black = new Color3f(0, 0, 0);
+
+            debugAppearance = new Appearance();
+            Color3f rand = new Color3f(random.nextFloat(), random.nextFloat(), random.nextFloat());
+            debugAppearance.setMaterial(new Material(rand,rand,rand,black,70f));
+        }
         TransformGroup tg = new TransformGroup();
 
         KDParentTreeNode parent = node.getParent();
@@ -173,8 +187,8 @@ class Application {
             System.out.println("parent and node were equal");
             return tg;
         }
-//        System.out.println("node" + nodePoint.toSTring());
-//        System.out.println("parent" + parentPoint.toSTring());
+//        System.out.println("node" + nodePoint.toString());
+//        System.out.println("parent" + parentPoint.toString());
 
         Point3D newYAxis = new Point3D(nodePoint.getX() - parentPoint.getX(), nodePoint.getY() - parentPoint.getY(), nodePoint.getZ() - parentPoint.getZ());
 
@@ -209,21 +223,21 @@ class Application {
                 newXAxis.getZ()/newXAxis.vectorLength(), newYAxis.getZ()/newYAxis.vectorLength(), newZAxis.getZ()/newZAxis.vectorLength());
         t.set(matrix, new Vector3f((float)(node.getParent().getPoint().getX() + 0.5*vector.getX()), (float)(node.getParent().getPoint().getY() + 0.5*vector.getY()), (float)(node.getParent().getPoint().getZ() + 0.5*vector.getZ())),1.0f);
 
-//        System.out.println("new y axis" + newYAxis.toSTring());
+//        System.out.println("new y axis" + newYAxis.toString());
 //        System.out.println(matrix.toString());
 
         tg.setTransform(t);
 
         Cylinder branch = new Cylinder(thickness,(float)(node.getPoint().distance(node.getParent().getPoint())));
-        branch.setAppearance(branchAppearance);
+        if(DEBUG)
+         branch.setAppearance(debugAppearance);
+        else
+            branch.setAppearance(branchAppearance);
 
         tg.addChild(branch);
 
         return tg;
     }
 
-    private static void log(String s){
-        view.log(s);
-    }
 
 }

@@ -25,7 +25,6 @@ public class View extends Applet implements ViewInterface {
     private final BranchGroup bgTree;
     private final BranchGroup bgNodes;
 
-    private final TextArea text;
 
     private final BoundingSphere bounds = new BoundingSphere( new Point3d( 0, 0, 0 ), 100 );
 
@@ -61,7 +60,7 @@ public class View extends Applet implements ViewInterface {
         add(firstPerson);
 
 
-        text = new TextArea();
+
         text.setPreferredSize(new Dimension((int)(0.8*screenWidth),(int)(0.8 * (screenHeight - (0.4*screenWidth)))));
         text.setFont(new Font("Lucida Console", Font.PLAIN, 18));
         Panel panel = new Panel();
@@ -87,11 +86,7 @@ public class View extends Applet implements ViewInterface {
         u.addBranchGraph(bgNodes);
     }
 
-    @Override
-    public void log(String s){
-        text.append(s);
-        text.append("\r\n");
-    }
+
     @Override
     public void resetTree(){
         this.bgTree.removeAllChildren();
@@ -157,7 +152,7 @@ public class View extends Applet implements ViewInterface {
         GeometryInfo gi = new GeometryInfo( GeometryInfo.QUAD_ARRAY );
 
         gi.setCoordinates( coordArray );
-        gi.setTextureCoordinates( texCoordArray ); //TODO deprecated alternative suchen
+        gi.setTextureCoordinates( texCoordArray ); //TODO deprecated, alternative suchen
 
         NormalGenerator normalGenerator = new NormalGenerator( );
         normalGenerator.generateNormals( gi );

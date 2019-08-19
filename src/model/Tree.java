@@ -17,10 +17,10 @@ public class Tree {
 
         this.nodes = new KDParentTree(new KDParentTreeNode(new Point3D(0,0,0), new double[]{Double.MIN_VALUE,Double.MIN_VALUE,Double.MIN_VALUE,Double.MAX_VALUE,Double.MAX_VALUE,Double.MAX_VALUE},null));
 
-        generateStem();
+//        generateStem();
     }
 
-    //TODO dummy
+    @Deprecated
     private void generateStem(){
 
         //idee: attraction radius hoch setzen und nach und nach runter
@@ -28,7 +28,7 @@ public class Tree {
         int count = (int)(stemHeight/0.1);
         //5 inserten
         KDParentTreeNode tmp = nodes.getRoot();
-        for(int i = 1; i<count ; i++){
+        for(int i = 1; i<count+1 ; i++){
             nodes.insert(new Point3D(0,i*0.1f,0), tmp);
             tmp = tmp.getRbfChild();
         }

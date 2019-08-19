@@ -2,8 +2,11 @@ package controller;
 
 import model.*;
 import view.Point3D;
+import view.ViewInterface;
 
 import java.util.*;
+
+import static java.awt.geom.Point2D.distance;
 
 
 class SpaceColonization {
@@ -46,18 +49,38 @@ class SpaceColonization {
 
         //if attractionMap is empty -> space colonization is finished
         if(attractionMap.isEmpty()){
+            System.out.println("abbruch");
             return false;
         }
 
-        //second step: caculate new node for every node in map
+        ViewInterface.log("      mapped nodes: " + attractionMap.size());
 
-        attractionMap.forEach((node, attractionPoints) -> tree.getNodes().insert(calculateNewNode(node, attractionPoints, tree.getType().getNodeDist()), node));
+        //second step: calculate new node for every node in map
+
+        attractionMap.forEach((node, attractionPoints) -> {
+            Point3D newPoint = calculateNewNode(node, attractionPoints, tree.getType().getNodeDist());
+            //testen ob newNode.point = point von nem kind von node
+            boolean isNew = true;
+            for (KDParentTreeNode child : node.getTreeChildren()) {
+                if(child.getPoint().equals(newPoint)) {
+                    isNew = false;
+                    pointCloud.getAttractionPoints().removeAll(attractionPoints);
+                    ViewInterface.log("   unlimited growing problem prevented");
+                    break;
+                }
+            }
+            if(isNew) tree.getNodes().insert(newPoint, node);
+        });
 
 
         //third step: remove attraction points that have a node in kill radius distance or less
-
-        pointCloud.getAttractionPoints().removeIf(attractionPoint ->
-                tree.getNodes().hasInRange(attractionPoint, tree.getType().getKillRad()));
+        //TODO anders machen? removeIf sache überprüfen.
+        tree.getNodes().getAll().forEach( node ->
+            pointCloud.getAttractionPoints().removeIf(attractionPoint ->
+                attractionPoint.distance(node.getPoint()) < tree.getType().getKillRad()
+            ));
+//        pointCloud.getAttractionPoints().removeIf(attractionPoint ->
+//                tree.getNodes().hasInRange(attractionPoint, tree.getType().getKillRad()));
 
         return true;
     }
@@ -77,10 +100,15 @@ class SpaceColonization {
             //get vector from point of node to attraction point
             Point3D vec = point.subtract(node.getPoint());
             //normalize vector
-            Point3D vecNorm = vec.divide(vec.distance(new Point3D(0, 0, 0)));
+            Point3D vecNorm = vec.divide(vec.distance(new Point3D(0, 0, 0))); //gibt den betrag, deswegen zu (0,0,0)
             //add vector to vector of influence of node
             infVec.addTo(vecNorm);
         });
+
+        float length = infVec.vectorLength();
+        if(length < 1/*nodeDist*/){
+            ViewInterface.log(node.hashCode() + " " + length);
+        }
 
         //normalize influence vector
         Point3D infVecNorm = infVec.divide(infVec.distance(new Point3D(0, 0, 0)));
@@ -103,47 +131,23 @@ class SpaceColonization {
 
         PointCloud pointCloud = new PointCloud();
 
+        double treeWidth = type.getWidthPerHeight() * treeHeight;
         List<Point3D> envelope = new ArrayList<>();//generateEnvelope(type);
+        List<Point3D> envelope2 = new ArrayList<>();//generateEnvelope(type);
+
+
+        Random random = new Random();
+
+        //würfel um volumen bauen
+        //würfel gleichverteilt füllen
+        //schnitt(würfel,volumen) behalten -> für jeden punkt: ist in volumen?
 
         switch (type) {
             case TREE:
-                Random random = new Random();
 
-
-                //kugel
-                double radius = (type.getTopPercentage() / 100 * treeHeight) / 2;
-
-                //calculate sphere center
-                double center = treeHeight - radius;
-
-                Point3D vec;
-
-                System.out.println(center);
-
-                for (int i = 1; i <= (int) (type.getNodesPerHeight() * treeHeight); i++) {
-                    //random 3d vector
-                    vec = new Point3D(random.nextFloat()-0.5f, random.nextFloat()-0.5f, random.nextFloat()-0.5f);
-//                    System.out.println("random " + vec);
-
-                    //normalize
-                    vec.divideFrom(vec.vectorLength());
-//                    System.out.println("normalized " + vec);
-
-                    //random magnitude(?) die nicht radius überschreitet
-                    vec.multTo(random.nextFloat() * (float)(radius));
-//                    System.out.println("random länge " + vec);
-                    vec.addTo(new Point3D(0, (float) (center), 0));
-
-//                    System.out.println("addiert auf center " + vec);
-
-                    envelope.add(vec);
-                }
-
-
-                //würfel
-                /*
-                float xzMin = -(float)(type.getWidthPerHeight() * treeHeight)/2;
-                float xzMax = (float)(type.getWidthPerHeight() * treeHeight)/2;
+                //quadrat bauen
+                float xzMin = -(float)treeWidth/2;
+                float xzMax = (float)treeWidth/2;
 
                 System.out.println("xzMin "+xzMin);
                 System.out.println("xtMax "+xzMax);
@@ -154,7 +158,7 @@ class SpaceColonization {
                 System.out.println("yMin "+yMin);
 
 
-                for(int i = 1; i <= (int)(type.getNodesPerHeight()*treeHeight); i++){
+                for(int i = 1; i <= (int)(type.getAttPointsPerHeight()*treeHeight); i++){
                     float x = random.nextFloat() * (xzMax - xzMin) + xzMin;
                     float y = random.nextFloat() * (yMax - yMin) + yMin;
                     float z = random.nextFloat() * (xzMax - xzMin) + xzMin;
@@ -162,12 +166,52 @@ class SpaceColonization {
 
                     envelope.add(new Point3D(x,y,z));
                 }
-                */
+
+
+                //punkte checken mit funktion
+
+                double maxDistance;
+                float xForDistance;
+                double realDistance;
+                for (Point3D point3D : envelope) {
+
+                    xForDistance = (float)((treeWidth/2) * Math.sin(((2 * Math.PI) / (treeHeight*2)) * point3D.getY()));
+
+                    maxDistance = distance(0.0f, point3D.getY(), xForDistance, point3D.getY());
+                    realDistance = point3D.distance(new Point3D(0.0f, point3D.getY(), 0.0f));
+                    if(realDistance <= maxDistance ){
+                        envelope2.add(point3D);
+                    }
+                }
 
                 break;
-        }
 
-        pointCloud.setAttractionPoints(envelope);
+//            default:
+//                //würfel
+////
+//                float xzMin = -(float)(type.getWidthPerHeight() * treeHeight)/2;
+//                float xzMax = (float)(type.getWidthPerHeight() * treeHeight)/2;
+//
+//                System.out.println("xzMin "+xzMin);
+//                System.out.println("xtMax "+xzMax);
+//
+//                float yMin = (float)(treeHeight - type.getTopPercentage()/100*treeHeight);
+//                float yMax = (float)treeHeight;
+//
+//                System.out.println("yMin "+yMin);
+//
+//
+//                for(int i = 1; i <= (int)(type.getAttPointsPerHeight()*treeHeight); i++){
+//                    float x = random.nextFloat() * (xzMax - xzMin) + xzMin;
+//                    float y = random.nextFloat() * (yMax - yMin) + yMin;
+//                    float z = random.nextFloat() * (xzMax - xzMin) + xzMin;
+//
+//
+//                    envelope.add(new Point3D(x,y,z));
+//                }
+
+        }
+        pointCloud.setAttractionPoints(envelope2);
 
         return pointCloud;
     }
@@ -181,5 +225,19 @@ class SpaceColonization {
                 break;
         }
         return new ArrayList<>();
+    }
+
+    @Deprecated
+    public PointCloud debugGeneratePointCloud() {
+        List<Point3D> attractionPoints = new ArrayList<>();
+        Point3D point1 = new Point3D(0.31f, 0.3f, 0);
+        Point3D point2 = new Point3D(-0.3f, 0.31f, 0);
+        attractionPoints.add(point1);
+        attractionPoints.add(point2);
+
+        PointCloud pointCloud = new PointCloud();
+        pointCloud.setAttractionPoints(attractionPoints);
+
+        return pointCloud;
     }
 }
