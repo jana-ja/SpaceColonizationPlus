@@ -9,7 +9,7 @@ public interface ViewInterface {
     void addToNodes(BranchGroup bg);
     void resetTree();
     void resetNodes();
-    static void log(String s){
+    static void log(String s){ //TODO SHIT?
         text.append(s);
         text.append("\r\n");
     }

@@ -18,6 +18,8 @@ import java.util.Stack;
 class Application {
 
     private static final float ATT_POINT_NODE_SIZE = 0.015f;
+    private static final double THICKNESS_N = 2.2;
+    private static final float INIT_BRANCH_THICKNESS = 0.0025f;
     private static ViewInterface view;
 
     private static final int STEP = 1; //every x STEP is visualized
@@ -44,7 +46,7 @@ class Application {
 
         SpaceColonization colo = new SpaceColonization();
         ViewInterface.log("generating point cloud");
-//        PointCloud cloud = colo.debugGeneratePointCloud(); //TODO deprecated
+
         PointCloud cloud = colo.generatePointCloud(tree.getType(),tree.getHeight());
 
         ViewInterface.log("starting space colonization");
@@ -111,7 +113,7 @@ class Application {
      */
     private static void putBranches(Tree tree){
 
-        tree.getNodes().calculateThicknesses(0.0025f, 2.0); //TODO parameter
+        tree.getNodes().calculateThicknesses(INIT_BRANCH_THICKNESS, THICKNESS_N); //TODO parameter
 
 
         KDParentTreeNode node = tree.getNodes().getRoot();
@@ -187,10 +189,9 @@ class Application {
             System.out.println("parent and node were equal");
             return tg;
         }
-//        System.out.println("node" + nodePoint.toString());
-//        System.out.println("parent" + parentPoint.toString());
 
         Point3D newYAxis = new Point3D(nodePoint.getX() - parentPoint.getX(), nodePoint.getY() - parentPoint.getY(), nodePoint.getZ() - parentPoint.getZ());
+
 
         //calculate new X and Z vector (orthogonal)
         Point3D newXAxis;
@@ -216,6 +217,7 @@ class Application {
                     newYAxis.getX()*newXAxis.getY() -newYAxis.getY()*newXAxis.getX());
         }
 
+
         //build matrix
 
         Matrix3f matrix = new Matrix3f(newXAxis.getX()/newXAxis.vectorLength(), newYAxis.getX()/newYAxis.vectorLength(), newZAxis.getX()/newZAxis.vectorLength(),
@@ -223,8 +225,6 @@ class Application {
                 newXAxis.getZ()/newXAxis.vectorLength(), newYAxis.getZ()/newYAxis.vectorLength(), newZAxis.getZ()/newZAxis.vectorLength());
         t.set(matrix, new Vector3f((float)(node.getParent().getPoint().getX() + 0.5*vector.getX()), (float)(node.getParent().getPoint().getY() + 0.5*vector.getY()), (float)(node.getParent().getPoint().getZ() + 0.5*vector.getZ())),1.0f);
 
-//        System.out.println("new y axis" + newYAxis.toString());
-//        System.out.println(matrix.toString());
 
         tg.setTransform(t);
 
