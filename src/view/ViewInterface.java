@@ -1,6 +1,7 @@
 package view;
 
 import javax.media.j3d.BranchGroup;
+import javax.vecmath.Color3f;
 import java.awt.*;
 
 public interface ViewInterface {
@@ -13,4 +14,6 @@ public interface ViewInterface {
         text.append(s);
         text.append("\r\n");
     }
+    void addMarker(float x, float y, float z);
+    void addMarker(float x, float y, float z, Color3f color);
 }

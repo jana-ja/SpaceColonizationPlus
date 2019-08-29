@@ -48,7 +48,7 @@ class SpaceColonization {
         });
 
         //if attractionMap is empty -> space colonization is finished
-        if(attractionMap.isEmpty()){
+        if (attractionMap.isEmpty()) {
             System.out.println("abbruch");
             return false;
         }
@@ -62,23 +62,23 @@ class SpaceColonization {
             //testen ob newNode.point = point von nem kind von node
             boolean isNew = true;
             for (KDParentTreeNode child : node.getTreeChildren()) {
-                if(child.getPoint().equals(newPoint)) {
+                if (child.getPoint().equals(newPoint)) {
                     isNew = false;
                     pointCloud.getAttractionPoints().removeAll(attractionPoints);
                     ViewInterface.log("   unlimited growing problem prevented");
                     break;
                 }
             }
-            if(isNew) tree.getNodes().insert(newPoint, node);
+            if (isNew) tree.getNodes().insert(newPoint, node);
         });
 
 
         //third step: remove attraction points that have a node in kill radius distance or less
-        //TODO anders machen? removeIf sache überprüfen.
-        tree.getNodes().getAll().forEach( node ->
-            pointCloud.getAttractionPoints().removeIf(attractionPoint ->
-                attractionPoint.distance(node.getPoint()) < tree.getType().getKillRad()
-            ));
+        //TODO debug anders machen? removeIf sache überprüfen.
+        tree.getNodes().getAll().forEach(node ->
+                pointCloud.getAttractionPoints().removeIf(attractionPoint ->
+                        attractionPoint.distance(node.getPoint()) < tree.getType().getKillRad()
+                ));
 //        pointCloud.getAttractionPoints().removeIf(attractionPoint ->
 //                tree.getNodes().hasInRange(attractionPoint, tree.getType().getKillRad()));
 
@@ -102,7 +102,7 @@ class SpaceColonization {
             //normalize vector
             Point3D vecNorm = vec.divide(vec.distance(new Point3D(0, 0, 0))); //gibt den betrag, deswegen zu (0,0,0)
             //add vector to vector of influence of node
-            infVec.addTo(vecNorm);
+            infVec.addTo(vecNorm); //TODO normieren oder nicht?
         });
 
         //normalize influence vector
@@ -138,45 +138,81 @@ class SpaceColonization {
         //schnitt(würfel,volumen) behalten -> für jeden punkt: ist in volumen?
 
         //würfel bauen
-        float xzMin = -(float)treeWidth/2;
-        float xzMax = (float)treeWidth/2;
+        float xzMin = -(float) treeWidth / 2;
+        float xzMax = (float) treeWidth / 2;
 
-        float yMin = (float)(treeHeight - type.getTopPercentage()/100*treeHeight);
-        float yMax = (float)treeHeight;
+        float yMin = (float) (treeHeight - type.getTopPercentage() / 100 * treeHeight);
+        float yMax = (float) treeHeight;
 
 
-        for(int i = 1; i <= (int)(type.getAttPointsPerHeight()*treeHeight); i++){
+        //würfel random gleichverteilt füllen
+        for (int i = 1; i <= (int) (type.getAttPointsPerHeight() * treeHeight); i++) {
             float x = random.nextFloat() * (xzMax - xzMin) + xzMin;
             float y = random.nextFloat() * (yMax - yMin) + yMin;
             float z = random.nextFloat() * (xzMax - xzMin) + xzMin;
 
-            envelope.add(new Point3D(x,y,z));
+            envelope.add(new Point3D(x, y, z));
         }
-
 
         //punkte checken mit funktion
-        switch (type) {
-            case TREE:
+        double maxDistance;
+        double minDistance;
+        float xForMaxDistance;
+        float xForMinDistance = 0;
+        double realDistance;
+        double thickness = 0.1;
+        double fs = 0.0; //function start, where sin should go positive on y axis
+        for (Point3D point3D : envelope) {
 
-                double maxDistance;
-                float xForDistance;
-                double realDistance;
-                for (Point3D point3D : envelope) {
+            float y = point3D.getY();
 
-                    //Formel
-                    xForDistance = (float)((treeWidth/2) * Math.sin(((2 * Math.PI) / (treeHeight*2)) * point3D.getY()));
+            switch (type.getTreeShape()) {
+                case UMBRELLA:
+                    fs = treeHeight - 2 * type.getTopPercentage() / 100 * treeHeight;
+                    xForMaxDistance = (float) ((treeWidth / 2) * Math.sin(Math.PI / (treeHeight - fs) * (point3D.getY() - fs)));
+                    xForMinDistance = (float) ((treeWidth / 2) * (1.0 - 2 * thickness) * Math.sin(((Math.PI) / ((treeHeight - fs) * (1.0 - 2 * thickness))) * (point3D.getY() - (fs + (treeHeight - fs) * thickness))));
 
-                    maxDistance = distance(0.0f, point3D.getY(), xForDistance, point3D.getY());
-                    realDistance = point3D.distance(new Point3D(0.0f, point3D.getY(), 0.0f));
-                    if(realDistance <= maxDistance ){
-                        envelope2.add(point3D);
+                    break;
+
+                case CONE:
+                    // f(x) = (float) ( ((treeHeight * type.getTopPercentage()/100) / (treeWidth/2)) * point3D.getY() + treeHeight);
+                    xForMaxDistance = (float) ((point3D.getY() - treeHeight) * treeWidth/2 / (treeHeight * type.getTopPercentage() / 100)); //f(y)
+                    break;
+                default:
+                    xForMaxDistance = (float) ((treeWidth / 2) * Math.sin(Math.PI / (treeHeight - fs) * (point3D.getY() - fs)));
+                    xForMinDistance = (float) ((treeWidth / 2) * (1.0 - 2 * thickness) * Math.sin(((Math.PI) / ((treeHeight - fs) * (1.0 - 2 * thickness))) * (point3D.getY() - (fs + (treeHeight - fs) * thickness))));
+
+
+            }
+
+
+            maxDistance = distance(0.0f, point3D.getY(), xForMaxDistance, point3D.getY());
+            realDistance = point3D.distance(new Point3D(0.0f, point3D.getY(), 0.0f));
+
+
+            switch (type.getTreeShape()) {
+                case UMBRELLA: //Kontur
+                    minDistance = distance(0.0f, point3D.getY(), xForMinDistance, point3D.getY());
+                    if ((realDistance <= maxDistance && realDistance >= minDistance) ) {
+                        envelope2.add(point3D); //envelope2 wg concurrent modification
                     }
-                }
-                break;
+                    break;
+
+                default:
+                    if (realDistance <= maxDistance) {
+                        envelope2.add(point3D); //envelope2 wg concurrent modification
+                    }
+
+            }
+
 
         }
+
+
         pointCloud.setAttractionPoints(envelope2);
 
         return pointCloud;
     }
 }
+
+
