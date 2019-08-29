@@ -51,13 +51,14 @@ class Application extends Applet {
 //        generation.setEnable(true);
 //        branchAppearance.setTexCoordGeneration(generation);
 
+        Point3D verschiebung = new Point3D(1,0,0);
 
-        Tree tree = new Tree(TreeType.UMBRELLA, 4.0);
+        Tree tree = new Tree(TreeType.TREE, 4.0, verschiebung);
 
         SpaceColonization colo = new SpaceColonization();
         ViewInterface.log("generating point cloud");
 
-        PointCloud cloud = colo.generatePointCloud(tree.getType(), tree.getHeight());
+        PointCloud cloud = colo.generatePointCloud(tree);
 
         ViewInterface.log("starting space colonization");
         int i = 1;
@@ -83,30 +84,45 @@ class Application extends Applet {
 //        putAttractionPoints(cloud);
 
 
-//        view.addMarker(0.0f, (float) (tree.getHeight() - tree.getType().getTopPercentage()/100*tree.getHeight()), 0.0f);
-//        view.addMarker(0.0f, (float)tree.getHeight(), 0.0f);
-//        double fs = tree.getHeight() - 2* tree.getType().getTopPercentage()/100*tree.getHeight();
+
+
 //        float xForMaxDistance;
-//        float yForMaxDistance;
+//        float xOhneVerschiebung;
 //        double treeWidth = tree.getType().getWidthPerHeight() * tree.getHeight();
 //        System.out.println(treeWidth);
 //        double thickness = 0.1;
 //        float xForMinDistance;
 //        double treeHeight = tree.getHeight();
 //        TreeType type = tree.getType();
+//        double crownHeight = treeHeight * type.getTopPercentage() / 100;
 //
 //
-//        for (double i = fs; i <= tree.getHeight(); i += 0.2) {
-//            yForMaxDistance = (float) (((treeHeight * (type.getTopPercentage()/100)) / (treeWidth/2)) * i + treeHeight);
-//            view.addMarker((float)i, yForMaxDistance, 0.0f, new Color3f(Color.MAGENTA));
+//        double treeTopY = verschiebung.getY() + treeHeight;
+//        double fs = verschiebung.getY() + treeHeight - 2 * type.getTopPercentage() / 100 * treeHeight;
+//        double fsOhneVerschiebung = treeHeight - 2 * type.getTopPercentage() / 100 * treeHeight;
 //
+//        view.addMarker(verschiebung.getX(), verschiebung.getY() + (float) (tree.getHeight() - tree.getType().getTopPercentage()/100*tree.getHeight()), verschiebung.getZ());
+//        view.addMarker(verschiebung.getX(), verschiebung.getY() + (float)tree.getHeight(), verschiebung.getZ());
+//        view.addMarker(verschiebung.getX(), (float) fs, verschiebung.getZ());
 
-//            xForMaxDistance = (float) ((treeWidth/2) * Math.sin(Math.PI / (tree.getHeight() - fs) * (i - fs)));
+//        for (double i = fs; i <= verschiebung.getY() + tree.getHeight(); i += 0.2) {
+//
+//            für cone
+//            xForMaxDistance = (float) ((i - treeTopY) * treeWidth / 2 / (crownHeight) + verschiebung.getX());
+//            view.addMarker( xForMaxDistance,(float)i, 0.0f, new Color3f(Color.MAGENTA));
+//
+//
+//            für round
+//            xForMaxDistance = (float) ((treeWidth / 2) * Math.sin(Math.PI / (treeTopY - fs) * (i - fs)) + verschiebung.getX());
 //            view.addMarker(xForMaxDistance, (float)i, 0.0f, new Color3f(Color.MAGENTA));
 //
-//
-//            xForMinDistance = (float) ((treeWidth/2) * (1.0 - 2 * thickness) * Math.sin(((Math.PI) / ((tree.getHeight() - fs) * (1.0 - 2 * thickness))) * (i - (fs + (tree.getHeight() - fs) * thickness))));
+//            xForMinDistance = (float) ((treeWidth / 2) * (1.0 - 2 * thickness) * Math.sin(((Math.PI) / ((treeTopY - fs) * (1.0 - 2 * thickness))) * (i - (fs + (treeTopY - fs) * thickness)))+ verschiebung.getX());
 //            view.addMarker(xForMinDistance, (float)i, 0.0f, new Color3f(Color.CYAN));
+//        }
+//
+//        for (double i = fsOhneVerschiebung; i <=  + tree.getHeight(); i += 0.2) {
+//            xOhneVerschiebung = (float) ((treeWidth / 2) * Math.sin(Math.PI / (treeHeight - fsOhneVerschiebung) * (i - fsOhneVerschiebung)));
+//            view.addMarker(xOhneVerschiebung, (float)i, 0.0f, new Color3f(Color.CYAN));
 //        }
     }
 

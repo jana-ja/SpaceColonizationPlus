@@ -118,13 +118,16 @@ class SpaceColonization {
     /**
      * Returns a pointcloud fitting the tree type and height.
      *
-     * @param type
-     * @param treeHeight
      * @return
      */
-    PointCloud generatePointCloud(TreeType type, double treeHeight) {
+    PointCloud generatePointCloud(Tree tree) {
 
         PointCloud pointCloud = new PointCloud();
+        TreeType type = tree.getType();
+        double treeHeight = tree.getHeight();
+        double crownHeight = treeHeight * type.getTopPercentage() / 100;
+
+        Point3D rootCoordinates = tree.getNodes().getRoot().getPoint();
 
         double treeWidth = type.getWidthPerHeight() * treeHeight;
         List<Point3D> envelope = new ArrayList<>();//generateEnvelope(type);
@@ -138,62 +141,64 @@ class SpaceColonization {
         //schnitt(würfel,volumen) behalten -> für jeden punkt: ist in volumen?
 
         //würfel bauen
-        float xzMin = -(float) treeWidth / 2;
-        float xzMax = (float) treeWidth / 2;
+        float xMin = rootCoordinates.getX() - (float) treeWidth / 2;
+        float xMax = rootCoordinates.getX() + (float) treeWidth / 2;
 
-        float yMin = (float) (treeHeight - type.getTopPercentage() / 100 * treeHeight);
-        float yMax = (float) treeHeight;
+        float zMin = rootCoordinates.getZ() - (float) treeWidth / 2;
+        float zMax = rootCoordinates.getZ() + (float) treeWidth / 2;
+
+        float yMin = rootCoordinates.getY() + (float) (treeHeight - crownHeight);
+        float yMax = rootCoordinates.getY() + (float) treeHeight;
 
 
         //würfel random gleichverteilt füllen
         for (int i = 1; i <= (int) (type.getAttPointsPerHeight() * treeHeight); i++) {
-            float x = random.nextFloat() * (xzMax - xzMin) + xzMin;
+            float x = random.nextFloat() * (xMax - xMin) + xMin;
             float y = random.nextFloat() * (yMax - yMin) + yMin;
-            float z = random.nextFloat() * (xzMax - xzMin) + xzMin;
+            float z = random.nextFloat() * (zMax - zMin) + zMin;
 
             envelope.add(new Point3D(x, y, z));
         }
 
         //punkte checken mit funktion
         double maxDistance;
-        double minDistance;
+        double minDistance = Double.MIN_VALUE;
         float xForMaxDistance;
         float xForMinDistance = 0;
         double realDistance;
         double thickness = 0.1;
-        double fs = 0.0; //function start, where sin should go positive on y axis
-        for (Point3D point3D : envelope) {
+        double treeTopY = rootCoordinates.getY() + treeHeight;
 
-            float y = point3D.getY();
+        double fs = rootCoordinates.getY(); //function start, where sin should go positive on y axis
+        for (Point3D point3D : envelope) {
 
             switch (type.getTreeShape()) {
                 case UMBRELLA:
-                    fs = treeHeight - 2 * type.getTopPercentage() / 100 * treeHeight;
-                    xForMaxDistance = (float) ((treeWidth / 2) * Math.sin(Math.PI / (treeHeight - fs) * (point3D.getY() - fs)));
-                    xForMinDistance = (float) ((treeWidth / 2) * (1.0 - 2 * thickness) * Math.sin(((Math.PI) / ((treeHeight - fs) * (1.0 - 2 * thickness))) * (point3D.getY() - (fs + (treeHeight - fs) * thickness))));
+                    fs = rootCoordinates.getY() + treeHeight - 2 * type.getTopPercentage() / 100 * treeHeight;
+                    xForMaxDistance = (float) ((treeWidth / 2) * Math.sin(Math.PI / (treeTopY - fs) * (point3D.getY() - fs)) + rootCoordinates.getX());
+                    xForMinDistance = (float) ((treeWidth / 2) * (1.0 - 2 * thickness) * Math.sin(((Math.PI) / ((treeTopY - fs) * (1.0 - 2 * thickness))) * (point3D.getY() - (fs + (treeTopY - fs) * thickness)))+ rootCoordinates.getX());
 
                     break;
 
                 case CONE:
-                    // f(x) = (float) ( ((treeHeight * type.getTopPercentage()/100) / (treeWidth/2)) * point3D.getY() + treeHeight);
-                    xForMaxDistance = (float) ((point3D.getY() - treeHeight) * treeWidth/2 / (treeHeight * type.getTopPercentage() / 100)); //f(y)
+                    // f(x) = (float) ( (crownHeight / (treeWidth/2)) * (point3D.getX() - rootCoordinates.getX()) + treeHeight); //minus verschiebt nach rechts
+                    xForMaxDistance = (float) ((point3D.getY() - treeTopY) * treeWidth / 2 / (crownHeight) + rootCoordinates.getX()); //f(y)
                     break;
                 default:
-                    xForMaxDistance = (float) ((treeWidth / 2) * Math.sin(Math.PI / (treeHeight - fs) * (point3D.getY() - fs)));
-                    xForMinDistance = (float) ((treeWidth / 2) * (1.0 - 2 * thickness) * Math.sin(((Math.PI) / ((treeHeight - fs) * (1.0 - 2 * thickness))) * (point3D.getY() - (fs + (treeHeight - fs) * thickness))));
+                    xForMaxDistance = (float) ((treeWidth / 2) * Math.sin(Math.PI / (treeTopY - fs) * (point3D.getY() - fs)) + rootCoordinates.getX());
 
 
             }
 
 
-            maxDistance = distance(0.0f, point3D.getY(), xForMaxDistance, point3D.getY());
-            realDistance = point3D.distance(new Point3D(0.0f, point3D.getY(), 0.0f));
+            maxDistance = distance(rootCoordinates.getX(), point3D.getY(), xForMaxDistance, point3D.getY());
+            realDistance = point3D.distance(new Point3D(rootCoordinates.getX(), point3D.getY(), rootCoordinates.getZ()));
 
 
             switch (type.getTreeShape()) {
                 case UMBRELLA: //Kontur
-                    minDistance = distance(0.0f, point3D.getY(), xForMinDistance, point3D.getY());
-                    if ((realDistance <= maxDistance && realDistance >= minDistance) ) {
+                    minDistance = distance(rootCoordinates.getX(), point3D.getY(), xForMinDistance, point3D.getY());
+                    if ((realDistance <= maxDistance && realDistance >= minDistance)) {
                         envelope2.add(point3D); //envelope2 wg concurrent modification
                     }
                     break;
