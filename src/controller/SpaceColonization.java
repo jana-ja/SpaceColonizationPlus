@@ -121,26 +121,26 @@ class SpaceColonization {
      * @return
      */
     PointCloud generatePointCloud(Tree tree) {
+        //würfel um volumen bauen
+        List<Point3D> cubeCloud = fillPointCloudCube(tree);
 
-        PointCloud pointCloud = new PointCloud();
+        //schnitt(würfel,volumen) behalten -> für jeden punkt: ist in volumen?
+        List<Point3D> cloud = intersectCubeCloud(tree, cubeCloud);
+
+        return new PointCloud(cloud);
+    }
+
+    private List<Point3D> fillPointCloudCube(Tree tree) {
+        List<Point3D> cloud = new ArrayList<>();
+        Random random = new Random();
+
+        Point3D rootCoordinates = tree.getNodes().getRoot().getPoint();
         TreeType type = tree.getType();
         double treeHeight = tree.getHeight();
         double crownHeight = treeHeight * type.getTopPercentage() / 100;
-
-        Point3D rootCoordinates = tree.getNodes().getRoot().getPoint();
-
         double treeWidth = type.getWidthPerHeight() * treeHeight;
-        List<Point3D> envelope = new ArrayList<>();//generateEnvelope(type);
-        List<Point3D> envelope2 = new ArrayList<>();//generateEnvelope(type);
 
 
-        Random random = new Random();
-
-        //würfel um volumen bauen
-        //würfel gleichverteilt füllen
-        //schnitt(würfel,volumen) behalten -> für jeden punkt: ist in volumen?
-
-        //würfel bauen
         float xMin = rootCoordinates.getX() - (float) treeWidth / 2;
         float xMax = rootCoordinates.getX() + (float) treeWidth / 2;
 
@@ -157,66 +157,67 @@ class SpaceColonization {
             float y = random.nextFloat() * (yMax - yMin) + yMin;
             float z = random.nextFloat() * (zMax - zMin) + zMin;
 
-            envelope.add(new Point3D(x, y, z));
+            cloud.add(new Point3D(x, y, z));
         }
 
-        //punkte checken mit funktion
-        double maxDistance;
-        double minDistance = Double.MIN_VALUE;
-        float xForMaxDistance;
-        float xForMinDistance = 0;
-        double realDistance;
-        double thickness = 0.1;
+        return cloud;
+    }
+
+    private List<Point3D> intersectCubeCloud(Tree tree, List<Point3D> cubeCloud) {
+
+        List<Point3D> cloud = new ArrayList<>();
+
+        Point3D rootCoordinates = tree.getNodes().getRoot().getPoint();
+        TreeType type = tree.getType();
+        double treeHeight = tree.getHeight();
+        double crownHeight = treeHeight * type.getTopPercentage() / 100;
+        double treeRadius = type.getWidthPerHeight() * treeHeight / 2;
         double treeTopY = rootCoordinates.getY() + treeHeight;
 
-        double fs = rootCoordinates.getY(); //function start, where sin should go positive on y axis
-        for (Point3D point3D : envelope) {
+
+        for (Point3D point3D : cubeCloud) {
+            float xForMaxDistance;
+            float xForMinDistance = rootCoordinates.getX();
+            double fs; //function start, where sin should go positive on y axis
+            double thickness;//TODO abwarten ob das tatsächlich in mehreren fällen gebraucht wird
 
             switch (type.getTreeShape()) {
                 case UMBRELLA:
+                    thickness = 0.1;
                     fs = rootCoordinates.getY() + treeHeight - 2 * type.getTopPercentage() / 100 * treeHeight;
-                    xForMaxDistance = (float) ((treeWidth / 2) * Math.sin(Math.PI / (treeTopY - fs) * (point3D.getY() - fs)) + rootCoordinates.getX());
-                    xForMinDistance = (float) ((treeWidth / 2) * (1.0 - 2 * thickness) * Math.sin(((Math.PI) / ((treeTopY - fs) * (1.0 - 2 * thickness))) * (point3D.getY() - (fs + (treeTopY - fs) * thickness)))+ rootCoordinates.getX());
-
+                    xForMaxDistance = (float) ((treeRadius) * Math.sin(Math.PI / (treeTopY - fs) * (point3D.getY() - fs)) + rootCoordinates.getX());
+                    xForMinDistance = (float) ((treeRadius) * (1.0 - 2 * thickness) * Math.sin(((Math.PI) / ((treeTopY - fs) * (1.0 - 2 * thickness))) * (point3D.getY() - (fs + (treeTopY - fs) * thickness))) + rootCoordinates.getX());
                     break;
-
                 case CONE:
                     // f(x) = (float) ( (crownHeight / (treeWidth/2)) * (point3D.getX() - rootCoordinates.getX()) + treeHeight); //minus verschiebt nach rechts
-                    xForMaxDistance = (float) ((point3D.getY() - treeTopY) * treeWidth / 2 / (crownHeight) + rootCoordinates.getX()); //f(y)
+                    xForMaxDistance = (float) ((point3D.getY() - treeTopY) * treeRadius / (crownHeight) + rootCoordinates.getX()); //f(y)
                     break;
                 default:
-                    xForMaxDistance = (float) ((treeWidth / 2) * Math.sin(Math.PI / (treeTopY - fs) * (point3D.getY() - fs)) + rootCoordinates.getX());
-
-
+                    //round
+                    fs = rootCoordinates.getY();
+                    xForMaxDistance = (float) ((treeRadius) * Math.sin(Math.PI / (treeTopY - fs) * (point3D.getY() - fs)) + rootCoordinates.getX());
             }
 
 
-            maxDistance = distance(rootCoordinates.getX(), point3D.getY(), xForMaxDistance, point3D.getY());
-            realDistance = point3D.distance(new Point3D(rootCoordinates.getX(), point3D.getY(), rootCoordinates.getZ()));
-
+            double maxDistance = distance(rootCoordinates.getX(), point3D.getY(), xForMaxDistance, point3D.getY());
+            double realDistance = point3D.distance(new Point3D(rootCoordinates.getX(), point3D.getY(), rootCoordinates.getZ()));
 
             switch (type.getTreeShape()) {
-                case UMBRELLA: //Kontur
-                    minDistance = distance(rootCoordinates.getX(), point3D.getY(), xForMinDistance, point3D.getY());
+                case UMBRELLA:
+                    //rahmen
+                    double minDistance = distance(rootCoordinates.getX(), point3D.getY(), xForMinDistance, point3D.getY());
                     if ((realDistance <= maxDistance && realDistance >= minDistance)) {
-                        envelope2.add(point3D); //envelope2 wg concurrent modification
+                        cloud.add(point3D);
                     }
                     break;
-
                 default:
+                    //normaler schnitt
                     if (realDistance <= maxDistance) {
-                        envelope2.add(point3D); //envelope2 wg concurrent modification
+                        cloud.add(point3D);
                     }
-
             }
-
-
         }
-
-
-        pointCloud.setAttractionPoints(envelope2);
-
-        return pointCloud;
+        return cloud;
     }
 }
 

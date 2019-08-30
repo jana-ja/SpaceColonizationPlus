@@ -12,6 +12,10 @@ public class PointCloud {
         this.attractionPoints = new ArrayList<>();
     }
 
+    public PointCloud(List<Point3D> attractionPoints){
+        this.attractionPoints = attractionPoints;
+    }
+
     public boolean isEmpty() {
         return attractionPoints.isEmpty();
     }
