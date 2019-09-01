@@ -3,6 +3,7 @@ package controller;
 import com.sun.j3d.utils.applet.MainFrame;
 import com.sun.j3d.utils.geometry.Cylinder;
 import com.sun.j3d.utils.geometry.Sphere;
+import com.sun.j3d.utils.image.TextureLoader;
 import model.*;
 import view.Point3D;
 import view.View;
@@ -43,22 +44,27 @@ class Application extends Applet {
         branchAppearance = new Appearance();
         Color3f brown = new Color3f(0.318f, 0.212f, 0.051f);
         Color3f black = new Color3f(0, 0, 0);
-        branchAppearance.setMaterial(new Material(brown, brown, brown, black, 70f));
+//        branchAppearance.setMaterial(new Material(brown, brown, brown, black, 70f));
 
-//        Texture loader = new TextureLoader( View.class.getClassLoader().getResource("bark004-color.jpg").getPath(), ((View) view).getComponent(0)  ).getTexture( );
-//        branchAppearance.setTexture(loader);
-//        TexCoordGeneration generation = new TexCoordGeneration(TexCoordGeneration.EYE_LINEAR, TexCoordGeneration.TEXTURE_COORDINATE_2);
-//        generation.setEnable(true);
-//        branchAppearance.setTexCoordGeneration(generation);
+        Texture loader = new TextureLoader( View.class.getClassLoader().getResource("bark004-color.jpg").getPath(), ((View) view).getComponent(0)  ).getTexture( );
+        branchAppearance.setTexture(loader);
+        TexCoordGeneration generation = new TexCoordGeneration(TexCoordGeneration.EYE_LINEAR, TexCoordGeneration.TEXTURE_COORDINATE_2);
+        generation.setEnable(true);
+        branchAppearance.setTexCoordGeneration(generation);
 
-        Point3D verschiebung = new Point3D(1,0,0);
+        Point3D verschiebung = new Point3D(0,0,0);
 
-        Tree tree = new Tree(TreeType.TREE, 4.0, verschiebung);
+        Tree tree = new Tree(TreeType.PLATANE, 4.0, verschiebung);
 
         SpaceColonization colo = new SpaceColonization();
         ViewInterface.log("generating point cloud");
 
         PointCloud cloud = colo.generatePointCloud(tree);
+
+//        TruncatedCone test = new TruncatedCone(0.1f, 1.0f, 1f, branchAppearance);
+//        BranchGroup bg = new BranchGroup();
+//        bg.addChild(test);
+//        view.addToNodes(bg);
 
         ViewInterface.log("starting space colonization");
         int i = 1;
@@ -187,7 +193,13 @@ class Application extends Applet {
 
             KDParentTreeNode tmp = nodes.pop();
 
-            bg.addChild(buildCylinder(tmp, tmp.getThickness()));
+            if(tmp.equals( tree.getNodes().getRoot()))
+                bg.addChild(buildCylinder(tmp, tmp.getThickness(), tmp.getThickness(), TruncatedCone.BODY | TruncatedCone.BOT));
+            else if(tree.getNodes().getLeaves().contains(tmp))
+                bg.addChild(buildCylinder(tmp, tmp.getThickness(), tmp.getParent().getThickness(), TruncatedCone.BODY | TruncatedCone.TOP));
+            else
+                bg.addChild(buildCylinder(tmp, tmp.getThickness(), tmp.getParent().getThickness(), TruncatedCone.BODY));
+
 
 
             if (tmp.getLtbChild() != null) {
@@ -215,7 +227,7 @@ class Application extends Applet {
      * @param node
      * @return
      */
-    private static TransformGroup buildCylinder(KDParentTreeNode node, float thickness) {
+    private static TransformGroup buildCylinder(KDParentTreeNode node, float thicknessTop, float thicknessBot, int flags) {
 
         Appearance debugAppearance;
         if (DEBUG) {
@@ -283,11 +295,11 @@ class Application extends Applet {
 
         tg.setTransform(t);
 
-        Cylinder branch = new Cylinder(thickness, (float) (node.getPoint().distance(node.getParent().getPoint())));
-        if (DEBUG)
-            branch.setAppearance(debugAppearance);
-        else
-            branch.setAppearance(branchAppearance);
+        TruncatedCone branch = new TruncatedCone(thicknessTop, thicknessBot, (float) (node.getPoint().distance(node.getParent().getPoint())), branchAppearance, flags);
+//        if (DEBUG)
+//            branch.setAppearance(debugAppearance);
+//        else
+//            branch.setAppearance(branchAppearance);
 
         tg.addChild(branch);
 
