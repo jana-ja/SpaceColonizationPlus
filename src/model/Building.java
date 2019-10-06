@@ -1,0 +1,296 @@
+package model;
+
+import com.sun.j3d.utils.geometry.GeometryInfo;
+import com.sun.j3d.utils.geometry.NormalGenerator;
+import controller.SpaceColonization;
+import org.apache.commons.math.fraction.Fraction;
+import org.apache.commons.math.fraction.FractionConversionException;
+import view.Point3D;
+
+import javax.media.j3d.Appearance;
+import javax.media.j3d.Shape3D;
+import javax.vecmath.Point3f;
+
+
+public class Building implements Obstacle {
+    private Point3D corner1, corner2;
+
+    private Point3D darkestPoint;
+
+//    Point3D[] topCorners; //gegen den uhrzeigersinn
+
+    private float maxX,  minX,  maxZ, minZ, maxY, minY;
+
+    public Building(Point3D corner1, Point3D corner2) {
+        this.corner1 = corner1;
+        this.corner2 = corner2;
+
+        maxX = Math.max(corner1.getX(), corner2.getX());
+        minX = Math.min(corner1.getX(), corner2.getX());
+        maxZ = Math.max(corner1.getZ(), corner2.getZ());
+        minZ = Math.min(corner1.getZ(), corner2.getZ());
+
+        maxY = Math.max(corner1.getY(), corner2.getY());
+        minY = Math.min(corner1.getY(), corner2.getY());
+
+//        topCorners = new Point3D[4];
+//        topCorners[0] = new Point3D(maxX, maxY, maxZ); // oben rechts
+//        topCorners[1] = new Point3D(minX, maxY, maxZ); // oben links
+//        topCorners[2] = new Point3D(minX, maxY, minZ); // unten links
+//        topCorners[3] = new Point3D(maxX, maxY, minZ); // unten rechts
+    }
+
+    @Override
+    public boolean isInside(Point3D point) {
+        if (point.getX() > Math.max(corner1.getX(), corner2.getX())
+                || point.getX() < Math.min(corner1.getX(), corner2.getX())
+                || point.getY() > Math.max(corner1.getY(), corner2.getY())
+                || point.getY() < Math.min(corner1.getY(), corner2.getY())
+                || point.getZ() > Math.max(corner1.getZ(), corner2.getZ())
+                || point.getZ() < Math.min(corner1.getZ(), corner2.getZ()))
+            return false;
+        return true;
+    }
+
+    @Override
+    public Shape3D getShape3D(Appearance appearance) {
+        Point3f[] point3fs = new Point3f[8];
+        point3fs[0] = new Point3f(corner1.getX(), corner1.getY(), corner1.getZ());
+        point3fs[1] = new Point3f(corner1.getX(), corner2.getY(), corner1.getZ());
+        point3fs[2] = new Point3f(corner2.getX(), corner2.getY(), corner1.getZ());
+        point3fs[3] = new Point3f(corner2.getX(), corner1.getY(), corner1.getZ());
+        point3fs[4] = new Point3f(corner2.getX(), corner1.getY(), corner2.getZ());
+        point3fs[5] = new Point3f(corner2.getX(), corner2.getY(), corner2.getZ());
+        point3fs[6] = new Point3f(corner1.getX(), corner2.getY(), corner2.getZ());
+        point3fs[7] = new Point3f(corner1.getX(), corner1.getY(), corner2.getZ());
+
+        Point3f[] quadArray = new Point3f[4*6];
+        int j = 0;
+        for(int i = 0 ; i <= 4; i+=4){
+            quadArray[j++] = point3fs[i];
+            quadArray[j++] = point3fs[i+1];
+            quadArray[j++] = point3fs[(i+2)%8];
+            quadArray[j++] = point3fs[(i+3)%8];
+        }
+        for(int i = 2; i <= 6; i +=4){
+            quadArray[j++] = point3fs[i];
+            quadArray[j++] = point3fs[(i+3)%8];
+            quadArray[j++] = point3fs[(i+2)%8];
+            quadArray[j++] = point3fs[i+1];
+        }
+        for(int i = 0; i < 8; i++){
+            quadArray[j++] = point3fs[i];
+        }
+        GeometryInfo giBody = new GeometryInfo(GeometryInfo.QUAD_ARRAY);
+        giBody.setCoordinates(quadArray);
+        NormalGenerator ng = new NormalGenerator();
+        ng.generateNormals(giBody);
+        return (new Shape3D(giBody.getGeometryArray(), appearance));
+
+    }
+
+    @Override
+    public Point3D getClosestPoint(Point3D point) {
+
+        //Fall 1: inside
+        if(isInside(point))
+            return null;
+        //Fall 2: drüber oder drunter
+        if(point.getY() > Math.max(corner1.getY(), corner2.getY())
+        || point.getY() < Math.min(corner1.getY(), corner2.getY()))
+            return null;
+
+        //Fall 3: neben oder ecke
+
+
+        float x;
+        float y = point.getY();
+        float z;
+        //oben
+        if(point.getZ() > maxZ){
+            z = maxZ;
+        }
+        //unten
+        else if(point.getZ() < minZ){
+            z = minZ;
+        }
+        //mitte Z
+        else{
+            z = point.getZ();
+        }
+
+        //rechts
+        if(point.getX() > maxX){
+            x = maxX;
+        }
+        //links
+        else if (point.getX() < minX){
+            x = minX;
+        }
+        //mitte X
+        else {
+            x = point.getX();
+        }
+
+        return new Point3D(x,y,z);
+    }
+
+    @Override
+    public Point3D getClosestShadowVectorPoint(Point3D point) {//vorraussetzung dass
+        //TODO null wenn nicht im schatten
+
+        //überprüfung nicht notwendig da in getClosestPoint immer bereits überprüft
+//        //Fall 1: inside
+//        if(isInside(point))
+//            return null;
+//        //Fall 2: drüber oder drunter
+//        if(point.getY() > Math.max(corner1.getY(), corner2.getY())
+//                || point.getY() < Math.min(corner1.getY(), corner2.getY()))
+//            return null;
+
+
+        //north shadow vectors
+        //punkt berechnen auf dem vektor mit point.getZ()
+        Fraction slope;
+        try {
+            slope = new Fraction(Math.tan(SpaceColonization.SUN_ANGLE));
+        } catch (FractionConversionException e) {
+            slope = new Fraction(2,3); //TODO
+            e.printStackTrace();
+        }
+
+        //sonne scheint von -Z nach Z
+        Point3D shadowVector = new Point3D(0, slope.getNumerator(), slope.getDenominator()); //TODO ist gar nicht 0 x
+        //TODO sonnenwinkel für x achse überlegen oder andere lösung
+        shadowVector.normalize();
+        //geradengleichung
+
+        //NE
+        Point3D cornerNE = new Point3D(maxX, maxY, maxZ);
+        //NW
+        Point3D cornerNW = new Point3D(minX, maxY, maxZ);
+        //gleichung: punkt + s * vector
+
+        //normale der gerade ist X bei buidling
+
+        //gucken ob punkt von Z Achse her im schatten ist
+        float t = (- cornerNE.getY() / shadowVector.getY()); //TODO groundpoint nicht mit y=0 sondern da wo baum anfängt!!!
+        Point3D groundPoint = shadowVector.mult(t).add(cornerNE);
+        if(point.getZ() <= groundPoint.getZ() && point.getZ() >= cornerNE.getZ()){
+            //gucken ob punkt zwischen den schatten vektoren ist X Achse
+            //TODO wenn oben vektor nicht mehr trivial mit 0 dann hier anpassen
+            if(point.getX() >= minX && point.getX() <= maxX){
+                //punkt ist zwischen schattenvektoren NE und NW
+
+                //gucken ob punkt von höhe her mschatten Y Achse
+                float s = (point.getZ() - cornerNE.getZ()) / shadowVector.getZ();
+                //cornerNE.Z + s * shadowVector.Z = point.Z
+                Point3D abovePointOnSV = shadowVector.mult(s);
+                Point3D abovePointNE = abovePointOnSV.add(cornerNE);
+                Point3D abovePointNW = abovePointOnSV.add(cornerNW);
+
+                Point3D abovePoint = lineIntersection(cornerNE, shadowVector.cross(new Point3D(1,0,0)), point, new Point3D(0,1,0));
+
+                if(/*Math.min(abovePointNE.getY(), abovePointNW.getY())*/ abovePoint.getY() >= point.getY() && point.getY() >= groundPoint.getY()){
+                    //ist im schatten
+                    //TODO genauer machen bzw ist das richtig?
+                    //welche punkt ist am nächsten?
+                    //nach osten und wetsen reicht mit verändertem y
+                    //nach oben mit mitte zwischen NE x und NW x
+                    //nach norden mit normale
+                    Point3D pointNE = new Point3D(abovePointNE.getX(), point.getY(), point.getZ()); //TODO geht so nur weil die shatten parallel sind, oben 0 im vektor. sonst z anpassen unf normale zur ebene nehmen
+                    double distanceNE = pointNE.distance(point);
+                    Point3D pointNW = new Point3D(abovePointNW.getX(), point.getY(), point.getZ());
+                    double distanceNW = pointNW.distance(point);
+                    //3 punkte für die ebene: abovePointNE, cornerNE, cornerNW
+                    //first plane vector is shadowvector
+                    Point3D secondPlaneVector = cornerNE.subtract(cornerNW);
+                    Point3D pointN = lineIntersection(cornerNE, shadowVector.cross(secondPlaneVector), point, shadowVector.cross(secondPlaneVector));
+                    double distanceN = pointN.distance(point);
+
+                    if(distanceNE <= distanceNW && distanceNE <= distanceN)
+                        return pointNE;
+                    else if(distanceNW <= distanceN)
+                        return  pointNW;
+                    else
+                        return pointN;
+
+                }
+            } else if(true /*macht erst sinn wenn oben nicht mehr trivial mit 0, sonnensinkel waagerecht fehlt TODO*/){
+
+            }
+        }
+
+        return null;
+
+    }
+
+    @Override
+    public Point3D getDarkestPoint() {
+        if(darkestPoint == null)
+            calculateDarkestPoint();
+        return  darkestPoint;
+    }
+
+    //most north point
+    private void calculateDarkestPoint() {
+        //norden ist bei neg Z
+        this.darkestPoint = new Point3D((this.minX+this.maxX)/2, minY, maxZ);
+    }
+
+    @Override
+    public Point3D intersectDPVecShadow(Point3D dpVec) {
+        if(darkestPoint == null)
+            calculateDarkestPoint();
+
+        Fraction slope;
+        try {
+            slope = new Fraction(Math.tan(SpaceColonization.SUN_ANGLE));
+        } catch (FractionConversionException e) {
+            slope = new Fraction(2,3); //TODO
+            e.printStackTrace();
+        }
+
+        //sonne scheint von -Z nach Z
+        Point3D shadowVector = new Point3D(0, slope.getNumerator(), slope.getDenominator());
+        shadowVector.normalize();
+
+
+        //NE
+        Point3D cornerNE = new Point3D(maxX, maxY, maxZ);
+        //NW
+        Point3D cornerNW = new Point3D(minX, maxY, maxZ);
+        Point3D NSNormal = new Point3D(1,0,0);
+
+        //east
+
+        //TODO funktioniert das richtig oder nehme ich zu oft north??
+        Point3D east = lineIntersection(cornerNE, NSNormal, darkestPoint, dpVec);
+        if(east!=null && getClosestShadowVectorPoint(east)!=null){
+            return  east;
+        }
+        Point3D west = lineIntersection(cornerNW, NSNormal, darkestPoint, dpVec);
+        if (west!=null && getClosestShadowVectorPoint(west)!=null){
+            return west;
+        }
+        Point3D north = lineIntersection(cornerNE, shadowVector.cross(NSNormal), darkestPoint, dpVec);
+        if (north!=null /*&& getClosestShadowVectorPoint(north)!=null*/){
+            return north;
+        }
+        return null;
+    }
+
+    private static Point3D lineIntersection(Point3D planePoint, Point3D planeNormal, Point3D linePoint, Point3D lineDirection) {
+        lineDirection.normalize();
+        if (planeNormal.dot(lineDirection) == 0) {
+            return null; //parallel
+        }
+
+        float t = (planeNormal.dot(planePoint) - planeNormal.dot(linePoint)) / planeNormal.dot(lineDirection);
+
+        lineDirection.multTo(t);
+
+        return linePoint.add(lineDirection);
+    }
+
+}

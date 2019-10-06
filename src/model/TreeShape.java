@@ -4,5 +4,10 @@ public enum TreeShape {
 
     ROUND(),
     UMBRELLA(),
-    CONE()
+    CONE(),
+    COLUMNAR(),
+    VASE(),
+    WEEPING(),
+    SPREADING(),
+    FASTIGIATE()
 }

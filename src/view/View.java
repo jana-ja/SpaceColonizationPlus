@@ -22,11 +22,11 @@ public class View extends Applet implements ViewInterface {
     private final int LAND_LENGTH = 12;
     private final int nTileSize = 2;
 
-    private final float MARKER_NODE_SIZE = 0.03f;
+    private final float MARKER_NODE_SIZE = 0.02f;
 
     private final BranchGroup bgTree;
     private final BranchGroup bgNodes;
-    private final BranchGroup markerNodes;
+    private final BranchGroup sceneNodes;
 
 
     private final BoundingSphere bounds = new BoundingSphere(new Point3d(0, 0, 0), 100);
@@ -86,9 +86,9 @@ public class View extends Applet implements ViewInterface {
         bgNodes.setCapability(Group.ALLOW_CHILDREN_READ);
         bgNodes.setCapability(Group.ALLOW_CHILDREN_WRITE);
         u.addBranchGraph(bgNodes);
-        markerNodes = new BranchGroup();
-        markerNodes.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-        u.addBranchGraph(markerNodes);
+        sceneNodes = new BranchGroup();
+        sceneNodes.setCapability(Group.ALLOW_CHILDREN_EXTEND);
+        u.addBranchGraph(sceneNodes);
     }
 
 
@@ -127,7 +127,7 @@ public class View extends Applet implements ViewInterface {
 
         // create an Appearance and load a texture
         Appearance app = new Appearance();
-        Texture tex = new TextureLoader(View.class.getClassLoader().getResource("dirt.jpg").getPath(), this).getTexture();
+        Texture tex = new TextureLoader(View.class.getClassLoader().getResource("grass.jpg").getPath(), this).getTexture();
         app.setTexture(tex);
 
         int nItem = 0;
@@ -222,11 +222,12 @@ public class View extends Applet implements ViewInterface {
     private void addLights(BranchGroup bg) {
 
         Color3f dlColor = new Color3f(0.7f, 0.7f, 0.7f);
-        Vector3f dir = new Vector3f(-1.0f, -1.0f, -1.0f);
+        Vector3f dir = new Vector3f(0.0f, 1.0f, 1.0f);
         Color3f alColor = new Color3f(0.2f, 0.2f, 0.2f);
 
         AmbientLight ambLight = new AmbientLight(alColor);
         ambLight.setInfluencingBounds(bounds);
+        PointLight pointLight = new PointLight(true, dlColor, new Point3f(0,1.5f,0), new Point3f(5,0,0));
         DirectionalLight dirLight = new DirectionalLight(dlColor, dir);
         dirLight.setInfluencingBounds(bounds);
 
@@ -270,7 +271,12 @@ public class View extends Applet implements ViewInterface {
         tg.addChild(sphere);
         bg.addChild(tg);
 
-        this.markerNodes.addChild(bg);
+        this.sceneNodes.addChild(bg);
+    }
+
+    @Override
+    public void addToScene(BranchGroup bg){
+        this.sceneNodes.addChild(bg);
     }
 
 }

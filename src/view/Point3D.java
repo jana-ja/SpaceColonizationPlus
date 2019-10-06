@@ -2,53 +2,70 @@ package view;
 
 public class Point3D {
 
-    private float x;
-    private float y;
-    private float z;
+    private float x, y, z;
 
-    public Point3D(float x, float y, float z){
-        this.x=x;
-        this.y=y;
-        this.z=z;
+    public Point3D(float x, float y, float z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
     }
 
-    public double distance(Point3D point){
-        return Math.sqrt(Math.pow((point.getX()-x),2) + Math.pow((point.getY()-y),2) + Math.pow((point.getZ()-z),2));
+    public void normalize() {
+//        if(this.distance(new Point3D(0,0,0))==0)
+//            throw new ArithmeticException();
+        this.divideFrom((float) (this.distance(new Point3D(0, 0, 0))));
     }
 
-    public float vectorLength(){
-        return (float)(Math.sqrt(Math.pow(x,2) + Math.pow(y,2) + Math.pow(z,2)));
-    }
-    public Point3D subtract(Point3D sub){
-        return new Point3D(x -sub.getX(), y-sub.getY(), z-sub.getZ());
+    public double distance(Point3D point) {
+        return Math.sqrt(Math.pow((point.getX() - x), 2) + Math.pow((point.getY() - y), 2) + Math.pow((point.getZ() - z), 2));
     }
 
-    public double dotProduct(Point3D vector){
-        return (x*vector.getX() + y*vector.getY() + z*vector.getZ());
+    public float vectorLength() {
+        return (float) (Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2)));
     }
 
-    public Point3D divide(double div){
-        return new Point3D((float)(x/div), (float)(y/div), (float)(z/div));
+    public Point3D subtract(Point3D sub) {
+        return new Point3D(x - sub.getX(), y - sub.getY(), z - sub.getZ());
     }
-    public void divideFrom(float div){
+
+    public float dot(Point3D vector) {
+        return (x * vector.getX() + y * vector.getY() + z * vector.getZ());
+    }
+
+    public Point3D divide(double div) {
+        return new Point3D((float) (x / div), (float) (y / div), (float) (z / div));
+    }
+
+    public void divideFrom(float div) {
         this.x /= div;
         this.y /= div;
         this.z /= div;
     }
-    public void multTo(float mul){
+
+    public void multTo(float mul) {
         this.x *= mul;
         this.y *= mul;
         this.z *= mul;
     }
-    public Point3D mult(double mul){
-        return new Point3D((float)(x*mul), (float)(y*mul), (float)(z*mul));
+
+    public Point3D mult(double mul) {
+        return new Point3D((float) (x * mul), (float) (y * mul), (float) (z * mul));
     }
 
-    public void addTo(Point3D sum){
+    public Point3D add(Point3D sum) {
+        return new Point3D(x + sum.getX(), y + sum.getY(), z + sum.getZ());
+    }
+
+    public Point3D cross(Point3D dot){
+        return new Point3D(y*dot.getZ() - z*dot.getY(), z*dot.getX() - x*dot.getZ(), x*dot.getY() - y*dot.getX());
+    }
+
+    public void addTo(Point3D sum) {
         x += sum.getX();
         y += sum.getY();
         z += sum.getZ();
     }
+
     public float getX() {
         return x;
     }
@@ -73,11 +90,11 @@ public class Point3D {
         this.z = z;
     }
 
-    public String toString(){
+    public String toString() {
         return (x + " " + y + " " + z);
     }
 
-    public boolean equals(Point3D point){
-        return ( this.x == point.getX() && this.y == point.getY() && this.z == point.getZ());
+    public boolean equals(Point3D point) {
+        return (this.x == point.getX() && this.y == point.getY() && this.z == point.getZ());
     }
 }

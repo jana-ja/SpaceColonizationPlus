@@ -4,9 +4,7 @@ import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
 
 import javax.media.j3d.*;
-import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
-import java.awt.*;
 
 public class TruncatedCone extends Group {
     public static final int BODY = 0x00;
@@ -14,7 +12,7 @@ public class TruncatedCone extends Group {
     public static final int BOT = 0x02;
 
     float radiusTop, radiusBot, height;
-    int X_DIVISION = 15;
+    private int X_DIVISION = 15;
 
     //fürn deckel trianglefanarray
     public TruncatedCone(float radiusTop, float radiusBot, float height, Appearance appearance, int flags) {

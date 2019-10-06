@@ -16,4 +16,5 @@ public interface ViewInterface {
     }
     void addMarker(float x, float y, float z);
     void addMarker(float x, float y, float z, Color3f color);
+    void addToScene(BranchGroup bg);
 }

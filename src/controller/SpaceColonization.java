@@ -9,8 +9,9 @@ import java.util.*;
 import static java.awt.geom.Point2D.distance;
 
 
-class SpaceColonization {
+public class SpaceColonization {
 
+    public static final double SUN_ANGLE = 40;
 
     /**
      * Performs one step of space colonization.
@@ -19,7 +20,7 @@ class SpaceColonization {
      * @param tree
      * @param pointCloud
      */
-    boolean spaceColonize(Tree tree, PointCloud pointCloud) {
+    boolean spaceColonize(Tree tree, PointCloud pointCloud, List<Obstacle> obstacles) {
 
 
         if (pointCloud.isEmpty())
@@ -58,7 +59,33 @@ class SpaceColonization {
         //second step: calculate new node for every node in map
 
         attractionMap.forEach((node, attractionPoints) -> {
-            Point3D newPoint = calculateNewNode(node, attractionPoints, tree.getType().getNodeDist());
+            //attraction vector
+            Point3D apVector = calculateInfluenceVector(node, attractionPoints);
+
+            //liste mit closest points kriegen für obstacles
+//            List<Point3D> obstacleAPs = new ArrayList<>();
+//            obstacles.forEach(obstacle -> {
+//                if(obstacle.getClosestPoint(node.getPoint())!=null) {
+//                    if(obstacle.getClosestShadowVectorPoint(node.getPoint()) != null)
+//                      obstacleAPs.add(obstacle.getClosestShadowVectorPoint(node.getPoint()));
+//                }
+//            });
+
+            //detraction vector
+//            Point3D obstVector = calculateLightAttractionVector(node, obstacles);
+            Point3D obstVector = calculateShadowDetractrionVector(node, obstacles);
+
+
+            Point3D finalVector = apVector.add(obstVector);
+//            Point3D finalVector = apVector;
+
+            //norm final vector
+            finalVector.normalize();
+
+            Point3D newPoint = finalVector.mult(tree.getType().getNodeDist());
+
+            //vector zu node point addieren
+            newPoint.addTo(node.getPoint());
             //testen ob newNode.point = point von nem kind von node
             boolean isNew = true;
             for (KDParentTreeNode child : node.getTreeChildren()) {
@@ -89,30 +116,98 @@ class SpaceColonization {
      * Returns point of new node given the parent node and all its influencing attraction points.
      *
      * @param node
-     * @param attractionPoints
+     * @param influencePoints
      * @return
      */
-    private Point3D calculateNewNode(KDParentTreeNode node, List<Point3D> attractionPoints, double nodeDist) {
+    private Point3D calculateInfluenceVector(KDParentTreeNode node, List<Point3D> influencePoints) {
 
-        final Point3D infVec = new Point3D(0, 0, 0);
+        final Point3D inflVec = new Point3D(0, 0, 0);
 
-        attractionPoints.forEach(point -> {
-            //get vector from point of node to attraction point
-            Point3D vec = point.subtract(node.getPoint());
+        influencePoints.forEach(influencePoint -> {
+            //get vector from node to attraction point
+            Point3D ipVec = influencePoint.subtract(node.getPoint());
+
             //normalize vector
-            Point3D vecNorm = vec.divide(vec.distance(new Point3D(0, 0, 0))); //gibt den betrag, deswegen zu (0,0,0)
+            ipVec.normalize();
+
             //add vector to vector of influence of node
-            infVec.addTo(vecNorm); //TODO normieren oder nicht?
+            inflVec.addTo(ipVec);
+
+
         });
 
-        //normalize influence vector
-        Point3D infVecNorm = infVec.divide(infVec.distance(new Point3D(0, 0, 0)));
+        //normalize attraction vector
+        inflVec.normalize();
 
-        //multiply with node distance
-        Point3D f = infVecNorm.mult(nodeDist);
-        //add final vector to point of node
-        f.addTo(node.getPoint());
-        return f;
+//        //multiply with node distance
+//        Point3D f = attrVecNorm.mult(nodeDist);
+//        //add final vector to point of node
+//        f.addTo(node.getPoint());
+        return inflVec;
+    }
+
+    private Point3D calculateShadowDetractrionVector(KDParentTreeNode node, List<Obstacle> obstacles){
+        final Point3D inflVec = new Point3D(0, 0, 0);
+
+        obstacles.forEach(obstacle -> {
+
+                if(obstacle.getClosestShadowVectorPoint(node.getPoint()) != null) { //dann ist im schatten
+                    Point3D darkestPoint = obstacle.getDarkestPoint();
+
+                    //get vector from darkest point to node
+                    Point3D dpVec = node.getPoint().subtract(darkestPoint);
+
+                    float factor;
+                    int maxPercent = 100; //bestimmt intensität der schattenflucht
+                    factor = 100 - (float)(maxPercent / darkestPoint.distance(obstacle.intersectDPVecShadow(dpVec)) * darkestPoint.distance(node.getPoint()));
+
+                    dpVec.normalize();
+                    dpVec.multTo(factor/100);
+
+                    //add vector to vector of influence of node
+                    inflVec.addTo(dpVec);
+                }
+
+        });
+
+        //normalize attraction vector
+//            inflVec.normalize();
+
+        //TODO obstacles sind grad nicht normalisiert, gute lösung finden mit dem faktor undso
+
+        return inflVec;
+    }
+    private Point3D calculateLightAttractionVector(KDParentTreeNode node, List<Obstacle> obstacles) {
+
+        final Point3D inflVec = new Point3D(0, 0, 0);
+        final Point3D[] influencePoint = new Point3D[1];
+        obstacles.forEach(obstacle -> {
+            if(obstacle.getClosestPoint(node.getPoint())!=null) {
+                if(obstacle.getClosestShadowVectorPoint(node.getPoint()) != null) {
+                    influencePoint[0] = obstacle.getClosestShadowVectorPoint(node.getPoint());
+
+                    //get vector from node to influence point
+                    Point3D ipVec = influencePoint[0].subtract(node.getPoint());
+
+                    float factor;
+                    int maxPercent = 100; //bestimmt intensität der schattenflucht
+                    factor = (float) (maxPercent / influencePoint[0].distance(obstacle.getClosestPoint(influencePoint[0])) * influencePoint[0].distance(node.getPoint()));
+
+                    ipVec.normalize();
+                    ipVec.multTo(factor/100 );
+
+                    //add vector to vector of influence of node
+                    inflVec.addTo(ipVec);
+                }
+            }
+        });
+
+        //normalize attraction vector
+//            inflVec.normalize();
+
+        //TODO obstacles sind grad nicht normalisiert, gute lösung finden mit dem faktor undso
+
+        return inflVec;
     }
 
     /**
@@ -120,17 +215,22 @@ class SpaceColonization {
      *
      * @return
      */
-    PointCloud generatePointCloud(Tree tree) {
+    PointCloud generatePointCloud(Tree tree, List<Obstacle> obstacles) {
         //würfel um volumen bauen
-        List<Point3D> cubeCloud = fillPointCloudCube(tree);
+        List<Point3D> cloud = fillPointCloudCuboid(tree);
 
         //schnitt(würfel,volumen) behalten -> für jeden punkt: ist in volumen?
-        List<Point3D> cloud = intersectCubeCloud(tree, cubeCloud);
+        cloud = buildTreeShape(tree, cloud);
+
+        //schnitt cloud obstacles
+        cloud = intersectWithObstacles(obstacles, cloud);
 
         return new PointCloud(cloud);
     }
 
-    private List<Point3D> fillPointCloudCube(Tree tree) {
+
+
+    private List<Point3D> fillPointCloudCuboid(Tree tree) {
         List<Point3D> cloud = new ArrayList<>();
         Random random = new Random();
 
@@ -151,7 +251,7 @@ class SpaceColonization {
         float yMax = rootCoordinates.getY() + (float) treeHeight;
 
 
-        //würfel random gleichverteilt füllen
+        //quader random gleichverteilt füllen
         for (int i = 1; i <= (int) (type.getAttPointsPerHeight() * treeHeight); i++) {
             float x = random.nextFloat() * (xMax - xMin) + xMin;
             float y = random.nextFloat() * (yMax - yMin) + yMin;
@@ -163,7 +263,7 @@ class SpaceColonization {
         return cloud;
     }
 
-    private List<Point3D> intersectCubeCloud(Tree tree, List<Point3D> cubeCloud) {
+    private List<Point3D> buildTreeShape(Tree tree, List<Point3D> cuboidCloud) {
 
         List<Point3D> cloud = new ArrayList<>();
 
@@ -175,7 +275,7 @@ class SpaceColonization {
         double treeTopY = rootCoordinates.getY() + treeHeight;
 
 
-        for (Point3D point3D : cubeCloud) {
+        for (Point3D point3D : cuboidCloud) {
             float xForMaxDistance;
             float xForMinDistance = rootCoordinates.getX();
             double fs; //function start, where sin should go positive on y axis
@@ -218,6 +318,25 @@ class SpaceColonization {
             }
         }
         return cloud;
+    }
+
+    private List<Point3D> intersectWithObstacles(List<Obstacle> obstacles, List<Point3D> cloud){
+
+        List<Point3D> cloud2 = new ArrayList<>();
+
+        for (Point3D point : cloud) {
+            boolean yeah = true;
+            for (Obstacle obstacle : obstacles) {
+                if(obstacle.isInside(point))
+                    yeah = false;
+            }
+            if(yeah)
+                cloud2.add(point);
+        }
+
+
+
+        return cloud2;
     }
 }
 
