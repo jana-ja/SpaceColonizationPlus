@@ -1,5 +1,6 @@
 package model;
 
+import com.sun.glass.ui.View;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
 import controller.SpaceColonization;
@@ -8,14 +9,19 @@ import org.apache.commons.math.fraction.FractionConversionException;
 import view.Point3D;
 
 import javax.media.j3d.Appearance;
+import javax.media.j3d.BoundingBox;
 import javax.media.j3d.Shape3D;
+import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
+import javax.vecmath.Vector3d;
 
 
 public class Building implements Obstacle {
     private Point3D corner1, corner2;
 
     private Point3D darkestPoint;
+
+    private BoundingBox bounds;
 
 //    Point3D[] topCorners; //gegen den uhrzeigersinn
 
@@ -32,6 +38,9 @@ public class Building implements Obstacle {
 
         maxY = Math.max(corner1.getY(), corner2.getY());
         minY = Math.min(corner1.getY(), corner2.getY());
+
+        bounds = new BoundingBox(new Point3d(minX, minY, minZ), new Point3d(maxX, maxY, maxZ));
+
 
 //        topCorners = new Point3D[4];
 //        topCorners[0] = new Point3D(maxX, maxY, maxZ); // oben rechts
@@ -85,7 +94,12 @@ public class Building implements Obstacle {
         giBody.setCoordinates(quadArray);
         NormalGenerator ng = new NormalGenerator();
         ng.generateNormals(giBody);
-        return (new Shape3D(giBody.getGeometryArray(), appearance));
+        Shape3D shape = new Shape3D(giBody.getGeometryArray(), appearance);
+//        shape.setCapability(Shape3D.ALLOW_BOUNDS_READ);
+//        shape.setCapability(Shape3D.ALLOW_BOUNDS_WRITE);
+//        shape.setBoundsAutoCompute(false);
+//        shape.setCollisionBounds(bounds);
+        return shape;
 
     }
 
@@ -226,16 +240,17 @@ public class Building implements Obstacle {
     }
 
     @Override
-    public Point3D getDarkestPoint() {
+    public Point3D getDarkestPoint() { //TODO vllt abhängig von der sonne berechnen
         if(darkestPoint == null)
             calculateDarkestPoint();
         return  darkestPoint;
     }
 
+
     //most north point
     private void calculateDarkestPoint() {
         //norden ist bei neg Z
-        this.darkestPoint = new Point3D((this.minX+this.maxX)/2, minY, maxZ);
+        this.darkestPoint = new Point3D((minX+maxX)/2, minY, (minZ + maxZ)/2);
     }
 
     @Override
@@ -293,4 +308,21 @@ public class Building implements Obstacle {
         return linePoint.add(lineDirection);
     }
 
+    @Override
+    public boolean isInShadow(Point3D node, SunPosition sunPos){
+        double azimuth = sunPos.getAzimuthRadians();
+        double altitude = sunPos.getAltitudeRadians();
+        double x = (Math.sin(azimuth) * Math.cos(altitude));
+        double y = (Math.sin(altitude));
+        double z = -(Math.cos(azimuth) * Math.cos(altitude));
+        Vector3d ray = new Vector3d(x, y, z);
+        ray.normalize();
+
+        return bounds.intersect(new Point3d(node.getX(), node.getY(), node.getZ()), ray);
+    }
+
+    @Override
+    public Point3D getVectorFromDarkestPoint(Point3D node){
+        return node.subtract(getDarkestPoint());
+    }
 }

@@ -11,8 +11,10 @@ public interface Obstacle {
     Shape3D getShape3D(Appearance appearance);
     Point3D getClosestPoint(Point3D point);
     Point3D getClosestShadowVectorPoint(Point3D point);
+    boolean isInShadow(Point3D node, SunPosition sunPos);
 
     Point3D getDarkestPoint();
+    Point3D getVectorFromDarkestPoint(Point3D node);
 
     Point3D intersectDPVecShadow(Point3D dpVec);
 }

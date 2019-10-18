@@ -42,8 +42,13 @@ class Application extends Applet {
         //obstacles
         List<Obstacle> obstacles = new ArrayList<>();
         //onw building
-        Building singleBuilding = new Building(new Point3D(-1.5f, 0, -1.0f), new Point3D(1.5f, 2, -0.2f));
-        obstacles.add(singleBuilding);
+//        Building northBuilding = new Building(new Point3D(-1.5f, 0, 1.0f), new Point3D(1.5f, 2, 0.2f));
+//        obstacles.add(northBuilding);
+
+        //east building
+        Building eastBuidling = new Building(new Point3D(0.2f, 0, -1.5f), new Point3D(1.0f, 2.0f, 1.5f));
+        obstacles.add(eastBuidling);
+
         //two buildings
 //        Building building = new Building(new Point3D(-1, 0, -1.5f), new Point3D(-0.2f, 2, -1));
 //        Building building2 = new Building(new Point3D(0.0f,0,-1.5f), new Point3D(1,2,-0.5f));
@@ -108,47 +113,69 @@ class Application extends Applet {
         Color3f white = new Color3f(Color.WHITE);
         obstacleAppearance.setMaterial(new Material(white, black, white, white, 110f));
 
-        view.addMarker(-1.0f, 1.0f,0);
 
 
-        Fraction slope;
-        try {
-            slope = new Fraction(Math.tan(SpaceColonization.SUN_ANGLE));
-        } catch (FractionConversionException e) {
-            slope = new Fraction(2,3); //TODO
-            e.printStackTrace();
-        }
 
-        //sonne scheint von -Z nach Z
-        Point3D shadowVector = new Point3D(0, slope.getNumerator(), slope.getDenominator());
-        shadowVector.normalize();
-        //geradengleichung
 
-        //NE
-        Point3D cornerNE = new Point3D(0, 2, -0.2f);
-        //gleichung: punkt + s * vector
-        float s = ( - cornerNE.getY()) / shadowVector.getY();
-        //cornerNE.Y + s * shadowVector.Y = 0
-        Point3D groundPointSV = shadowVector.mult(s);
-        Point3D groundPoint = groundPointSV.add(cornerNE);
+//        Fraction slope;
+//        try {
+//            slope = new Fraction(Math.tan(SpaceColonization.SUN_ANGLE));
+//        } catch (FractionConversionException e) {
+//            slope = new Fraction(2,3); //TODO
+//            e.printStackTrace();
+//        }
+//
+//        //sonne scheint von -Z nach Z
+//        Point3D shadowVector = new Point3D(0, slope.getNumerator(), slope.getDenominator());
+//        shadowVector.normalize();
+//        //geradengleichung
+//
+//        //NE
+//        Point3D cornerNE = new Point3D(0, 2, -0.2f);
+//        //gleichung: punkt + s * vector
+//        float s = ( - cornerNE.getY()) / shadowVector.getY();
+//        //cornerNE.Y + s * shadowVector.Y = 0
+//        Point3D groundPointSV = shadowVector.mult(s);
+//        Point3D groundPoint = groundPointSV.add(cornerNE);
+//
+//        Point3D corner2 = new Point3D(1,2,-0.5f);
+//        s = (-corner2.getY() / shadowVector.getY());
+//        Point3D groundPoint2 = shadowVector.mult(s).add(corner2);
+//
+//
+//
+//        view.addMarker(groundPoint.getX(), groundPoint.getY(), groundPoint.getZ(), new Color3f(Color.green));
+//        for (float i = 0; i <= s; i+=0.1){
+//            Point3D point = shadowVector.mult(i);
+//            point.addTo(cornerNE);
+//            view.addMarker(point.getX(), point.getY(), point.getZ());
+//
+////            Point3D point2 = shadowVector.mult(i);
+////            point2.addTo(corner2);
+////            view.addMarker(point2.getX(), point2.getY(), point2.getZ());
+//        }
 
-        Point3D corner2 = new Point3D(1,2,-0.5f);
-        s = (-corner2.getY() / shadowVector.getY());
-        Point3D groundPoint2 = shadowVector.mult(s).add(corner2);
+        //coordinates
+        view.addMarker(0,0,0, new Color3f(Color.black), 0.04f);
+        view.addMarker(0.5f,0,0, new Color3f(Color.blue),0.04f);
+        view.addMarker(0,0.5f,0, new Color3f(Color.green),0.04f);
+        view.addMarker(0,0,0.5f, new Color3f(Color.red),0.04f);
 
-        view.addMarker(groundPoint.getX(), groundPoint.getY(), groundPoint.getZ(), new Color3f(Color.green));
-        for (float i = 0; i <= s; i+=0.1){
-            Point3D point = shadowVector.mult(i);
-            point.addTo(cornerNE);
+        //test sonnenwinkel
+        SunPosition sunPos = new SunPosition(179.59, 61.93);
+        double azimuth = sunPos.getAzimuthRadians();
+        double altitude = sunPos.getAltitudeRadians();
+        float x = (float)(Math.sin(azimuth) * Math.cos(altitude));
+        float y = (float)(Math.sin(altitude));
+        float z = (float)-(Math.cos(azimuth) * Math.cos(altitude));
+        Point3D ray = new Point3D(x, y, z);
+        ray.normalize();
+        for (float i = 0.1f; i <= 1; i+=0.1){
+            Point3D point = ray.mult(i);
+            point.addTo(new Point3D(0,0,0));
             view.addMarker(point.getX(), point.getY(), point.getZ());
 
-//            Point3D point2 = shadowVector.mult(i);
-//            point2.addTo(corner2);
-//            view.addMarker(point2.getX(), point2.getY(), point2.getZ());
         }
-
-
-
 
                 run();
 

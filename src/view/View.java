@@ -49,7 +49,8 @@ public class View extends Applet implements ViewInterface {
         Transform3D t3d = new Transform3D();
 //        t3d.lookAt(0,0,0);
         t3d.rotX(-Math.PI / 8.0);
-        t3d.setTranslation(new Vector3d(0, 3, 6));
+        t3d.rotY(Math.toRadians(180));
+        t3d.setTranslation(new Vector3d(0, 3, -6));
 
         MultiTransformGroup mtg = vp.getMultiTransformGroup();
         mtg.getTransformGroup(0).setTransform(t3d);
@@ -69,7 +70,7 @@ public class View extends Applet implements ViewInterface {
         panel.add(text);
         add(panel);
 
-        u.getLocale().addBranchGraph(createViewer(firstPerson, 0, 1, 6)); //TODO sinnvolle location vom viewer aus baummaßen berechnen
+        u.getLocale().addBranchGraph(createViewer(firstPerson, 0, 1, -6)); //TODO sinnvolle location vom viewer aus baummaßen berechnen
 
 
         // create background with floor and lights
@@ -191,6 +192,7 @@ public class View extends Applet implements ViewInterface {
 
         // set the initial position for the Viewer
         Transform3D t3d = new Transform3D();
+        t3d.rotY(Math.toRadians(180));
         t3d.setTranslation(new Vector3d(x, y, z));
         vp2.getViewPlatformTransform().setTransform(t3d);
 
@@ -254,6 +256,10 @@ public class View extends Applet implements ViewInterface {
 
     @Override
     public void addMarker(float x, float y, float z, Color3f color) {
+        addMarker(x,y,z,color, MARKER_NODE_SIZE);
+    }
+    @Override
+    public void addMarker(float x, float y, float z, Color3f color, float size) {
         Appearance app = new Appearance();
         BranchGroup bg = new BranchGroup();
 
@@ -265,7 +271,7 @@ public class View extends Applet implements ViewInterface {
         t.setTranslation(new Vector3d(x, y, z));
         tg.setTransform(t);
 
-        Sphere sphere = new Sphere(MARKER_NODE_SIZE);
+        Sphere sphere = new Sphere(size);
         sphere.setAppearance(app);
 
         tg.addChild(sphere);

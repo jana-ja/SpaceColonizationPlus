@@ -71,12 +71,20 @@ public class SpaceColonization {
 //                }
 //            });
 
+            SunPosition dummy1 = new SunPosition(94.50, 34.07); //sommersonnenwende 09:15
+            SunPosition dummy2 = new SunPosition(179.59, 61.93); //sommersonnenwende 13:31 (höchststand)
+            SunPosition dummy3 = new SunPosition(264.74, 34.64); //sommersonnenwende 17:45
+            List<SunPosition> sunPositions = new ArrayList<>();
+            sunPositions.add(dummy1);
+            sunPositions.add(dummy2);
+            sunPositions.add(dummy3);
+
             //detraction vector
 //            Point3D obstVector = calculateLightAttractionVector(node, obstacles);
-            Point3D obstVector = calculateShadowDetractrionVector(node, obstacles);
+//            Point3D obstVector = calculateShadowDetractrionVector(node, obstacles);
+            Point3D obstVector = calculateShadowDetractionVector(node, obstacles, sunPositions);
 
-
-            Point3D finalVector = apVector.add(obstVector);
+            Point3D finalVector = apVector.add(obstVector); //TODO 1:1 gewichten?
 //            Point3D finalVector = apVector;
 
             //norm final vector
@@ -210,6 +218,20 @@ public class SpaceColonization {
         return inflVec;
     }
 
+    private Point3D calculateShadowDetractionVector(KDParentTreeNode node, List<Obstacle> obstacles, List<SunPosition> sunPositions){
+        Point3D shadowVector = new Point3D(0,0,0);
+        sunPositions.forEach(sunPos -> {
+            obstacles.forEach(obstacle -> {
+               double factor = 1; //TODO guten faktor finden
+               if(obstacle.isInShadow(node.getPoint(), sunPos)) {
+                   shadowVector.addTo(obstacle.getVectorFromDarkestPoint(node.getPoint()).mult(factor));
+               }
+            });
+        });
+        if(shadowVector.vectorLength() != 0)
+            shadowVector.normalize();
+        return shadowVector;
+    }
     /**
      * Returns a pointcloud fitting the tree type and height.
      *
