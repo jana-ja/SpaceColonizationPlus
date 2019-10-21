@@ -3,8 +3,6 @@ package controller;
 import com.sun.j3d.utils.applet.MainFrame;
 import com.sun.j3d.utils.geometry.Sphere;
 import model.*;
-import org.apache.commons.math.fraction.Fraction;
-import org.apache.commons.math.fraction.FractionConversionException;
 import view.Point3D;
 import view.View;
 import view.ViewInterface;
@@ -42,11 +40,11 @@ class Application extends Applet {
         //obstacles
         List<Obstacle> obstacles = new ArrayList<>();
         //onw building
-//        Building northBuilding = new Building(new Point3D(-1.5f, 0, 1.0f), new Point3D(1.5f, 2, 0.2f));
-//        obstacles.add(northBuilding);
+        Building southBuilding = new Building(new Point3D(-1.5f, 0, 2.0f), new Point3D(1.5f, 2, 1.0f));
+        obstacles.add(southBuilding);
 
         //east building
-        Building eastBuidling = new Building(new Point3D(0.2f, 0, -1.5f), new Point3D(1.0f, 2.0f, 1.5f));
+        Building eastBuidling = new Building(new Point3D(1.0f, 0, -1.5f), new Point3D(2.0f, 2.0f, 1.5f));
         obstacles.add(eastBuidling);
 
         //two buildings
@@ -164,7 +162,7 @@ class Application extends Applet {
         //test sonnenwinkel
         SunPosition sunPos = new SunPosition(179.59, 61.93);
         double azimuth = sunPos.getAzimuthRadians();
-        double altitude = sunPos.getAltitudeRadians();
+        double altitude = sunPos.getElevationRadians();
         float x = (float)(Math.sin(azimuth) * Math.cos(altitude));
         float y = (float)(Math.sin(altitude));
         float z = (float)-(Math.cos(azimuth) * Math.cos(altitude));

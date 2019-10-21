@@ -47,10 +47,9 @@ public class View extends Applet implements ViewInterface {
 
         // rotate and position the first Viewer above the environment
         Transform3D t3d = new Transform3D();
-//        t3d.lookAt(0,0,0);
-        t3d.rotX(-Math.PI / 8.0);
-        t3d.rotY(Math.toRadians(180));
-        t3d.setTranslation(new Vector3d(0, 3, -6));
+        t3d.setRotation(new Quat4d(0, 180, 20,1));
+        t3d.setTranslation(new Vector3d(0, 3, -7));
+
 
         MultiTransformGroup mtg = vp.getMultiTransformGroup();
         mtg.getTransformGroup(0).setTransform(t3d);
@@ -224,12 +223,12 @@ public class View extends Applet implements ViewInterface {
     private void addLights(BranchGroup bg) {
 
         Color3f dlColor = new Color3f(0.7f, 0.7f, 0.7f);
-        Vector3f dir = new Vector3f(0.0f, 1.0f, 1.0f);
+        Vector3f dir = new Vector3f(0.0f, 0.0f, -1.0f);
         Color3f alColor = new Color3f(0.2f, 0.2f, 0.2f);
 
         AmbientLight ambLight = new AmbientLight(alColor);
         ambLight.setInfluencingBounds(bounds);
-        PointLight pointLight = new PointLight(true, dlColor, new Point3f(0,1.5f,0), new Point3f(5,0,0));
+//        PointLight pointLight = new PointLight(true, dlColor, new Point3f(0,1.5f,0), new Point3f(5,0,0));
         DirectionalLight dirLight = new DirectionalLight(dlColor, dir);
         dirLight.setInfluencingBounds(bounds);
 

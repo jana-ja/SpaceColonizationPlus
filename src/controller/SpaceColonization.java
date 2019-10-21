@@ -5,6 +5,7 @@ import view.Point3D;
 import view.ViewInterface;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.awt.geom.Point2D.distance;
 
@@ -12,6 +13,9 @@ import static java.awt.geom.Point2D.distance;
 public class SpaceColonization {
 
     public static final double SUN_ANGLE = 40;
+    private final int beginDay = 60;
+    private final int endDay = 300;
+    private int currentDay = beginDay;
 
     /**
      * Performs one step of space colonization.
@@ -27,12 +31,6 @@ public class SpaceColonization {
             return false;
 
         Map<KDParentTreeNode, List<Point3D>> attractionMap = new HashMap<>();
-
-
-        //one step
-
-        //ich muss zum baum gehen und sagen "hey hier ist ein attractionpoint, welches ist das nächstgelegene node?"
-        //für alle attractionPoints
 
         //first step: map nodes to their influencing attraction points
 
@@ -58,32 +56,27 @@ public class SpaceColonization {
 
         //second step: calculate new node for every node in map
 
+        List<SunPosition> sunPositions = SunCalculator.positionsForDay(currentDay, 1.0);
+        ViewInterface.log("\t day: " + currentDay + ", " + sunPositions.size() + "  hours");
+        if(currentDay == endDay)
+            currentDay = beginDay;
+        else
+            currentDay++;
+
+
         attractionMap.forEach((node, attractionPoints) -> {
             //attraction vector
             Point3D apVector = calculateInfluenceVector(node, attractionPoints);
 
-            //liste mit closest points kriegen für obstacles
-//            List<Point3D> obstacleAPs = new ArrayList<>();
-//            obstacles.forEach(obstacle -> {
-//                if(obstacle.getClosestPoint(node.getPoint())!=null) {
-//                    if(obstacle.getClosestShadowVectorPoint(node.getPoint()) != null)
-//                      obstacleAPs.add(obstacle.getClosestShadowVectorPoint(node.getPoint()));
-//                }
-//            });
 
-            SunPosition dummy1 = new SunPosition(94.50, 34.07); //sommersonnenwende 09:15
-            SunPosition dummy2 = new SunPosition(179.59, 61.93); //sommersonnenwende 13:31 (höchststand)
-            SunPosition dummy3 = new SunPosition(264.74, 34.64); //sommersonnenwende 17:45
-            List<SunPosition> sunPositions = new ArrayList<>();
-            sunPositions.add(dummy1);
-            sunPositions.add(dummy2);
-            sunPositions.add(dummy3);
+
 
             //detraction vector
 //            Point3D obstVector = calculateLightAttractionVector(node, obstacles);
 //            Point3D obstVector = calculateShadowDetractrionVector(node, obstacles);
             Point3D obstVector = calculateShadowDetractionVector(node, obstacles, sunPositions);
 
+            obstVector.multTo(0.5f);
             Point3D finalVector = apVector.add(obstVector); //TODO 1:1 gewichten?
 //            Point3D finalVector = apVector;
 
@@ -104,7 +97,14 @@ public class SpaceColonization {
                     break;
                 }
             }
-            if (isNew) tree.getNodes().insert(newPoint, node);
+            if (isNew) {
+                AtomicBoolean legitim = new AtomicBoolean(true);
+                obstacles.forEach(obstacle -> {if(obstacle.isInside(newPoint)) legitim.set(false);});
+                if(legitim.get())
+                    tree.getNodes().insert(newPoint, node);
+                else
+                    System.err.println("NE REIN GEWACHSEN"); //TODO unlimitetd nicht-growing
+            }
         });
 
 
@@ -222,10 +222,14 @@ public class SpaceColonization {
         Point3D shadowVector = new Point3D(0,0,0);
         sunPositions.forEach(sunPos -> {
             obstacles.forEach(obstacle -> {
-               double factor = 1; //TODO guten faktor finden
-               if(obstacle.isInShadow(node.getPoint(), sunPos)) {
-                   shadowVector.addTo(obstacle.getVectorFromDarkestPoint(node.getPoint()).mult(factor));
-               }
+                double shadowFactor = 0.4; //TODO guten faktor finden, iwas was intensität wiederspiegelt
+                double lightFactor = Math.toDegrees(sunPos.getElevationRadians()/100); //TODO faktor finden, vllt der lichtintensität weiderspiegelt (elevation winkel oder so, der ist höchstens 61.94)
+                if(obstacle.isInShadow(node.getPoint(), sunPos)) {
+//                    shadowVector.addTo(obstacle.getVectorFromDarkestPoint(node.getPoint()).mult(shadowFactor));
+                }
+                else{
+                    shadowVector.addTo(sunPos.calculateRayVector().mult(lightFactor));
+                }
             });
         });
         if(shadowVector.vectorLength() != 0)

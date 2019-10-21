@@ -1,6 +1,5 @@
 package model;
 
-import com.sun.glass.ui.View;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
 import controller.SpaceColonization;
@@ -73,7 +72,7 @@ public class Building implements Obstacle {
         point3fs[6] = new Point3f(corner1.getX(), corner2.getY(), corner2.getZ());
         point3fs[7] = new Point3f(corner1.getX(), corner1.getY(), corner2.getZ());
 
-        Point3f[] quadArray = new Point3f[4*6];
+        Point3f[] quadArray = new Point3f[4*6 *2];
         int j = 0;
         for(int i = 0 ; i <= 4; i+=4){
             quadArray[j++] = point3fs[i];
@@ -90,6 +89,25 @@ public class Building implements Obstacle {
         for(int i = 0; i < 8; i++){
             quadArray[j++] = point3fs[i];
         }
+
+        swapArray(point3fs);
+
+        for(int i = 0 ; i <= 4; i+=4){
+            quadArray[j++] = point3fs[i];
+            quadArray[j++] = point3fs[i+1];
+            quadArray[j++] = point3fs[(i+2)%8];
+            quadArray[j++] = point3fs[(i+3)%8];
+        }
+        for(int i = 2; i <= 6; i +=4){
+            quadArray[j++] = point3fs[i];
+            quadArray[j++] = point3fs[(i+3)%8];
+            quadArray[j++] = point3fs[(i+2)%8];
+            quadArray[j++] = point3fs[i+1];
+        }
+        for(int i = 0; i < 8; i++){
+            quadArray[j++] = point3fs[i];
+        }
+
         GeometryInfo giBody = new GeometryInfo(GeometryInfo.QUAD_ARRAY);
         giBody.setCoordinates(quadArray);
         NormalGenerator ng = new NormalGenerator();
@@ -99,10 +117,23 @@ public class Building implements Obstacle {
 //        shape.setCapability(Shape3D.ALLOW_BOUNDS_WRITE);
 //        shape.setBoundsAutoCompute(false);
 //        shape.setCollisionBounds(bounds);
+
+
+
         return shape;
 
     }
 
+    private void swapArray(Point3f[] array){
+        //0 1 2 3 4 - length 5 - ungerade
+        //0 1 2 3 - length 4 - gerade
+        for (int i = 0; i < array.length/2; i++){
+            Point3f temp = array[i];
+            array[i] = array[array.length-i-1];
+            array[array.length-i-1] = temp;
+        }
+
+    }
     @Override
     public Point3D getClosestPoint(Point3D point) {
 
@@ -310,12 +341,7 @@ public class Building implements Obstacle {
 
     @Override
     public boolean isInShadow(Point3D node, SunPosition sunPos){
-        double azimuth = sunPos.getAzimuthRadians();
-        double altitude = sunPos.getAltitudeRadians();
-        double x = (Math.sin(azimuth) * Math.cos(altitude));
-        double y = (Math.sin(altitude));
-        double z = -(Math.cos(azimuth) * Math.cos(altitude));
-        Vector3d ray = new Vector3d(x, y, z);
+        Vector3d ray = sunPos.calculateRayVector3d();
         ray.normalize();
 
         return bounds.intersect(new Point3d(node.getX(), node.getY(), node.getZ()), ray);
@@ -325,4 +351,5 @@ public class Building implements Obstacle {
     public Point3D getVectorFromDarkestPoint(Point3D node){
         return node.subtract(getDarkestPoint());
     }
+
 }
