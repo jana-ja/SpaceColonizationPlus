@@ -1,5 +1,7 @@
 package view;
 
+import model.SunPosition;
+
 import javax.media.j3d.BranchGroup;
 import javax.vecmath.Color3f;
 import java.awt.*;
@@ -18,4 +20,6 @@ public interface ViewInterface {
     void addMarker(float x, float y, float z, Color3f color);
     void addMarker(float x, float y, float z, Color3f color, float size);
     void addToScene(BranchGroup bg);
+
+    void setSun(SunPosition sunPos);
 }

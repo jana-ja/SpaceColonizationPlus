@@ -2,6 +2,7 @@ package controller;
 
 import com.sun.j3d.utils.applet.MainFrame;
 import com.sun.j3d.utils.geometry.Sphere;
+import com.sun.j3d.utils.image.TextureLoader;
 import model.*;
 import view.Point3D;
 import view.View;
@@ -25,7 +26,7 @@ class Application extends Applet {
 
     private static final int STEP = 1; //every x STEP is visualized
     private static final int STEPS = 400; //number of space colonization iterations
-    private static final long DELAY = 100;
+    private static final long DELAY = 0;
     private static final boolean DEBUG = false;
     private static Appearance branchAppearance;
     private static Appearance obstacleAppearance;
@@ -35,7 +36,7 @@ class Application extends Applet {
 
         Point3D verschiebung = new Point3D(0, 0, 0);
 
-        Tree tree = new Tree(TreeType.PLATANE, 3.0, verschiebung);
+        Tree tree = new Tree(TreeType.PLATANE, 4.0, verschiebung);
 
         //obstacles
         List<Obstacle> obstacles = new ArrayList<>();
@@ -47,6 +48,9 @@ class Application extends Applet {
         Building eastBuidling = new Building(new Point3D(1.0f, 0, -1.5f), new Point3D(2.0f, 2.0f, 1.5f));
         obstacles.add(eastBuidling);
 
+        //west building
+        Building westBuilding = new Building(new Point3D(-2.0f, 0, -1.5f), new Point3D(-1.0f, 2.0f, 1.5f));
+        obstacles.add(westBuilding);
         //two buildings
 //        Building building = new Building(new Point3D(-1, 0, -1.5f), new Point3D(-0.2f, 2, -1));
 //        Building building2 = new Building(new Point3D(0.0f,0,-1.5f), new Point3D(1,2,-0.5f));
@@ -58,6 +62,12 @@ class Application extends Applet {
         ViewInterface.log("generating point cloud");
 
         PointCloud cloud = colo.generatePointCloud(tree, obstacles);
+
+//        //debug
+//        List<Point3D> aps = new ArrayList<>();
+//        aps.add(new Point3D(0.3f,0.3f,0));
+//        aps.add(new Point3D(-0.3f,0.3f,0));
+//        PointCloud cloud = new PointCloud(aps);
 
         ViewInterface.log("starting space colonization");
         long start = System.currentTimeMillis();
@@ -111,6 +121,12 @@ class Application extends Applet {
         Color3f white = new Color3f(Color.WHITE);
         obstacleAppearance.setMaterial(new Material(white, black, white, white, 110f));
 
+
+//        Texture loader = new TextureLoader(View.class.getClassLoader().getResource("bark001-color.jpg").getPath(), ((View) view).getComponent(0)).getTexture();
+//        obstacleAppearance.setTexture(loader);
+//        TexCoordGeneration generation = new TexCoordGeneration(TexCoordGeneration.EYE_LINEAR, TexCoordGeneration.TEXTURE_COORDINATE_2);
+//        generation.setEnable(true);
+//        obstacleAppearance.setTexCoordGeneration(generation);
 
 
 
@@ -182,6 +198,7 @@ class Application extends Applet {
 
     private static void putObstacles(List<Obstacle> obstacles) {
         BranchGroup bg = new BranchGroup();
+
         obstacles.forEach(obstacle -> bg.addChild(obstacle.getShape3D(obstacleAppearance)));
         view.addToScene(bg);
     }
@@ -358,4 +375,7 @@ class Application extends Applet {
         return tg;
     }
 
+    public static void visualizeSun(SunPosition sunPos) {
+        view.setSun(sunPos);
+    }
 }

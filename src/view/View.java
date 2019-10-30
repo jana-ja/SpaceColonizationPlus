@@ -2,6 +2,7 @@ package view;
 
 import java.applet.Applet;
 import java.awt.*;
+import java.text.DecimalFormat;
 
 import javax.media.j3d.*;
 import javax.vecmath.*;
@@ -9,6 +10,7 @@ import javax.vecmath.*;
 import com.sun.j3d.utils.geometry.*;
 import com.sun.j3d.utils.universe.*;
 import com.sun.j3d.utils.image.TextureLoader;
+import model.SunPosition;
 
 public class View extends Applet implements ViewInterface {
 
@@ -27,6 +29,7 @@ public class View extends Applet implements ViewInterface {
     private final BranchGroup bgTree;
     private final BranchGroup bgNodes;
     private final BranchGroup sceneNodes;
+    private final BranchGroup sun;
 
 
     private final BoundingSphere bounds = new BoundingSphere(new Point3d(0, 0, 0), 100);
@@ -89,6 +92,11 @@ public class View extends Applet implements ViewInterface {
         sceneNodes = new BranchGroup();
         sceneNodes.setCapability(Group.ALLOW_CHILDREN_EXTEND);
         u.addBranchGraph(sceneNodes);
+        sun = new BranchGroup();
+        sun.setCapability(Group.ALLOW_CHILDREN_EXTEND);
+        sun.setCapability(Group.ALLOW_CHILDREN_READ);
+        sun.setCapability(Group.ALLOW_CHILDREN_WRITE);
+        u.addBranchGraph(sun);
     }
 
 
@@ -282,6 +290,40 @@ public class View extends Applet implements ViewInterface {
     @Override
     public void addToScene(BranchGroup bg){
         this.sceneNodes.addChild(bg);
+    }
+
+    @Override
+    public void setSun(SunPosition sunPos) {
+        this.sun.removeAllChildren();
+
+        Appearance app = new Appearance();
+        BranchGroup bg = new BranchGroup();
+
+        Color3f yellow = new Color3f(Color.yellow);
+        app.setMaterial(new Material(yellow, yellow, yellow, yellow, 70f));
+
+        TransformGroup tg = new TransformGroup();
+        Transform3D t = new Transform3D();
+
+        //ray (sonnenstrahl vektor)
+        Vector3d ray = sunPos.calculateRayVector3d();
+        ray.scale(5);
+
+//        DecimalFormat df = new DecimalFormat("#.##");
+//        ViewInterface.log(df.format(ray.x) + " " + df.format(ray.y) + " " + df.format(ray.z));
+
+        t.setTranslation(ray);
+        tg.setTransform(t);
+
+        Sphere sphere = new Sphere(0.3f);
+        sphere.setAppearance(app);
+
+        tg.addChild(sphere);
+        bg.addChild(tg);
+
+        bg.setCapability(BranchGroup.ALLOW_DETACH);
+
+        this.sun.addChild(bg);
     }
 
 }

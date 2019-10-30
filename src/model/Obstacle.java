@@ -13,8 +13,7 @@ public interface Obstacle {
     Point3D getClosestShadowVectorPoint(Point3D point);
     boolean isInShadow(Point3D node, SunPosition sunPos);
 
-    Point3D getDarkestPoint();
-    Point3D getVectorFromDarkestPoint(Point3D node);
-
-    Point3D intersectDPVecShadow(Point3D dpVec);
+    Point3D getCentroid();
+    Point3D getDarkestPoint(Point3D node, SunPosition sunPos);
+    Point3D getVectorFromDarkestPoint(Point3D node, SunPosition sunPos);
 }

@@ -13,12 +13,13 @@ import javax.media.j3d.Shape3D;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
+import java.util.*;
 
 
 public class Building implements Obstacle {
     private Point3D corner1, corner2;
 
-    private Point3D darkestPoint;
+    private Point3D centroid;
 
     private BoundingBox bounds;
 
@@ -271,57 +272,77 @@ public class Building implements Obstacle {
     }
 
     @Override
-    public Point3D getDarkestPoint() { //TODO vllt abhängig von der sonne berechnen
-        if(darkestPoint == null)
-            calculateDarkestPoint();
-        return  darkestPoint;
-    }
-
-
-    //most north point
-    private void calculateDarkestPoint() {
-        //norden ist bei neg Z
-        this.darkestPoint = new Point3D((minX+maxX)/2, minY, (minZ + maxZ)/2);
+    public Point3D getCentroid() {
+        if(centroid == null)
+            calculateCentroid();
+        return centroid;
     }
 
     @Override
-    public Point3D intersectDPVecShadow(Point3D dpVec) {
-        if(darkestPoint == null)
-            calculateDarkestPoint();
+    public Point3D getDarkestPoint(Point3D node, SunPosition sunPos) {
+        if(centroid == null)
+            calculateCentroid();
+        Point3D ray = sunPos.calculateRayVector();
 
-        Fraction slope;
-        try {
-            slope = new Fraction(Math.tan(SpaceColonization.SUN_ANGLE));
-        } catch (FractionConversionException e) {
-            slope = new Fraction(2,3); //TODO
-            e.printStackTrace();
+        //ray mit allen wänden schneiden
+        //von den punkten den mit kleinster distance zu node nehmen
+
+        //NS wände sind mit normale (1,0,0)
+        Point3D nsNormal = new Point3D(0,0,1);
+        //EW wände sind mit normale (0,0,1)
+        Point3D ewNormal = new Point3D(1,0,0);
+
+        //punkt für SW wände
+        Point3D swPoint = new Point3D(minX, minY, minZ);
+        //punkt für ne wände
+        Point3D nePoint = new Point3D(maxX, maxY, maxZ);
+
+        List<Point3D> points = new ArrayList<>();
+        //schnitt norden
+        points.add(zWallIntersection(nePoint, nsNormal, this.centroid, ray));
+
+        //schnitt east
+        points.add(xWallIntersection(nePoint, ewNormal, this.centroid, ray));
+
+        //schnitt south
+        points.add(zWallIntersection(swPoint, nsNormal, this.centroid, ray));
+
+        //schnitt west
+        points.add(xWallIntersection(swPoint, ewNormal, this.centroid, ray));
+
+        points.removeIf(point -> point==null);
+
+        Optional<Point3D> fin = points.stream().min(Comparator.
+                comparing(p -> p.distance(node)));
+
+        if(fin.isPresent())
+                return fin.get();//TODO was tun mit y??
+        else
+            return null;
+    }
+
+    private void calculateCentroid(){
+        //weil quader: (sonst alle punkte addieren und durch anzahl teilen)
+        this.centroid = new Point3D((minX+maxX)/2, minY, (minZ+maxZ)/2);
+    }
+
+    private Point3D xWallIntersection(Point3D planePoint, Point3D planeNormal, Point3D linePoint, Point3D lineDirection){
+        Point3D sec = lineIntersection(planePoint, planeNormal, linePoint, lineDirection);
+        if(sec!=null){
+            //check x und y
+            if(sec.getX() >= minX && sec.getX() <= maxX && sec.getY() >= minY && sec.getY() <= maxY){
+                return  sec;
+            }
         }
-
-        //sonne scheint von -Z nach Z
-        Point3D shadowVector = new Point3D(0, slope.getNumerator(), slope.getDenominator());
-        shadowVector.normalize();
-
-
-        //NE
-        Point3D cornerNE = new Point3D(maxX, maxY, maxZ);
-        //NW
-        Point3D cornerNW = new Point3D(minX, maxY, maxZ);
-        Point3D NSNormal = new Point3D(1,0,0);
-
-        //east
-
-        //TODO funktioniert das richtig oder nehme ich zu oft north??
-        Point3D east = lineIntersection(cornerNE, NSNormal, darkestPoint, dpVec);
-        if(east!=null && getClosestShadowVectorPoint(east)!=null){
-            return  east;
-        }
-        Point3D west = lineIntersection(cornerNW, NSNormal, darkestPoint, dpVec);
-        if (west!=null && getClosestShadowVectorPoint(west)!=null){
-            return west;
-        }
-        Point3D north = lineIntersection(cornerNE, shadowVector.cross(NSNormal), darkestPoint, dpVec);
-        if (north!=null /*&& getClosestShadowVectorPoint(north)!=null*/){
-            return north;
+        return null;
+    }
+    private Point3D zWallIntersection(Point3D planePoint, Point3D planeNormal, Point3D linePoint, Point3D lineDirection){
+        Point3D sec = lineIntersection(planePoint, planeNormal, linePoint, lineDirection);
+        if(sec!=null){
+            //check z und y
+            if(sec.getZ() >= minZ && sec.getZ() <= maxZ && sec.getY() >= minY && sec.getY() <= maxY){
+                return  sec;
+            }
         }
         return null;
     }
@@ -340,7 +361,7 @@ public class Building implements Obstacle {
     }
 
     @Override
-    public boolean isInShadow(Point3D node, SunPosition sunPos){
+    public boolean isInShadow(Point3D node, SunPosition sunPos){ //TODO auch true wen strahl erst node und dann building trifft
         Vector3d ray = sunPos.calculateRayVector3d();
         ray.normalize();
 
@@ -348,8 +369,11 @@ public class Building implements Obstacle {
     }
 
     @Override
-    public Point3D getVectorFromDarkestPoint(Point3D node){
-        return node.subtract(getDarkestPoint());
+    public Point3D getVectorFromDarkestPoint(Point3D node, SunPosition sunPos){
+        if(getDarkestPoint(node,sunPos)==null){
+            int f = 32;
+        }
+        return node.subtract(getDarkestPoint(node, sunPos));
     }
 
 }

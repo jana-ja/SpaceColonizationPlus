@@ -16,6 +16,8 @@ public class SpaceColonization {
     private final int beginDay = 60;
     private final int endDay = 300;
     private int currentDay = beginDay;
+    private boolean marker;
+    private final boolean SUN = false;
 
     /**
      * Performs one step of space colonization.
@@ -26,7 +28,7 @@ public class SpaceColonization {
      */
     boolean spaceColonize(Tree tree, PointCloud pointCloud, List<Obstacle> obstacles) {
 
-
+        marker = true;
         if (pointCloud.isEmpty())
             return false;
 
@@ -56,6 +58,7 @@ public class SpaceColonization {
 
         //second step: calculate new node for every node in map
 
+//        currentDay = 100;
         List<SunPosition> sunPositions = SunCalculator.positionsForDay(currentDay, 1.0);
         ViewInterface.log("\t day: " + currentDay + ", " + sunPositions.size() + "  hours");
         if(currentDay == endDay)
@@ -76,7 +79,7 @@ public class SpaceColonization {
 //            Point3D obstVector = calculateShadowDetractrionVector(node, obstacles);
             Point3D obstVector = calculateShadowDetractionVector(node, obstacles, sunPositions);
 
-            obstVector.multTo(0.5f);
+            obstVector.multTo(0.25f);
             Point3D finalVector = apVector.add(obstVector); //TODO 1:1 gewichten?
 //            Point3D finalVector = apVector;
 
@@ -89,14 +92,18 @@ public class SpaceColonization {
             newPoint.addTo(node.getPoint());
             //testen ob newNode.point = point von nem kind von node
             boolean isNew = true;
-            for (KDParentTreeNode child : node.getTreeChildren()) {
-                if (child.getPoint().equals(newPoint)) {
-                    isNew = false;
-                    pointCloud.getAttractionPoints().removeAll(attractionPoints);
-                    ViewInterface.log("   unlimited growing problem prevented");
-                    break;
+            if(attractionPoints.size()==2){
+                for (KDParentTreeNode child : node.getTreeChildren()) {
+
+                    if (child.getPoint().distance(newPoint) < 0.001) {
+                        isNew = false;
+                        pointCloud.getAttractionPoints().removeAll(attractionPoints);
+                        ViewInterface.log("   unlimited growing problem prevented"); //TODO schwierig mit wandernder sonne. so funktioniert das dann nicht
+                        break;
+                    }
                 }
             }
+
             if (isNew) {
                 AtomicBoolean legitim = new AtomicBoolean(true);
                 obstacles.forEach(obstacle -> {if(obstacle.isInside(newPoint)) legitim.set(false);});
@@ -154,37 +161,38 @@ public class SpaceColonization {
         return inflVec;
     }
 
-    private Point3D calculateShadowDetractrionVector(KDParentTreeNode node, List<Obstacle> obstacles){
-        final Point3D inflVec = new Point3D(0, 0, 0);
+//    private Point3D calculateShadowDetractrionVector(KDParentTreeNode node, List<Obstacle> obstacles){
+//        final Point3D inflVec = new Point3D(0, 0, 0);
+//
+//        obstacles.forEach(obstacle -> {
+//
+//                if(obstacle.getClosestShadowVectorPoint(node.getPoint()) != null) { //dann ist im schatten
+//                    Point3D darkestPoint = obstacle.getDarkestPoint();
+//
+//                    //get vector from darkest point to node
+//                    Point3D dpVec = node.getPoint().subtract(darkestPoint);
+//
+//                    float factor;
+//                    int maxPercent = 100; //bestimmt intensität der schattenflucht
+//                    factor = 100 - (float)(maxPercent / darkestPoint.distance(obstacle.intersectDPVecShadow(dpVec)) * darkestPoint.distance(node.getPoint()));
+//
+//                    dpVec.normalize();
+//                    dpVec.multTo(factor/100);
+//
+//                    //add vector to vector of influence of node
+//                    inflVec.addTo(dpVec);
+//                }
+//
+//        });
+//
+//        //normalize attraction vector
+////            inflVec.normalize();
+//
+//        //TODO obstacles sind grad nicht normalisiert, gute lösung finden mit dem faktor undso
+//
+//        return inflVec;
+//    }
 
-        obstacles.forEach(obstacle -> {
-
-                if(obstacle.getClosestShadowVectorPoint(node.getPoint()) != null) { //dann ist im schatten
-                    Point3D darkestPoint = obstacle.getDarkestPoint();
-
-                    //get vector from darkest point to node
-                    Point3D dpVec = node.getPoint().subtract(darkestPoint);
-
-                    float factor;
-                    int maxPercent = 100; //bestimmt intensität der schattenflucht
-                    factor = 100 - (float)(maxPercent / darkestPoint.distance(obstacle.intersectDPVecShadow(dpVec)) * darkestPoint.distance(node.getPoint()));
-
-                    dpVec.normalize();
-                    dpVec.multTo(factor/100);
-
-                    //add vector to vector of influence of node
-                    inflVec.addTo(dpVec);
-                }
-
-        });
-
-        //normalize attraction vector
-//            inflVec.normalize();
-
-        //TODO obstacles sind grad nicht normalisiert, gute lösung finden mit dem faktor undso
-
-        return inflVec;
-    }
     private Point3D calculateLightAttractionVector(KDParentTreeNode node, List<Obstacle> obstacles) {
 
         final Point3D inflVec = new Point3D(0, 0, 0);
@@ -221,17 +229,35 @@ public class SpaceColonization {
     private Point3D calculateShadowDetractionVector(KDParentTreeNode node, List<Obstacle> obstacles, List<SunPosition> sunPositions){
         Point3D shadowVector = new Point3D(0,0,0);
         sunPositions.forEach(sunPos -> {
-            obstacles.forEach(obstacle -> {
-                double shadowFactor = 0.4; //TODO guten faktor finden, iwas was intensität wiederspiegelt
-                double lightFactor = Math.toDegrees(sunPos.getElevationRadians()/100); //TODO faktor finden, vllt der lichtintensität weiderspiegelt (elevation winkel oder so, der ist höchstens 61.94)
-                if(obstacle.isInShadow(node.getPoint(), sunPos)) {
-//                    shadowVector.addTo(obstacle.getVectorFromDarkestPoint(node.getPoint()).mult(shadowFactor));
+            if(marker && SUN){
+
+                Application.visualizeSun(sunPos);
+                try {
+                    Thread.sleep(25);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-                else{
-                    shadowVector.addTo(sunPos.calculateRayVector().mult(lightFactor));
+            }
+            AtomicBoolean light = new AtomicBoolean(true);
+            obstacles.forEach(obstacle -> {
+                double shadowFactor = 0.3f;//Math.toDegrees(sunPos.getElevationRadians())/100; //TODO guten faktor finden, iwas was intensität wiederspiegelt
+
+                if(obstacle.isInShadow(node.getPoint(), sunPos)) {
+                    shadowVector.addTo(obstacle.getVectorFromDarkestPoint(node.getPoint(), sunPos).mult(shadowFactor));
+                    light.set(false);
                 }
             });
+            if(light.get()) { //TODO bei licht und schatten vektor vllt richtung x und z von licht bzw schatten abhängig machen und y senkrecht zu ast?
+                //ist im licht
+                double lightFactor = Math.toDegrees(sunPos.getElevationRadians())/100; //TODO faktor finden, vllt der lichtintensität weiderspiegelt (elevation winkel oder so, der ist höchstens 61.94)
+                shadowVector.addTo(sunPos.calculateRayVector().mult(lightFactor));
+            }
+            int f = 34;
+//            System.out.println(light.get());
+
         });
+//        System.out.println("\t new day");
+        marker = false;
         if(shadowVector.vectorLength() != 0)
             shadowVector.normalize();
         return shadowVector;
