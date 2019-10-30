@@ -50,7 +50,7 @@ class Application extends Applet {
 
         //west building
         Building westBuilding = new Building(new Point3D(-2.0f, 0, -1.5f), new Point3D(-1.0f, 2.0f, 1.5f));
-        obstacles.add(westBuilding);
+//        obstacles.add(westBuilding);
         //two buildings
 //        Building building = new Building(new Point3D(-1, 0, -1.5f), new Point3D(-0.2f, 2, -1));
 //        Building building2 = new Building(new Point3D(0.0f,0,-1.5f), new Point3D(1,2,-0.5f));

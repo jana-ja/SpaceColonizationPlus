@@ -16,4 +16,6 @@ public interface Obstacle {
     Point3D getCentroid();
     Point3D getDarkestPoint(Point3D node, SunPosition sunPos);
     Point3D getVectorFromDarkestPoint(Point3D node, SunPosition sunPos);
+
+    Point3D getVectorFromShadow(Point3D node, SunPosition sunPos);
 }

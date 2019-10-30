@@ -279,6 +279,7 @@ public class Building implements Obstacle {
     }
 
     @Override
+    @Deprecated
     public Point3D getDarkestPoint(Point3D node, SunPosition sunPos) {
         if(centroid == null)
             calculateCentroid();
@@ -325,7 +326,7 @@ public class Building implements Obstacle {
         //weil quader: (sonst alle punkte addieren und durch anzahl teilen)
         this.centroid = new Point3D((minX+maxX)/2, minY, (minZ+maxZ)/2);
     }
-
+    @Deprecated
     private Point3D xWallIntersection(Point3D planePoint, Point3D planeNormal, Point3D linePoint, Point3D lineDirection){
         Point3D sec = lineIntersection(planePoint, planeNormal, linePoint, lineDirection);
         if(sec!=null){
@@ -336,6 +337,7 @@ public class Building implements Obstacle {
         }
         return null;
     }
+    @Deprecated
     private Point3D zWallIntersection(Point3D planePoint, Point3D planeNormal, Point3D linePoint, Point3D lineDirection){
         Point3D sec = lineIntersection(planePoint, planeNormal, linePoint, lineDirection);
         if(sec!=null){
@@ -369,11 +371,33 @@ public class Building implements Obstacle {
     }
 
     @Override
+    @Deprecated
     public Point3D getVectorFromDarkestPoint(Point3D node, SunPosition sunPos){
         if(getDarkestPoint(node,sunPos)==null){
             int f = 32;
         }
         return node.subtract(getDarkestPoint(node, sunPos));
+    }
+
+    @Override
+    public Point3D getVectorFromShadow(Point3D node, SunPosition sunPos){
+        if(centroid == null)
+            calculateCentroid();
+        Point3D ray = sunPos.calculateRayVector();
+
+        //senkrecht zu gerade(ray durch centroid) und durch node
+
+
+        //1. senkrechte zu ebene(ray, centroid-node)
+        Point3D vectorCentroidNode = node.subtract(centroid);
+        Point3D perpendicular1 = ray.cross(vectorCentroidNode);
+
+        //2. senkrechte zu ebene(perpendicular, ray) <- richtung des vektors
+        Point3D perpendicular2 = perpendicular1.cross(ray);
+        perpendicular2.normalize();
+
+        return perpendicular2;
+
     }
 
 }

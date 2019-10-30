@@ -79,7 +79,7 @@ public class SpaceColonization {
 //            Point3D obstVector = calculateShadowDetractrionVector(node, obstacles);
             Point3D obstVector = calculateShadowDetractionVector(node, obstacles, sunPositions);
 
-            obstVector.multTo(0.25f);
+            obstVector.multTo(0.3f);
             Point3D finalVector = apVector.add(obstVector); //TODO 1:1 gewichten?
 //            Point3D finalVector = apVector;
 
@@ -161,38 +161,9 @@ public class SpaceColonization {
         return inflVec;
     }
 
-//    private Point3D calculateShadowDetractrionVector(KDParentTreeNode node, List<Obstacle> obstacles){
-//        final Point3D inflVec = new Point3D(0, 0, 0);
-//
-//        obstacles.forEach(obstacle -> {
-//
-//                if(obstacle.getClosestShadowVectorPoint(node.getPoint()) != null) { //dann ist im schatten
-//                    Point3D darkestPoint = obstacle.getDarkestPoint();
-//
-//                    //get vector from darkest point to node
-//                    Point3D dpVec = node.getPoint().subtract(darkestPoint);
-//
-//                    float factor;
-//                    int maxPercent = 100; //bestimmt intensität der schattenflucht
-//                    factor = 100 - (float)(maxPercent / darkestPoint.distance(obstacle.intersectDPVecShadow(dpVec)) * darkestPoint.distance(node.getPoint()));
-//
-//                    dpVec.normalize();
-//                    dpVec.multTo(factor/100);
-//
-//                    //add vector to vector of influence of node
-//                    inflVec.addTo(dpVec);
-//                }
-//
-//        });
-//
-//        //normalize attraction vector
-////            inflVec.normalize();
-//
-//        //TODO obstacles sind grad nicht normalisiert, gute lösung finden mit dem faktor undso
-//
-//        return inflVec;
-//    }
 
+
+    @Deprecated
     private Point3D calculateLightAttractionVector(KDParentTreeNode node, List<Obstacle> obstacles) {
 
         final Point3D inflVec = new Point3D(0, 0, 0);
@@ -243,7 +214,7 @@ public class SpaceColonization {
                 double shadowFactor = 0.3f;//Math.toDegrees(sunPos.getElevationRadians())/100; //TODO guten faktor finden, iwas was intensität wiederspiegelt
 
                 if(obstacle.isInShadow(node.getPoint(), sunPos)) {
-                    shadowVector.addTo(obstacle.getVectorFromDarkestPoint(node.getPoint(), sunPos).mult(shadowFactor));
+                    shadowVector.addTo(obstacle.getVectorFromShadow(node.getPoint(), sunPos).mult(shadowFactor));
                     light.set(false);
                 }
             });
