@@ -22,4 +22,7 @@ public interface ViewInterface {
     void addToScene(BranchGroup bg);
 
     void setSun(SunPosition sunPos);
+    void addLine(Point3D one, Point3D two, Color color);
+    void setLine(Point3D one, Point3D two);
+    void setSchwerpunkt(Point3D schwerpunkt);
 }

@@ -1,8 +1,9 @@
 package controller;
 
+import com.google.gson.Gson;
+import com.sun.istack.internal.Nullable;
 import com.sun.j3d.utils.applet.MainFrame;
 import com.sun.j3d.utils.geometry.Sphere;
-import com.sun.j3d.utils.image.TextureLoader;
 import model.*;
 import view.Point3D;
 import view.View;
@@ -12,6 +13,7 @@ import javax.media.j3d.*;
 import javax.vecmath.*;
 import java.applet.Applet;
 import java.awt.*;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -25,9 +27,11 @@ class Application extends Applet {
     private static ViewInterface view;
 
     private static final int STEP = 1; //every x STEP is visualized
-    private static final int STEPS = 400; //number of space colonization iterations
+    private static final int STEPS = 250; //number of space colonization iterations
     private static final long DELAY = 0;
     private static final boolean DEBUG = false;
+    private static final boolean SAVED = true;
+    private static final String SAVEFILE = "cloud4m"; //cloud4m, cloud6m
     private static Appearance branchAppearance;
     private static Appearance obstacleAppearance;
 
@@ -38,36 +42,70 @@ class Application extends Applet {
 
         Tree tree = new Tree(TreeType.PLATANE, 4.0, verschiebung);
 
+
         //obstacles
         List<Obstacle> obstacles = new ArrayList<>();
         //onw building
-        Building southBuilding = new Building(new Point3D(-1.5f, 0, 2.0f), new Point3D(1.5f, 2, 1.0f));
+        Building southBuilding = new Building("south", new Point3D(-1.5f, 0, 2.0f), new Point3D(1.5f, 3, 1.0f));
         obstacles.add(southBuilding);
 
         //east building
-        Building eastBuidling = new Building(new Point3D(1.0f, 0, -1.5f), new Point3D(2.0f, 2.0f, 1.5f));
-        obstacles.add(eastBuidling);
+        Building eastBuilding = new Building("east", new Point3D(0.5f, 0, -1.5f), new Point3D(2.0f, 2.0f, 1.5f));
+        obstacles.add(eastBuilding);
 
         //west building
-        Building westBuilding = new Building(new Point3D(-2.0f, 0, -1.5f), new Point3D(-1.0f, 2.0f, 1.5f));
+        Building westBuilding = new Building("west", new Point3D(-2.0f, 0, -1.5f), new Point3D(-1.0f, 2.0f, 1.5f));
 //        obstacles.add(westBuilding);
-        //two buildings
-//        Building building = new Building(new Point3D(-1, 0, -1.5f), new Point3D(-0.2f, 2, -1));
-//        Building building2 = new Building(new Point3D(0.0f,0,-1.5f), new Point3D(1,2,-0.5f));
-//        obstacles.add(building);
-//        obstacles.add(building2);
+
+//        Building strangeBuilding = new Building("strange", new Point3D(-2.0f, 1, -1.5f), new Point3D(-0.2f, 1.5f, 1.5f));
+//        obstacles.add(strangeBuilding);
 
         putObstacles(obstacles);
+
         SpaceColonization colo = new SpaceColonization();
         ViewInterface.log("generating point cloud");
 
-        PointCloud cloud = colo.generatePointCloud(tree, obstacles);
+        PointCloud cloud = new PointCloud();
 
-//        //debug
-//        List<Point3D> aps = new ArrayList<>();
-//        aps.add(new Point3D(0.3f,0.3f,0));
-//        aps.add(new Point3D(-0.3f,0.3f,0));
-//        PointCloud cloud = new PointCloud(aps);
+        if (SAVED) {
+            List<Point3D> aps = new ArrayList<>();
+            try {
+                BufferedReader reader = new BufferedReader(new FileReader("E:\\Users\\JanaJ\\IdeaProjects\\jana.jansen\\" + SAVEFILE + ".txt"));
+                String st;
+                Gson gson = new Gson();
+                while ((st = reader.readLine()) != null)
+                    aps.add(gson.fromJson(st, Point3D.class));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            cloud.setAttractionPoints(aps);
+        } else {
+            cloud = colo.generatePointCloud(tree);
+            Gson gson = new Gson();
+            try {
+                BufferedWriter writer = new BufferedWriter(new FileWriter("E:\\Users\\JanaJ\\IdeaProjects\\jana.jansen\\cloud2.txt"));
+                cloud.getAttractionPoints().forEach(ap -> {
+                    String json = gson.toJson(ap);
+                    try {
+                        writer.write(json);
+                        writer.newLine();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                });
+                writer.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+        }
+
+        cloud.intersectWithObstacles(obstacles);
 
         ViewInterface.log("starting space colonization");
         long start = System.currentTimeMillis();
@@ -82,19 +120,46 @@ class Application extends Applet {
             }
             Thread.sleep(DELAY);
 
+//            calculateStats(tree);
+
             if (i >= STEPS)
                 break;
 
             i++;
         }
+
         long stop = System.currentTimeMillis();
+        double duration = (double) (stop - start) / 1000;
+        ViewInterface.log("finished in " + duration + "seconds");
 
-        ViewInterface.log("finished in " + (double) (stop - start) / 1000 + "seconds");
+//        Texture loader = new TextureLoader(View.class.getClassLoader().getResource("bark001-color.jpg").getPath(), ((View) view).getComponent(0)).getTexture();
+//        branchAppearance.setTexture(loader);
+//        TexCoordGeneration generation = new TexCoordGeneration(TexCoordGeneration.EYE_LINEAR, TexCoordGeneration.TEXTURE_COORDINATE_2);
+//        generation.setEnable(true);
+//        branchAppearance.setTexCoordGeneration(generation);
+//
+//        putBranches(tree);
+//        putAttractionPoints(cloud);
 
-        putBranches(tree);
-        putAttractionPoints(cloud);
+
+        ViewInterface.log("\n");
+
+        stats("iterations", String.valueOf(i));
+        stats("duration", String.valueOf(format(duration)));
+        stats("type", tree.getType().name());
+        stats("height", String.valueOf(tree.getHeight()));
+        if(SAVED){
+            stats("file", SAVEFILE);
+        }else{
+            stats("file", "new");
+        }
+
+        colo.stats();
+        calculateStats(tree);
+
+        obstacles.forEach(obstacle -> printToStats(obstacle.getName() + ": " + obstacle.getCentroid().cardinalString()));
+        stats("null", null);
     }
-
 
     public static void main(String[] args) throws InterruptedException {
 
@@ -110,91 +175,84 @@ class Application extends Applet {
         Color3f brown = new Color3f(0.318f, 0.212f, 0.051f);
         Color3f black = new Color3f(0, 0, 0);
         branchAppearance.setMaterial(new Material(brown, brown, black, black, 70f));
+//        branchAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+//        branchAppearance.setCapability(Appearance.ALLOW_TEXGEN_WRITE);
 
-//        Texture loader = new TextureLoader(View.class.getClassLoader().getResource("bark001-color.jpg").getPath(), ((View) view).getComponent(0)).getTexture();
-//        branchAppearance.setTexture(loader);
-//        TexCoordGeneration generation = new TexCoordGeneration(TexCoordGeneration.EYE_LINEAR, TexCoordGeneration.TEXTURE_COORDINATE_2);
-//        generation.setEnable(true);
-//        branchAppearance.setTexCoordGeneration(generation);
 
         obstacleAppearance = new Appearance();
         Color3f white = new Color3f(Color.WHITE);
         obstacleAppearance.setMaterial(new Material(white, black, white, white, 110f));
 
-
-//        Texture loader = new TextureLoader(View.class.getClassLoader().getResource("bark001-color.jpg").getPath(), ((View) view).getComponent(0)).getTexture();
-//        obstacleAppearance.setTexture(loader);
-//        TexCoordGeneration generation = new TexCoordGeneration(TexCoordGeneration.EYE_LINEAR, TexCoordGeneration.TEXTURE_COORDINATE_2);
-//        generation.setEnable(true);
-//        obstacleAppearance.setTexCoordGeneration(generation);
-
-
-
-
-//        Fraction slope;
-//        try {
-//            slope = new Fraction(Math.tan(SpaceColonization.SUN_ANGLE));
-//        } catch (FractionConversionException e) {
-//            slope = new Fraction(2,3); //TODO
-//            e.printStackTrace();
-//        }
-//
-//        //sonne scheint von -Z nach Z
-//        Point3D shadowVector = new Point3D(0, slope.getNumerator(), slope.getDenominator());
-//        shadowVector.normalize();
-//        //geradengleichung
-//
-//        //NE
-//        Point3D cornerNE = new Point3D(0, 2, -0.2f);
-//        //gleichung: punkt + s * vector
-//        float s = ( - cornerNE.getY()) / shadowVector.getY();
-//        //cornerNE.Y + s * shadowVector.Y = 0
-//        Point3D groundPointSV = shadowVector.mult(s);
-//        Point3D groundPoint = groundPointSV.add(cornerNE);
-//
-//        Point3D corner2 = new Point3D(1,2,-0.5f);
-//        s = (-corner2.getY() / shadowVector.getY());
-//        Point3D groundPoint2 = shadowVector.mult(s).add(corner2);
-//
-//
-//
-//        view.addMarker(groundPoint.getX(), groundPoint.getY(), groundPoint.getZ(), new Color3f(Color.green));
-//        for (float i = 0; i <= s; i+=0.1){
-//            Point3D point = shadowVector.mult(i);
-//            point.addTo(cornerNE);
-//            view.addMarker(point.getX(), point.getY(), point.getZ());
-//
-////            Point3D point2 = shadowVector.mult(i);
-////            point2.addTo(corner2);
-////            view.addMarker(point2.getX(), point2.getY(), point2.getZ());
-//        }
-
         //coordinates
-        view.addMarker(0,0,0, new Color3f(Color.black), 0.04f);
-        view.addMarker(0.5f,0,0, new Color3f(Color.blue),0.04f);
-        view.addMarker(0,0.5f,0, new Color3f(Color.green),0.04f);
-        view.addMarker(0,0,0.5f, new Color3f(Color.red),0.04f);
+        view.addMarker(0, 0, 0, new Color3f(Color.black), 0.02f);
+        view.addLine(new Point3D(0,0,0), new Point3D(10,0,0), Color.blue);
+//        view.addMarker(0.5f, 0, 0, new Color3f(Color.blue), 0.04f);
+        view.addLine(new Point3D(0,0,0), new Point3D(0,10,0), Color.green);
+//        view.addMarker(0, 0.5f, 0, new Color3f(Color.green), 0.04f);
+        view.addLine(new Point3D(0,0,0), new Point3D(0,0,10), Color.red);
+//        view.addMarker(0, 0, 0.5f, new Color3f(Color.red), 0.04f);
 
-        //test sonnenwinkel
-        SunPosition sunPos = new SunPosition(179.59, 61.93);
-        double azimuth = sunPos.getAzimuthRadians();
-        double altitude = sunPos.getElevationRadians();
-        float x = (float)(Math.sin(azimuth) * Math.cos(altitude));
-        float y = (float)(Math.sin(altitude));
-        float z = (float)-(Math.cos(azimuth) * Math.cos(altitude));
-        Point3D ray = new Point3D(x, y, z);
-        ray.normalize();
-        for (float i = 0.1f; i <= 1; i+=0.1){
-            Point3D point = ray.mult(i);
-            point.addTo(new Point3D(0,0,0));
-            view.addMarker(point.getX(), point.getY(), point.getZ());
 
-        }
+        run();
 
-                run();
 
     }
 
+    private static void calculateStats(Tree tree) {
+        //angle
+        Point3D angle = tree.calculateAngle();
+//        ViewInterface.log(angle.toString());
+//        ViewInterface.log(angle.toDegrees().toString());
+        Point3D zero = new Point3D(0, 0, 0);
+        view.setLine(zero, zero.add(angle.mult(tree.getHeight())));
+
+        //number of nodes
+        stats("number of nodes", String.valueOf(tree.getNodes().getAll().size()));
+
+        //number of branches
+        stats(" ", " ");
+
+        //avgNode
+        Point3D avgNode = tree.calculateAvgNode();
+        stats("average Node", avgNode.cardinalString());
+        view.setSchwerpunkt(avgNode);
+        avgNode.normalize();
+//        ViewInterface.log("avg normalized " + avgNode.toString());
+        avgNode.multTo(3f);
+//        view.addMarker(avgNode.getX(), avgNode.getY(), avgNode.getZ(), new Color3f(Color.green), 0.05f);
+
+        //avgNode gewichtet
+        Point3D schwerpunkt = tree.calculateSchwerpunkt();
+//        ViewInterface.log(schwerpunkt.toString());
+        schwerpunkt.normalize();
+//        ViewInterface.log("schwerpunkt normalized " + schwerpunkt.toString());
+        schwerpunkt.multTo(3f);
+//        view.addMarker(schwerpunkt.getX(), schwerpunkt.getY(), schwerpunkt.getZ(), new Color3f(Color.blue), 0.05f);
+    }
+
+    public static void stats(String description, String value){
+        printToStats(value);
+        ViewInterface.log(description + ": " + value);
+    }
+
+    private static void printToStats(@Nullable String string) {
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("E:\\Users\\JanaJ\\IdeaProjects\\jana.jansen\\stats.txt", true));
+
+            if(string == null)
+                writer.newLine();
+            else
+                writer.write(string + "\t\t");
+            writer.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static String format(double duration) {
+        return (Math.round(duration/60) + "m" + Math.round(duration%60) +"s");
+    }
 
     private static void putObstacles(List<Obstacle> obstacles) {
         BranchGroup bg = new BranchGroup();

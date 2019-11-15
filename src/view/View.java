@@ -29,6 +29,7 @@ public class View extends Applet implements ViewInterface {
     private final BranchGroup bgTree;
     private final BranchGroup bgNodes;
     private final BranchGroup sceneNodes;
+    private final BranchGroup tempSceneNodes;
     private final BranchGroup sun;
 
 
@@ -97,6 +98,11 @@ public class View extends Applet implements ViewInterface {
         sun.setCapability(Group.ALLOW_CHILDREN_READ);
         sun.setCapability(Group.ALLOW_CHILDREN_WRITE);
         u.addBranchGraph(sun);
+        tempSceneNodes = new BranchGroup();
+        tempSceneNodes.setCapability(Group.ALLOW_CHILDREN_EXTEND);
+        tempSceneNodes.setCapability(Group.ALLOW_CHILDREN_READ);
+        tempSceneNodes.setCapability(Group.ALLOW_CHILDREN_WRITE);
+        u.addBranchGraph(tempSceneNodes);
     }
 
 
@@ -307,7 +313,7 @@ public class View extends Applet implements ViewInterface {
 
         //ray (sonnenstrahl vektor)
         Vector3d ray = sunPos.calculateRayVector3d();
-        ray.scale(5);
+        ray.scale(6);
 
 //        DecimalFormat df = new DecimalFormat("#.##");
 //        ViewInterface.log(df.format(ray.x) + " " + df.format(ray.y) + " " + df.format(ray.z));
@@ -326,6 +332,58 @@ public class View extends Applet implements ViewInterface {
         this.sun.addChild(bg);
     }
 
+    @Override
+    public void setLine(Point3D one, Point3D two){
+        this.tempSceneNodes.removeAllChildren();
+        LineArray lineX = new LineArray(2, LineArray.COORDINATES);
+        lineX.setCoordinate(0, new Point3f(one.getX(), one.getY(), one.getZ()));
+        lineX.setCoordinate(1, new Point3f(two.getX(), two.getY(), two.getZ()));
+        BranchGroup why = new BranchGroup();
+        why.setCapability(BranchGroup.ALLOW_DETACH);
+        why.addChild(new Shape3D(lineX));
+        this.tempSceneNodes.addChild(why);
+    }
+
+    @Override
+    public void addLine(Point3D one, Point3D two, Color color){
+        Appearance app = new Appearance();
+        Color3f color3f = new Color3f(color);
+        ColoringAttributes att = new ColoringAttributes();
+        att.setColor(color3f);
+        app.setColoringAttributes(att);
+
+        LineArray lineX = new LineArray(2, LineArray.COORDINATES);
+        lineX.setCoordinate(0, new Point3f(one.getX(), one.getY(), one.getZ()));
+        lineX.setCoordinate(1, new Point3f(two.getX(), two.getY(), two.getZ()));
+
+        BranchGroup why = new BranchGroup();
+        why.addChild(new Shape3D(lineX, app));
+        this.sceneNodes.addChild(why);
+    }
+
+    @Override
+    public void setSchwerpunkt(Point3D schwerpunkt){
+        Appearance app = new Appearance();
+        BranchGroup bg = new BranchGroup();
+
+        Color3f color = new Color3f(Color.black);
+        app.setMaterial(new Material(color, color, color, color, 70f));
+
+        TransformGroup tg = new TransformGroup();
+        Transform3D t = new Transform3D();
+
+        t.setTranslation(new Vector3d(schwerpunkt.getX(), schwerpunkt.getY(), schwerpunkt.getZ()));
+        tg.setTransform(t);
+
+        Sphere sphere = new Sphere(0.05f);
+        sphere.setAppearance(app);
+
+        tg.addChild(sphere);
+        bg.addChild(tg);
+
+        bg.setCapability(BranchGroup.ALLOW_DETACH);
+        this.tempSceneNodes.addChild(bg);
+    }
 }
 
 

@@ -1,5 +1,7 @@
 package view;
 
+import java.text.DecimalFormat;
+
 public class Point3D {
 
     private float x, y, z;
@@ -94,7 +96,47 @@ public class Point3D {
         return (x + " " + y + " " + z);
     }
 
+    public String cardinalString(){
+        double a = Math.round(x * 1000.0) / 1000.0;
+        double b = Math.round(y * 1000.0) / 1000.0;
+        double c = Math.round(z * 1000.0) / 1000.0;
+
+        String x = String.valueOf(Math.abs(a));
+        String y = String.valueOf(Math.abs(b));
+        String z = String.valueOf(Math.abs(c));
+
+        if(a < 0)
+            x += "W";
+        else
+            x += "E";
+        if(c < 0)
+            z += "N";
+        else
+            z += "S";
+        return (x + "\t" + y + "\t" +z);
+    }
+
+    public String shortString(){
+        return ((double) (Math.round(x * 100.0) / 100.0) + " " + (double) (Math.round(y * 100.0) / 100.0) + " " + (double) (Math.round(z * 100.0) / 100.0));
+    }
+
     public boolean equals(Point3D point) {
         return (this.x == point.getX() && this.y == point.getY() && this.z == point.getZ());
+    }
+
+    public Point3D toDegrees(){
+        return new Point3D((float)(Math.toDegrees(Math.acos(x))), (float)(Math.toDegrees(Math.acos(y))), (float)Math.toDegrees(Math.acos(z)));
+//        Point3D angle = new Point3D(0,0,0);
+//
+//        return angle;
+    }
+
+    public double azimuthDegree(){
+        return 0;
+    }
+
+    public double elevationDegree(){
+        Point3D y = new Point3D(1,0,0);
+        return Math.toDegrees(y.dot(this) / (y.vectorLength() * this.vectorLength()));
     }
 }

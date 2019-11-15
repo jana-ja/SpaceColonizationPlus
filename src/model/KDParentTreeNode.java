@@ -97,4 +97,11 @@ public class KDParentTreeNode {
     void addToThicknessSum(float thickness) {
         this.thicknessHelpSum+=thickness;
     }
+
+    public Point3D parentAngle() {
+        if(parent == null)
+            return new Point3D(0,0,0);
+        else
+            return this.point.subtract(parent.getPoint());
+    }
 }
