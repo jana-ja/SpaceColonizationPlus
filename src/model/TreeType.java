@@ -4,10 +4,12 @@ import static model.TreeShape.*;
 
 public enum TreeType {
     // radOfInf, nodeDist, killRad, topPercentage, attPointsPerHeight, widthPerHeight
+    KORKHASE(0.36,0.02, 0.1,80.0,800,1.0, UMBRELLA2),
 //    TREE(0.5,0.05, 2*0.05,70.0,1100,1.0), //killRad = 2*nodeDist
     TREE(3.0,0.02, 2*0.03,90.0,600,0.6, CONE),
-    PLATANE(3.0,0.02, 2*0.03,90.0,600,0.6, ROUND),
+    PLATANE(2.0,0.02, 2*0.06,50.0,600,0.6, ROUND),
     UMBRELLA(4.0,0.02, 2*0.03,50.0,700,1.4, TreeShape.UMBRELLA);//TODO redofInf mit treehight
+
 
     //max neighbors - ????
 

@@ -53,7 +53,9 @@ public class View extends Applet implements ViewInterface {
         Transform3D t3d = new Transform3D();
         t3d.setRotation(new Quat4d(0, 180, 20,1));
         t3d.setTranslation(new Vector3d(0, 3, -7));
-
+//        t3d.setRotation(new Quat4d(0, 180, 90,1));
+//        t3d.rotZ(190);
+//        t3d.setTranslation(new Vector3d(0, 1, 0));
 
         MultiTransformGroup mtg = vp.getMultiTransformGroup();
         mtg.getTransformGroup(0).setTransform(t3d);
@@ -363,6 +365,8 @@ public class View extends Applet implements ViewInterface {
 
     @Override
     public void setSchwerpunkt(Point3D schwerpunkt){
+        if(Float.isNaN(schwerpunkt.getX()))
+            return;
         Appearance app = new Appearance();
         BranchGroup bg = new BranchGroup();
 

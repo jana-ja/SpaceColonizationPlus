@@ -18,23 +18,29 @@ public class SpaceColonization {
     private boolean marker;
     private final boolean SUN = false;
     private final int SUN_DELAY = 30;
-    private final boolean LIGHT = true;
-    private final boolean SHADOW = true;
-    private final float FACTOR = 0.3f;
+    private final boolean SHIFT = false;
+    private final boolean LIGHT = false;
+    private final boolean SHADOW = false;
+    private final float FACTOR = 0.5f;
 
 
-    public void stats(){
+    public void stats() {
         Application.stats("days", beginDay + "-" + endDay);
-        if(LIGHT)
+        if (SHIFT)
+            Application.stats("shift", "+");
+        else
+            Application.stats("shift", "-");
+        if (LIGHT)
             Application.stats("light", "+");
         else
             Application.stats("light", "-");
-        if(SHADOW)
+        if (SHADOW)
             Application.stats("shadow", "+");
         else
             Application.stats("shadow", "-");
         Application.stats("factor", String.valueOf(FACTOR));
     }
+
     /**
      * Performs one step of space colonization.
      * Adds nodes to the tree according to influence of attraction points from the point cloud.
@@ -45,25 +51,29 @@ public class SpaceColonization {
     boolean spaceColonize(Tree tree, PointCloud pointCloud, List<Obstacle> obstacles) {
 
 
-
         marker = true;
         if (pointCloud.isEmpty())
             return false;
+
+        Point3D lastAvgNode;
+        if (SHIFT)
+            lastAvgNode = tree.getLastAvgNode();
 
         Map<KDParentTreeNode, List<Point3D>> attractionMap = new HashMap<>();
 
         //first step: map nodes to their influencing attraction points
 
         pointCloud.getAttractionPoints().forEach(attractionPoint -> {
-            KDParentTreeNode node = tree.getNodes().nearestInRange(attractionPoint, tree.getType().getRadOfInf());
+            if (attractionPoint.isActivated()) {
+                KDParentTreeNode node = tree.getNodes().nearestInRange(attractionPoint, tree.getType().getRadOfInf());
 
-            if (node != null) {
-                if (!attractionMap.containsKey(node))
-                    attractionMap.put(node, new ArrayList<>());
+                if (node != null) {
+                    if (!attractionMap.containsKey(node))
+                        attractionMap.put(node, new ArrayList<>());
 
-                attractionMap.get(node).add(attractionPoint);
+                    attractionMap.get(node).add(attractionPoint);
+                }
             }
-
         });
 
         //if attractionMap is empty -> space colonization is finished
@@ -79,7 +89,7 @@ public class SpaceColonization {
 //        currentDay = 100;
         List<SunPosition> sunPositions = SunCalculator.positionsForDay(currentDay, 1.0);
         ViewInterface.log("\t day: " + currentDay + ", " + sunPositions.size() + "  hours");
-        if(currentDay == endDay)
+        if (currentDay == endDay)
             currentDay = beginDay;
         else
             currentDay++;
@@ -89,9 +99,10 @@ public class SpaceColonization {
             //attraction vector
             Point3D apVector = calculateInfluenceVector(node, attractionPoints);
 
+            Point3D obstVector;
             Point3D finalVector;
-            if(LIGHT || SHADOW) {
-                Point3D obstVector = calculateShadowDetractionVector(node, obstacles, sunPositions);
+            if (LIGHT || SHADOW) {
+                obstVector = calculateShadowDetractionVector(node, obstacles, sunPositions);
                 obstVector.multTo(FACTOR);
                 finalVector = apVector.add(obstVector);
             } else
@@ -106,7 +117,7 @@ public class SpaceColonization {
             newPoint.addTo(node.getPoint());
             //testen ob newNode.point = point von nem kind von node
             boolean isNew = true;
-            if(attractionPoints.size()==2){
+            if (attractionPoints.size() == 2) {
                 for (KDParentTreeNode child : node.getTreeChildren()) {
 
                     if (child.getPoint().distance(newPoint) < 0.001) {
@@ -120,8 +131,10 @@ public class SpaceColonization {
 
             if (isNew) {
                 AtomicBoolean legitim = new AtomicBoolean(true);
-                obstacles.forEach(obstacle -> {if(obstacle.isInside(newPoint)) legitim.set(false);});
-                if(legitim.get())
+                obstacles.forEach(obstacle -> {
+                    if (obstacle.isInside(newPoint)) legitim.set(false);
+                });
+                if (legitim.get())
                     tree.getNodes().insert(newPoint, node);
                 else
                     System.err.println("NE REIN GEWACHSEN"); //TODO unlimitetd nicht-growing
@@ -137,6 +150,15 @@ public class SpaceColonization {
                 ));
 //        pointCloud.getAttractionPoints().removeIf(attractionPoint ->
 //                tree.getNodes().hasInRange(attractionPoint, tree.getType().getKillRad()));
+
+        if (SHIFT) {
+            Point3D avgNode = tree.calculateAvgNode();
+            Point3D shiftVector = avgNode.subtract(lastAvgNode);
+            shiftVector.setY(0);
+            pointCloud.shift(shiftVector);
+
+            pointCloud.updateWithObstacles(obstacles);
+        }
 
         return true;
     }
@@ -175,10 +197,10 @@ public class SpaceColonization {
         return inflVec;
     }
 
-    private Point3D calculateShadowDetractionVector(KDParentTreeNode node, List<Obstacle> obstacles, List<SunPosition> sunPositions){
-        Point3D shadowVector = new Point3D(0,0,0);
+    private Point3D calculateShadowDetractionVector(KDParentTreeNode node, List<Obstacle> obstacles, List<SunPosition> sunPositions) {
+        Point3D shadowVector = new Point3D(0, 0, 0);
         sunPositions.forEach(sunPos -> {
-            if(marker && SUN){
+            if (marker && SUN) {
 
                 Application.visualizeSun(sunPos);
                 try {
@@ -189,17 +211,17 @@ public class SpaceColonization {
             }
             AtomicBoolean light = new AtomicBoolean(true);
             obstacles.forEach(obstacle -> {
-                double shadowFactor = Math.toDegrees(sunPos.getElevationRadians())/100; //TODO guten faktor finden, iwas was intensität wiederspiegelt
+                double shadowFactor = Math.toDegrees(sunPos.getElevationRadians()) / 100; //TODO guten faktor finden, iwas was intensität wiederspiegelt
 
-                if(obstacle.isInShadow(node.getPoint(), sunPos)) {
+                if (obstacle.isInShadow(node.getPoint(), sunPos)) {
                     if (SHADOW)
                         shadowVector.addTo(obstacle.getVectorFromShadow(node.getPoint(), sunPos).mult(shadowFactor));
                     light.set(false);
                 }
             });
-            if(light.get()) {
+            if (light.get()) {
                 //ist im licht
-                if(LIGHT) {
+                if (LIGHT) {
                     double lightFactor = Math.toDegrees(sunPos.getElevationRadians()) / 100; //TODO faktor finden, vllt der lichtintensität weiderspiegelt (elevation winkel oder so, der ist höchstens 61.94)
                     shadowVector.addTo(sunPos.calculateRayVector().mult(lightFactor));
                 }
@@ -208,7 +230,7 @@ public class SpaceColonization {
         });
 //        System.out.println("\t new day");
         marker = false;
-        if(shadowVector.vectorLength() != 0)
+        if (shadowVector.vectorLength() != 0)
             shadowVector.normalize();
         return shadowVector;
     }
@@ -223,7 +245,8 @@ public class SpaceColonization {
         List<Point3D> cloud = fillPointCloudCuboid(tree);
 
         //schnitt(würfel,volumen) behalten -> für jeden punkt: ist in volumen?
-        cloud = buildTreeShape(tree, cloud);
+//        cloud = buildTreeShape(tree, cloud);
+        //jetzt in filldingens drin
 
         //schnitt cloud obstacles
 //        cloud = intersectWithObstacles(obstacles, cloud);
@@ -253,17 +276,122 @@ public class SpaceColonization {
         float yMin = rootCoordinates.getY() + (float) (treeHeight - crownHeight);
         float yMax = rootCoordinates.getY() + (float) treeHeight;
 
-
+        int lim;
+        switch (tree.getType().getTreeShape()) {
+            case UMBRELLA2:
+            case UMBRELLA:
+                lim = (int) (0.55 * type.getAttPointsPerHeight() * treeHeight); //prozent für rahmen
+                break;
+            default:
+                lim = (int) (type.getAttPointsPerHeight() * treeHeight);
+                break;
+        }
         //quader random gleichverteilt füllen
-        for (int i = 1; i <= (int) (type.getAttPointsPerHeight() * treeHeight); i++) {
+        //für umbrella erst rahmen
+        for (int i = 1; i <= lim; i++) {
             float x = random.nextFloat() * (xMax - xMin) + xMin;
             float y = random.nextFloat() * (yMax - yMin) + yMin;
             float z = random.nextFloat() * (zMax - zMin) + zMin;
 
-            cloud.add(new Point3D(x, y, z));
+            Point3D point3D = new Point3D(x, y, z);
+            if (buildTreeShape2(tree, point3D, true))
+                cloud.add(point3D);
+            else i--;
         }
 
+        //für umbrella dann inneres
+        crownHeight = treeHeight * 95 / 100;
+        yMin = rootCoordinates.getY() + (float) (treeHeight - crownHeight);
+
+        for (int i = lim; i <= (int) (type.getAttPointsPerHeight() * treeHeight); i++) {
+            float x = random.nextFloat() * (xMax - xMin) + xMin;
+            float y = random.nextFloat() * (yMax - yMin) + yMin;
+            float z = random.nextFloat() * (zMax - zMin) + zMin;
+
+            Point3D point3D = new Point3D(x, y, z);
+            if (buildTreeShape2(tree, point3D, false))
+                cloud.add(point3D);
+            else i--;
+        }
+
+
         return cloud;
+    }
+
+    private boolean buildTreeShape2(Tree tree, Point3D point3D, boolean indicator) {
+
+        Point3D rootCoordinates = tree.getNodes().getRoot().getPoint();
+        TreeType type = tree.getType();
+        double treeHeight = tree.getHeight();
+        double crownHeight = treeHeight * type.getTopPercentage() / 100;
+        double treeRadius = type.getWidthPerHeight() * treeHeight / 2;
+        double treeTopY = rootCoordinates.getY() + treeHeight;
+        double topPercentage = type.getTopPercentage();
+
+
+
+        float xForMaxDistance;
+        float xForMinDistance = rootCoordinates.getX();
+        double fs; //function start, where sin should go positive on y axis
+        double thickness;//TODO abwarten ob das tatsächlich in mehreren fällen gebraucht wird
+
+//        if (!indicator) {
+//            topPercentage = 95;
+//        }
+        switch (type.getTreeShape()) {
+            case UMBRELLA2:
+                thickness = 0.15;
+                fs = rootCoordinates.getY() + treeHeight - 2 * topPercentage / 100 * treeHeight;
+                xForMaxDistance = (float) ((treeRadius) * Math.sin(Math.PI / (treeTopY - fs) * (point3D.getY() - fs)) + rootCoordinates.getX());
+                xForMinDistance = (float) ((treeRadius) * (1.0 - 2 * thickness) * Math.sin(((Math.PI) / ((treeTopY - fs) * (1.0 - 2 * thickness))) * (point3D.getY() - (fs + (treeTopY - fs) * thickness))) + rootCoordinates.getX());
+                break;
+            case UMBRELLA:
+                thickness = 0.1;
+                fs = rootCoordinates.getY() + treeHeight - 2 * topPercentage / 100 * treeHeight;
+                xForMaxDistance = (float) ((treeRadius) * Math.sin(Math.PI / (treeTopY - fs) * (point3D.getY() - fs)) + rootCoordinates.getX());
+                xForMinDistance = (float) ((treeRadius) * (1.0 - 2 * thickness) * Math.sin(((Math.PI) / ((treeTopY - fs) * (1.0 - 2 * thickness))) * (point3D.getY() - (fs + (treeTopY - fs) * thickness))) + rootCoordinates.getX());
+                break;
+            case CONE:
+                // f(x) = (float) ( (crownHeight / (treeWidth/2)) * (point3D.getX() - rootCoordinates.getX()) + treeHeight); //minus verschiebt nach rechts
+                xForMaxDistance = (float) ((point3D.getY() - treeTopY) * treeRadius / (crownHeight) + rootCoordinates.getX()); //f(y)
+                break;
+            default:
+                //round
+                fs = rootCoordinates.getY();
+                xForMaxDistance = (float) ((treeRadius) * Math.sin(Math.PI / (treeTopY - fs) * (point3D.getY() - fs)) + rootCoordinates.getX());
+        }
+
+
+        double maxDistance = distance(rootCoordinates.getX(), point3D.getY(), xForMaxDistance, point3D.getY());
+        double realDistance = point3D.distance(new Point3D(rootCoordinates.getX(), point3D.getY(), rootCoordinates.getZ()));
+
+        switch (type.getTreeShape()) {
+            case UMBRELLA2:
+            case UMBRELLA:
+                double minDistance = distance(rootCoordinates.getX(), point3D.getY(), xForMinDistance, point3D.getY());
+                if (indicator) {
+                    //rahmen
+                    if(xForMinDistance < 0) //TODO shitty lösung für problem oben sin zu viel punkte ne
+                        break;
+                    if ((realDistance <= maxDistance && realDistance >= minDistance)) {
+                        return true;
+                    }
+                    break;
+                }
+                else {
+                    if(xForMinDistance < 0) //TODO shitty lösung für problem oben sin zu viel punkte ne
+                        break;
+                    if (realDistance <= minDistance) {
+                        return true;
+                    }
+                }
+            default:
+                //normaler schnitt
+                if (realDistance <= maxDistance) {
+                    return true;
+                }
+        }
+        return false;
     }
 
     private List<Point3D> buildTreeShape(Tree tree, List<Point3D> cuboidCloud) {
@@ -285,6 +413,12 @@ public class SpaceColonization {
             double thickness;//TODO abwarten ob das tatsächlich in mehreren fällen gebraucht wird
 
             switch (type.getTreeShape()) {
+                case UMBRELLA2:
+                    thickness = 0.15;
+                    fs = rootCoordinates.getY() + treeHeight - 2 * type.getTopPercentage() / 100 * treeHeight;
+                    xForMaxDistance = (float) ((treeRadius) * Math.sin(Math.PI / (treeTopY - fs) * (point3D.getY() - fs)) + rootCoordinates.getX());
+                    xForMinDistance = (float) ((treeRadius) * (1.0 - 2 * thickness) * Math.sin(((Math.PI) / ((treeTopY - fs) * (1.0 - 2 * thickness))) * (point3D.getY() - (fs + (treeTopY - fs) * thickness))) + rootCoordinates.getX());
+                    break;
                 case UMBRELLA:
                     thickness = 0.1;
                     fs = rootCoordinates.getY() + treeHeight - 2 * type.getTopPercentage() / 100 * treeHeight;

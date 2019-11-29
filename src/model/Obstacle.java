@@ -13,5 +13,6 @@ public interface Obstacle {
     boolean isInShadow(Point3D node, SunPosition sunPos);
 
     Point3D getCentroid();
+    Point3D getCentroidBottom();
     Point3D getVectorFromShadow(Point3D node, SunPosition sunPos);
 }

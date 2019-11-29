@@ -12,7 +12,7 @@ public class PointCloud {
         this.attractionPoints = new ArrayList<>();
     }
 
-    public PointCloud(List<Point3D> attractionPoints){
+    public PointCloud(List<Point3D> attractionPoints) {
         this.attractionPoints = attractionPoints;
     }
 
@@ -28,20 +28,38 @@ public class PointCloud {
         this.attractionPoints = attractionPoints;
     }
 
-    public void intersectWithObstacles(List<Obstacle> obstacles){
+    public void intersectWithObstacles(List<Obstacle> obstacles) {
 
         List<Point3D> cloud2 = new ArrayList<>();
 
         for (Point3D point : attractionPoints) {
             boolean yeah = true;
             for (Obstacle obstacle : obstacles) {
-                if(obstacle.isInside(point))
+                if (obstacle.isInside(point))
                     yeah = false;
             }
-            if(yeah)
+            if (yeah)
                 cloud2.add(point);
         }
 
         this.attractionPoints = cloud2;
+    }
+
+    public void updateWithObstacles(List<Obstacle> obstacles){
+        for (Point3D point : attractionPoints) {
+            boolean outside = true;
+            for (Obstacle obstacle : obstacles) {
+                if (obstacle.isInside(point))
+                    outside = false;
+            }
+            if (outside)
+                point.setActivated(true);
+            else
+                point.setActivated(false);
+        }
+    }
+
+    public void shift(Point3D vector) {
+        attractionPoints.forEach(ap -> ap.addTo(vector));
     }
 }

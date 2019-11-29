@@ -5,11 +5,22 @@ import java.text.DecimalFormat;
 public class Point3D {
 
     private float x, y, z;
+    private boolean activated;
 
     public Point3D(float x, float y, float z) {
         this.x = x;
         this.y = y;
         this.z = z;
+
+        activated = true;
+    }
+
+    public void setActivated(boolean activated) {
+        this.activated = activated;
+    }
+
+    public boolean isActivated() {
+        return activated;
     }
 
     public void normalize() {
@@ -131,12 +142,22 @@ public class Point3D {
 //        return angle;
     }
 
-    public double azimuthDegree(){
-        return 0;
+    public String azimuthDegree(){
+        Point3D runterprojiziert = new Point3D(this.x, 0, this.z);
+        Point3D z = new Point3D(0,0,1);
+        //wenn -x westen, wenn +x osten
+        double ergebnis = Math.toDegrees((Math.acos(z.dot(runterprojiziert) / (z.vectorLength() * runterprojiziert.vectorLength()))));
+        ergebnis = Math.round(ergebnis * 1000.0) / 1000.0;
+        String end = (ergebnis >= 90)? "N" : "S";
+        end += (this.x < 0)? "W" : "E";
+        return (ergebnis) + end;
     }
 
-    public double elevationDegree(){
-        Point3D y = new Point3D(1,0,0);
-        return Math.toDegrees(y.dot(this) / (y.vectorLength() * this.vectorLength()));
+    public String elevationDegree(){
+        Point3D y = new Point3D(this.x,0,this.z);
+        y.normalize();
+        double ergebnis = Math.toDegrees(Math.acos(y.dot(this) / (y.vectorLength() * this.vectorLength())));
+        ergebnis = Math.round(ergebnis * 1000.0) / 1000.0;
+        return String.valueOf(ergebnis);
     }
 }

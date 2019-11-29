@@ -125,6 +125,13 @@ public class Building implements Obstacle {
     }
 
     @Override
+    public Point3D getCentroidBottom() {
+        if(centroid == null)
+            calculateCentroid();
+        return new Point3D(centroid.getX(), 0, centroid.getZ());
+    }
+
+    @Override
     public Point3D getCentroid() {
         if(centroid == null)
             calculateCentroid();
@@ -133,7 +140,7 @@ public class Building implements Obstacle {
 
     private void calculateCentroid(){
         //weil quader: (sonst alle punkte addieren und durch anzahl teilen)
-        this.centroid = new Point3D((minX+maxX)/2, minY, (minZ+maxZ)/2);
+        this.centroid = new Point3D((minX+maxX)/2, (minY+maxY)/2, (minZ+maxZ)/2);
     }
 
     private static Point3D lineIntersection(Point3D planePoint, Point3D planeNormal, Point3D linePoint, Point3D lineDirection) {
@@ -160,14 +167,12 @@ public class Building implements Obstacle {
 
     @Override
     public Point3D getVectorFromShadow(Point3D node, SunPosition sunPos){
-        if(centroid == null)
-            calculateCentroid();
         Point3D ray = sunPos.calculateRayVector();
 
         //richtung des vektors: senkrecht von gerade(ray durch centroid) durch node
 
         //dafür hilfsebene (ray, cantroid-node) nehmen
-        Point3D vectorCentroidNode = node.subtract(centroid);
+        Point3D vectorCentroidNode = node.subtract(getCentroidBottom());
         //und davon die senkrechte
         Point3D perpendicular1 = ray.cross(vectorCentroidNode);
 

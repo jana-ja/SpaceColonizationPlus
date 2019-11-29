@@ -8,7 +8,6 @@ import model.*;
 import view.Point3D;
 import view.View;
 import view.ViewInterface;
-
 import javax.media.j3d.*;
 import javax.vecmath.*;
 import java.applet.Applet;
@@ -27,11 +26,12 @@ class Application extends Applet {
     private static ViewInterface view;
 
     private static final int STEP = 1; //every x STEP is visualized
-    private static final int STEPS = 250; //number of space colonization iterations
+    private static final int STEPS = 250; //max number of space colonization iterations
     private static final long DELAY = 0;
     private static final boolean DEBUG = false;
-    private static final boolean SAVED = true;
-    private static final String SAVEFILE = "cloud4m"; //cloud4m, cloud6m
+    private static final boolean SAVED = false;
+    private static final String NEXTFILE = "exp";
+    private static final String SAVEFILE = "cloud2"; //clud4m, cloud4m, cloud6m, cloud2
     private static Appearance branchAppearance;
     private static Appearance obstacleAppearance;
 
@@ -40,22 +40,26 @@ class Application extends Applet {
 
         Point3D verschiebung = new Point3D(0, 0, 0);
 
-        Tree tree = new Tree(TreeType.PLATANE, 4.0, verschiebung);
-
+//        Tree tree = new Tree(TreeType.PLATANE, 4.0, verschiebung);
+        Tree tree = new Tree(TreeType.KORKHASE, 3.0, verschiebung);
 
         //obstacles
         List<Obstacle> obstacles = new ArrayList<>();
         //onw building
-        Building southBuilding = new Building("south", new Point3D(-1.5f, 0, 2.0f), new Point3D(1.5f, 3, 1.0f));
-        obstacles.add(southBuilding);
+//        Building southBuilding = new Building("south", new Point3D(-1.5f, 0, 2.0f), new Point3D(1.5f, 3, 0.5f));
+//        obstacles.add(southBuilding);
 
         //east building
-        Building eastBuilding = new Building("east", new Point3D(0.5f, 0, -1.5f), new Point3D(2.0f, 2.0f, 1.5f));
-        obstacles.add(eastBuilding);
+//        Building eastBuilding = new Building("east", new Point3D(1.0f, 0, -3.5f), new Point3D(2.0f, 3.0f, 3.5f));
+//        obstacles.add(eastBuilding);
 
         //west building
-        Building westBuilding = new Building("west", new Point3D(-2.0f, 0, -1.5f), new Point3D(-1.0f, 2.0f, 1.5f));
+//        Building westBuilding = new Building("west", new Point3D(-2.0f, 0, -1.5f), new Point3D(-1.0f, 3.0f, 1.5f));
 //        obstacles.add(westBuilding);
+
+        //north
+//        Building northBuilding = new Building("north", new Point3D(-1.5f, 0, -2.0f), new Point3D(1.5f, 3, -1.0f));
+//        obstacles.add(northBuilding);
 
 //        Building strangeBuilding = new Building("strange", new Point3D(-2.0f, 1, -1.5f), new Point3D(-0.2f, 1.5f, 1.5f));
 //        obstacles.add(strangeBuilding);
@@ -85,7 +89,7 @@ class Application extends Applet {
             cloud = colo.generatePointCloud(tree);
             Gson gson = new Gson();
             try {
-                BufferedWriter writer = new BufferedWriter(new FileWriter("E:\\Users\\JanaJ\\IdeaProjects\\jana.jansen\\cloud2.txt"));
+                BufferedWriter writer = new BufferedWriter(new FileWriter("E:\\Users\\JanaJ\\IdeaProjects\\jana.jansen\\" + NEXTFILE + ".txt"));
                 cloud.getAttractionPoints().forEach(ap -> {
                     String json = gson.toJson(ap);
                     try {
@@ -105,7 +109,8 @@ class Application extends Applet {
 
         }
 
-        cloud.intersectWithObstacles(obstacles);
+//        cloud.intersectWithObstacles(obstacles);
+        cloud.updateWithObstacles(obstacles);
 
         ViewInterface.log("starting space colonization");
         long start = System.currentTimeMillis();
@@ -116,7 +121,7 @@ class Application extends Applet {
             ViewInterface.log("   step " + i + "/" + STEPS);
             if (i % STEP == 0) {
                 putBranches(tree);
-                putAttractionPoints(cloud);
+//                putAttractionPoints(cloud);
             }
             Thread.sleep(DELAY);
 
@@ -139,7 +144,7 @@ class Application extends Applet {
 //        branchAppearance.setTexCoordGeneration(generation);
 //
 //        putBranches(tree);
-//        putAttractionPoints(cloud);
+        putAttractionPoints(cloud);
 
 
         ViewInterface.log("\n");
@@ -161,11 +166,7 @@ class Application extends Applet {
         stats("null", null);
     }
 
-    public static void main(String[] args) throws InterruptedException {
-
-//        IOController.analyzeCSV();
-
-
+    public static void initi(){
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
         view = new View((int) (screenSize.getWidth()), (int) (screenSize.getHeight()));
@@ -191,18 +192,25 @@ class Application extends Applet {
 //        view.addMarker(0, 0.5f, 0, new Color3f(Color.green), 0.04f);
         view.addLine(new Point3D(0,0,0), new Point3D(0,0,10), Color.red);
 //        view.addMarker(0, 0, 0.5f, new Color3f(Color.red), 0.04f);
+    }
+    public static void main(String[] args) throws InterruptedException {
 
+//        IOController.analyzeCSV();
 
+        initi();
         run();
 
+//        Point3D angle = new Point3D(-1f,0,1);
+//        System.out.println(angle.azimuthDegree());
+//        System.out.println(angle.elevationDegree());
 
     }
 
     private static void calculateStats(Tree tree) {
         //angle
         Point3D angle = tree.calculateAngle();
-//        ViewInterface.log(angle.toString());
-//        ViewInterface.log(angle.toDegrees().toString());
+        stats("azimuth degr", angle.azimuthDegree());
+        stats("elevation degr", angle.elevationDegree());
         Point3D zero = new Point3D(0, 0, 0);
         view.setLine(zero, zero.add(angle.mult(tree.getHeight())));
 
@@ -210,7 +218,7 @@ class Application extends Applet {
         stats("number of nodes", String.valueOf(tree.getNodes().getAll().size()));
 
         //number of branches
-        stats(" ", " ");
+        stats("number of branches", String.valueOf(tree.calculateBranches()));
 
         //avgNode
         Point3D avgNode = tree.calculateAvgNode();
@@ -272,8 +280,12 @@ class Application extends Applet {
         BranchGroup bg = new BranchGroup();
 
         Appearance app = new Appearance();
-        Color3f green = new Color3f(Color.BLUE);
-        app.setMaterial(new Material(green, green, green, green, 70f));
+        Color3f blue = new Color3f(Color.BLUE);
+        app.setMaterial(new Material(blue, blue, blue, blue, 70f));
+
+        Appearance app2 = new Appearance();
+        Color3f darkblue = new Color3f(Color.YELLOW);
+        app2.setMaterial(new Material(darkblue, darkblue, darkblue, darkblue, 70f));
 
         nodes.forEach(point -> {
             TransformGroup tg = new TransformGroup();
@@ -283,8 +295,14 @@ class Application extends Applet {
             tg.setTransform(t);
 
             Sphere sphere = new Sphere(ATT_POINT_NODE_SIZE);
-            sphere.setAppearance(app);
+            if(point.isActivated()){
 
+                sphere.setAppearance(app);
+            }
+            else {
+                sphere.setAppearance(app2);
+
+            }
             tg.addChild(sphere);
             bg.addChild(tg);
         });
