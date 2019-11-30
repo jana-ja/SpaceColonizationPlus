@@ -39,16 +39,15 @@ package view;
  */
 
 
-        import com.sun.j3d.utils.behaviors.keyboard.KeyNavigator;
+        import org.jogamp.java3d.Transform3D;
+        import org.jogamp.java3d.TransformGroup;
+        import org.jogamp.java3d.utils.behaviors.keyboard.KeyNavigator;
+        import org.jogamp.vecmath.Matrix4d;
+        import org.jogamp.vecmath.Point3d;
+        import org.jogamp.vecmath.Quat4d;
+        import org.jogamp.vecmath.Vector3d;
 
         import java.awt.event.KeyEvent;
-
-        import javax.media.j3d.Transform3D;
-        import javax.media.j3d.TransformGroup;
-        import javax.vecmath.Matrix4d;
-        import javax.vecmath.Point3d;
-        import javax.vecmath.Quat4d;
-        import javax.vecmath.Vector3d;
 
 /**
  * This is the KeyNavigator class.  It accumulates AWT key events (key
@@ -60,7 +59,7 @@ class FPKeyNavigator extends KeyNavigator {
     //TODO rechts links rotiert um globale y achse
     //TODO bewegungen nur auf globaler x z ebene
 
-    private final Vector3d	navVec;
+    private final Vector3d navVec;
     private	long		time;
 
     private final Vector3d	fwdAcc;
@@ -93,19 +92,19 @@ class FPKeyNavigator extends KeyNavigator {
 
     private final Vector3d	a	= new Vector3d();
     private final Vector3d	dv	= new Vector3d();
-    private final Point3d		dp	= new Point3d();
-    private final Quat4d		udQuat	= new Quat4d();
+    private final Point3d dp	= new Point3d();
+    private final Quat4d udQuat	= new Quat4d();
     private final Quat4d		lrQuat	= new Quat4d();
     private final Vector3d	vpPos	= new Vector3d();
     private	double		vpScale;
     private final Quat4d		vpQuat	= new Quat4d();
-    private	Matrix4d	vpMatrix = new Matrix4d();
-    private final Transform3D	vpTrans	= new Transform3D();
+    private Matrix4d vpMatrix = new Matrix4d();
+    private final Transform3D vpTrans	= new Transform3D();
     private final Matrix4d	mat	= new Matrix4d();
     private final Vector3d	nda	= new Vector3d();
     private	Vector3d	temp	= new Vector3d();
     private final Transform3D	nominal = new Transform3D();
-    private final TransformGroup	targetTG;
+    private final TransformGroup targetTG;
 
 
     private	static	final	int CHAR_W = (1<<0);

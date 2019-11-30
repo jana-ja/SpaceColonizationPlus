@@ -38,23 +38,18 @@
  */
 
 package view;
+        import org.jogamp.java3d.*;
+        import org.jogamp.java3d.internal.J3dUtilsI18N;
+
         import java.awt.AWTEvent;
         import java.awt.Component;
         import java.awt.event.KeyEvent;
         import java.awt.event.KeyListener;
         import java.util.Enumeration;
+        import java.util.Iterator;
         import java.util.LinkedList;
 
-        import javax.media.j3d.Behavior;
-        import javax.media.j3d.TransformGroup;
-        import javax.media.j3d.WakeupCondition;
-        import javax.media.j3d.WakeupCriterion;
-        import javax.media.j3d.WakeupOnAWTEvent;
-        import javax.media.j3d.WakeupOnBehaviorPost;
-        import javax.media.j3d.WakeupOnElapsedFrames;
-        import javax.media.j3d.WakeupOr;
 
-        import com.sun.j3d.internal.J3dUtilsI18N;
 
 /**
  * This class is a simple behavior that invokes the KeyNavigator
@@ -94,14 +89,14 @@ class FPKeyNavigatorBehavior extends Behavior implements KeyListener {
      *  Override Behavior's stimulus method to handle the event.
      */
     @Override
-    public void processStimulus(Enumeration criteria) {
+    public void processStimulus(Iterator<WakeupCriterion> criteria) {//Enumeration criteria
         WakeupOnAWTEvent ev;
         WakeupCriterion genericEvt;
         AWTEvent[] events;
         boolean sawFrame = false;
 
-        while (criteria.hasMoreElements()) {
-            genericEvt = (WakeupCriterion) criteria.nextElement();
+        while (criteria.hasNext()) {
+            genericEvt = criteria.next();
             if (genericEvt instanceof WakeupOnAWTEvent) {
                 ev = (WakeupOnAWTEvent) genericEvt;
                 events = ev.getAWTEvent();

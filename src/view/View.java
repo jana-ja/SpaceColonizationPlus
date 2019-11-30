@@ -4,13 +4,17 @@ import java.applet.Applet;
 import java.awt.*;
 import java.text.DecimalFormat;
 
-import javax.media.j3d.*;
-import javax.vecmath.*;
-
-import com.sun.j3d.utils.geometry.*;
-import com.sun.j3d.utils.universe.*;
-import com.sun.j3d.utils.image.TextureLoader;
 import model.SunPosition;
+import org.jogamp.java3d.*;
+import org.jogamp.java3d.utils.geometry.GeometryInfo;
+import org.jogamp.java3d.utils.geometry.NormalGenerator;
+import org.jogamp.java3d.utils.geometry.Sphere;
+import org.jogamp.java3d.utils.image.TextureLoader;
+import org.jogamp.java3d.utils.universe.MultiTransformGroup;
+import org.jogamp.java3d.utils.universe.SimpleUniverse;
+import org.jogamp.java3d.utils.universe.Viewer;
+import org.jogamp.java3d.utils.universe.ViewingPlatform;
+import org.jogamp.vecmath.*;
 
 public class View extends Applet implements ViewInterface {
 
@@ -266,7 +270,7 @@ public class View extends Applet implements ViewInterface {
 
     @Override
     public void addMarker(float x, float y, float z) {
-        addMarker(x, y, z, new Color3f(Color.RED));
+        addMarker(x, y, z, new Color3f(Color.RED.getRed(),Color.RED.getGreen(),Color.RED.getBlue()));
     }
 
     @Override
@@ -307,7 +311,7 @@ public class View extends Applet implements ViewInterface {
         Appearance app = new Appearance();
         BranchGroup bg = new BranchGroup();
 
-        Color3f yellow = new Color3f(Color.yellow);
+        Color3f yellow = new Color3f(Color.yellow.getRed(),Color.yellow.getGreen(),Color.yellow.getBlue());
         app.setMaterial(new Material(yellow, yellow, yellow, yellow, 70f));
 
         TransformGroup tg = new TransformGroup();
@@ -349,7 +353,7 @@ public class View extends Applet implements ViewInterface {
     @Override
     public void addLine(Point3D one, Point3D two, Color color){
         Appearance app = new Appearance();
-        Color3f color3f = new Color3f(color);
+        Color3f color3f = new Color3f(color.getRed(),color.getGreen(),color.getBlue());
         ColoringAttributes att = new ColoringAttributes();
         att.setColor(color3f);
         app.setColoringAttributes(att);
@@ -370,7 +374,7 @@ public class View extends Applet implements ViewInterface {
         Appearance app = new Appearance();
         BranchGroup bg = new BranchGroup();
 
-        Color3f color = new Color3f(Color.black);
+        Color3f color = new Color3f(Color.black.getRed(),Color.black.getGreen(),Color.black.getBlue());
         app.setMaterial(new Material(color, color, color, color, 70f));
 
         TransformGroup tg = new TransformGroup();

@@ -1,9 +1,9 @@
 package view;
 
 import model.SunPosition;
+import org.jogamp.java3d.BranchGroup;
+import org.jogamp.vecmath.Color3f;
 
-import javax.media.j3d.BranchGroup;
-import javax.vecmath.Color3f;
 import java.awt.*;
 
 public interface ViewInterface {

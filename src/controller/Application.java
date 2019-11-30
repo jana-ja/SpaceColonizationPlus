@@ -2,14 +2,17 @@ package controller;
 
 import com.google.gson.Gson;
 import com.sun.istack.internal.Nullable;
-import com.sun.j3d.utils.applet.MainFrame;
-import com.sun.j3d.utils.geometry.Sphere;
 import model.*;
+import org.jogamp.java3d.*;
+import org.jogamp.java3d.utils.applet.MainFrame;
+import org.jogamp.java3d.utils.geometry.Sphere;
+import org.jogamp.vecmath.Color3f;
+import org.jogamp.vecmath.Matrix3f;
+import org.jogamp.vecmath.Vector3d;
+import org.jogamp.vecmath.Vector3f;
 import view.Point3D;
 import view.View;
 import view.ViewInterface;
-import javax.media.j3d.*;
-import javax.vecmath.*;
 import java.applet.Applet;
 import java.awt.*;
 import java.io.*;
@@ -181,11 +184,11 @@ class Application extends Applet {
 
 
         obstacleAppearance = new Appearance();
-        Color3f white = new Color3f(Color.WHITE);
+        Color3f white = new Color3f(Color.WHITE.getRed(),Color.WHITE.getGreen(),Color.WHITE.getBlue());
         obstacleAppearance.setMaterial(new Material(white, black, white, white, 110f));
 
         //coordinates
-        view.addMarker(0, 0, 0, new Color3f(Color.black), 0.02f);
+        view.addMarker(0, 0, 0, new Color3f(Color.black.getRed(),Color.black.getGreen(),Color.black.getBlue()), 0.02f);
         view.addLine(new Point3D(0,0,0), new Point3D(10,0,0), Color.blue);
 //        view.addMarker(0.5f, 0, 0, new Color3f(Color.blue), 0.04f);
         view.addLine(new Point3D(0,0,0), new Point3D(0,10,0), Color.green);
@@ -280,11 +283,11 @@ class Application extends Applet {
         BranchGroup bg = new BranchGroup();
 
         Appearance app = new Appearance();
-        Color3f blue = new Color3f(Color.BLUE);
+        Color3f blue = new Color3f(Color.BLUE.getRed(),Color.BLUE.getGreen(),Color.BLUE.getBlue());
         app.setMaterial(new Material(blue, blue, blue, blue, 70f));
 
         Appearance app2 = new Appearance();
-        Color3f darkblue = new Color3f(Color.YELLOW);
+        Color3f darkblue = new Color3f(Color.YELLOW.getRed(),Color.YELLOW.getGreen(),Color.YELLOW.getBlue());
         app2.setMaterial(new Material(darkblue, darkblue, darkblue, darkblue, 70f));
 
         nodes.forEach(point -> {
