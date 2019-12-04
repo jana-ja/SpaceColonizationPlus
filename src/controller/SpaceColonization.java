@@ -18,9 +18,9 @@ public class SpaceColonization {
     private boolean marker;
     private final boolean SUN = false;
     private final int SUN_DELAY = 30;
-    private final boolean SHIFT = false;
-    private final boolean LIGHT = false;
-    private final boolean SHADOW = false;
+    private final boolean SHIFT = true;
+    private final boolean LIGHT = true;
+    private final boolean SHADOW = true;
     private final float FACTOR = 0.5f;
 
 

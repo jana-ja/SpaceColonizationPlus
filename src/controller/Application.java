@@ -5,11 +5,11 @@ import com.sun.istack.internal.Nullable;
 import model.*;
 import org.jogamp.java3d.*;
 import org.jogamp.java3d.utils.applet.MainFrame;
+import org.jogamp.java3d.utils.geometry.Cylinder;
 import org.jogamp.java3d.utils.geometry.Sphere;
-import org.jogamp.vecmath.Color3f;
-import org.jogamp.vecmath.Matrix3f;
-import org.jogamp.vecmath.Vector3d;
-import org.jogamp.vecmath.Vector3f;
+import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
+import org.jogamp.vecmath.*;
+import org.omg.CORBA.MARSHAL;
 import view.Point3D;
 import view.View;
 import view.ViewInterface;
@@ -32,10 +32,11 @@ class Application extends Applet {
     private static final int STEPS = 250; //max number of space colonization iterations
     private static final long DELAY = 0;
     private static final boolean DEBUG = false;
-    private static final boolean SAVED = false;
+    private static final boolean SAVED = true;
     private static final String NEXTFILE = "exp";
     private static final String SAVEFILE = "cloud2"; //clud4m, cloud4m, cloud6m, cloud2
-    private static Appearance branchAppearance;
+    private static ShaderAppearance branchAppearance;
+
     private static Appearance obstacleAppearance;
 
 
@@ -43,8 +44,8 @@ class Application extends Applet {
 
         Point3D verschiebung = new Point3D(0, 0, 0);
 
-//        Tree tree = new Tree(TreeType.PLATANE, 4.0, verschiebung);
-        Tree tree = new Tree(TreeType.KORKHASE, 3.0, verschiebung);
+        Tree tree = new Tree(TreeType.PLATANE, 4.0, verschiebung);
+//        Tree tree = new Tree(TreeType.KORKHASE, 3.0, verschiebung);
 
         //obstacles
         List<Obstacle> obstacles = new ArrayList<>();
@@ -124,7 +125,7 @@ class Application extends Applet {
             ViewInterface.log("   step " + i + "/" + STEPS);
             if (i % STEP == 0) {
                 putBranches(tree);
-//                putAttractionPoints(cloud);
+                putAttractionPoints(cloud);
             }
             Thread.sleep(DELAY);
 
@@ -175,17 +176,23 @@ class Application extends Applet {
         view = new View((int) (screenSize.getWidth()), (int) (screenSize.getHeight()));
         new MainFrame((View) view, (int) (screenSize.getWidth()), (int) (screenSize.getHeight()));
 
-        branchAppearance = new Appearance();
+        branchAppearance = new ShaderAppearance();
+        branchAppearance.setCapability(ShaderAppearance.ALLOW_SHADER_PROGRAM_WRITE);
         Color3f brown = new Color3f(0.318f, 0.212f, 0.051f);
         Color3f black = new Color3f(0, 0, 0);
-        branchAppearance.setMaterial(new Material(brown, brown, black, black, 70f));
+        Color3f white = new Color3f(255,255,255);
+        Color3f darkbrown = new Color3f(0.106f, 0.0314f, 0.0118f);
+//        branchAppearance.setMaterial(new Material(brown, brown, black, black, 70f));
+        branchAppearance.setMaterial(new Material(brown, darkbrown, brown, white, 70f));
+//        app.setMaterial(new Material(objColor, black, objColor, white, 80.0f));
+
 //        branchAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
 //        branchAppearance.setCapability(Appearance.ALLOW_TEXGEN_WRITE);
 
 
         obstacleAppearance = new Appearance();
-        Color3f white = new Color3f(Color.WHITE.getRed(),Color.WHITE.getGreen(),Color.WHITE.getBlue());
-        obstacleAppearance.setMaterial(new Material(white, black, white, white, 110f));
+        Color3f gray = new Color3f(Color.gray.getRed(),Color.gray.getGreen(),Color.gray.getBlue());
+        obstacleAppearance.setMaterial(new Material(gray, black, gray, white, 110f));
 
         //coordinates
         view.addMarker(0, 0, 0, new Color3f(Color.black.getRed(),Color.black.getGreen(),Color.black.getBlue()), 0.02f);
@@ -201,7 +208,49 @@ class Application extends Applet {
 //        IOController.analyzeCSV();
 
         initi();
-        run();
+//        run();
+        Point3D nodem1 = new Point3D(0,-0.1f,0);
+        Point3D node0 = new Point3D(0,0,0);
+        Point3D node1 = new Point3D(0,0.2f,0);
+        Point3D node2 = new Point3D(0,0.3f,0.2f);
+        Point3D node3 = new Point3D(0,0.35f,0.25f);
+        Point3D node4 = new Point3D(0,0.5f,0.25f);
+
+        TruncatedCone cone1 = new TruncatedCone(0.05f, 0.1f, (float)(node0.distance(node1)), branchAppearance, TruncatedCone.BODY, new Point3D[]{nodem1,node0,node1,node2});
+        TruncatedCone cone2 = new TruncatedCone(0.025f, 0.05f, (float)(node1.distance(node2)), branchAppearance, TruncatedCone.BODY, new Point3D[]{node0,node1,node2,node3});
+        TruncatedCone cone3 = new TruncatedCone(0.02f, 0.025f, (float)(node2.distance(node3)), branchAppearance, TruncatedCone.BODY, new Point3D[]{node1,node2,node3, node4});
+
+//        Cylinder cone1 = new Cylinder(0.05f, (float)(node0.distance(node1)));
+//        Cylinder cone2 = new Cylinder(0.02f, (float)(node1.distance(node2)));
+//        Cylinder cone3 = new Cylinder(0.01f, (float)(node2.distance(node3)));
+
+        BranchGroup bg = new BranchGroup();
+
+        TransformGroup tg1 = new TransformGroup();
+        Transform3D t1 = transform(node0,node1);
+        tg1.setTransform(t1);
+        tg1.addChild(cone1);
+
+        TransformGroup tg2 = new TransformGroup();
+        Transform3D t2 = transform(node1,node2);
+        tg2.setTransform(t2);
+        tg2.addChild(cone2);
+
+        TransformGroup tg3 = new TransformGroup();
+        Transform3D t3 = transform(node2,node3);
+        tg3.setTransform(t3);
+        tg3.addChild(cone3);
+
+//        bg.addChild(cone1);
+        bg.addChild(tg1);
+        bg.addChild(tg2);
+        bg.addChild(tg3);
+
+        view.addToTree(bg);
+
+
+        view.addMarker(0,0.2f,0);
+        view.addMarker(0,0.7f,0);
 
 //        Point3D angle = new Point3D(-1f,0,1);
 //        System.out.println(angle.azimuthDegree());
@@ -393,16 +442,42 @@ class Application extends Applet {
             return tg;
 
 
-        Point3D parentPoint = parent.getPoint();
-        Point3D nodePoint = node.getPoint();
+
+
+        Transform3D t = transform(parent.getPoint(), node.getPoint());
+
+        tg.setTransform(t);
+        Point3D durchschnittChildren = new Point3D(0,0,0);
+        node.getTreeChildren().forEach(child -> durchschnittChildren.addTo(child.getPoint()));
+        Point3D parentParent;
+        if(parent.getParent()!=null)
+            parentParent = parent.getParent().getPoint();
+        else
+            parentParent = null;
+        Point3D[] points = new Point3D[]{parentParent, node.getParent().getPoint(), node.getPoint(), durchschnittChildren};
+        TruncatedCone branch = new TruncatedCone(thicknessTop, thicknessBot, (float) (node.getPoint().distance(node.getParent().getPoint())), branchAppearance, flags, points);
+//        if (DEBUG)
+//            branch.setAppearance(debugAppearance);
+//        else
+//            branch.setAppearance(branchAppearance);
+
+        tg.addChild(branch);
+
+        return tg;
+    }
+
+    public static void visualizeSun(SunPosition sunPos) {
+        view.setSun(sunPos);
+    }
+
+    private static Transform3D transform(Point3D parentPoint, Point3D nodePoint){
 
         Point3D vector = nodePoint.subtract(parentPoint);
-
         Transform3D t = new Transform3D();
 
         if (nodePoint.toString().equals(parentPoint.toString())) {
             System.out.println("parent and node were equal");
-            return tg;
+            return t;
         }
 
         Point3D newYAxis = new Point3D(nodePoint.getX() - parentPoint.getX(), nodePoint.getY() - parentPoint.getY(), nodePoint.getZ() - parentPoint.getZ());
@@ -438,23 +513,8 @@ class Application extends Applet {
         Matrix3f matrix = new Matrix3f(newXAxis.getX() / newXAxis.vectorLength(), newYAxis.getX() / newYAxis.vectorLength(), newZAxis.getX() / newZAxis.vectorLength(),
                 newXAxis.getY() / newXAxis.vectorLength(), newYAxis.getY() / newYAxis.vectorLength(), newZAxis.getY() / newZAxis.vectorLength(),
                 newXAxis.getZ() / newXAxis.vectorLength(), newYAxis.getZ() / newYAxis.vectorLength(), newZAxis.getZ() / newZAxis.vectorLength());
-        t.set(matrix, new Vector3f((float) (node.getParent().getPoint().getX() + 0.5 * vector.getX()), (float) (node.getParent().getPoint().getY() + 0.5 * vector.getY()), (float) (node.getParent().getPoint().getZ() + 0.5 * vector.getZ())), 1.0f);
+        t.set(matrix, new Vector3f((float) (parentPoint.getX() /*+ 0.5 * vector.getX()*/), (float) (parentPoint.getY() /*+ 0.5 * vector.getY()*/), (float) (parentPoint.getZ() /*+ 0.5 * vector.getZ()*/)), 1.0f);
 
-
-        tg.setTransform(t);
-
-        TruncatedCone branch = new TruncatedCone(thicknessTop, thicknessBot, (float) (node.getPoint().distance(node.getParent().getPoint())), branchAppearance, flags);
-//        if (DEBUG)
-//            branch.setAppearance(debugAppearance);
-//        else
-//            branch.setAppearance(branchAppearance);
-
-        tg.addChild(branch);
-
-        return tg;
-    }
-
-    public static void visualizeSun(SunPosition sunPos) {
-        view.setSun(sunPos);
+        return t;
     }
 }

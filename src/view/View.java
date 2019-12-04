@@ -243,8 +243,8 @@ public class View extends Applet implements ViewInterface {
     private void addLights(BranchGroup bg) {
 
         Color3f dlColor = new Color3f(0.7f, 0.7f, 0.7f);
-        Vector3f dir = new Vector3f(0.0f, 0.0f, -1.0f);
-        Color3f alColor = new Color3f(0.2f, 0.2f, 0.2f);
+        Vector3f dir = new Vector3f(0.0f, -0.2f, 1.0f);
+        Color3f alColor = new Color3f(0.4f, 0.4f, 0.4f);
 
         AmbientLight ambLight = new AmbientLight(alColor);
         ambLight.setInfluencingBounds(bounds);

@@ -1,5 +1,7 @@
 package view;
 
+import org.jogamp.vecmath.Matrix3d;
+
 import java.text.DecimalFormat;
 
 public class Point3D {
@@ -159,5 +161,14 @@ public class Point3D {
         double ergebnis = Math.toDegrees(Math.acos(y.dot(this) / (y.vectorLength() * this.vectorLength())));
         ergebnis = Math.round(ergebnis * 1000.0) / 1000.0;
         return String.valueOf(ergebnis);
+    }
+
+    public void matrixVector(Matrix3d m){
+        double i1 = m.getM00()*x + m.getM01()*y + m.getM02()*z;
+        double i2 = m.getM10()*x + m.getM11()*y + m.getM12()*z;
+        double i3 = m.getM20()*x + m.getM21()*y + m.getM22()*z;
+        this.x = (float)i1;
+        this.y = (float)i2;
+        this.z = (float)i3;
     }
 }
