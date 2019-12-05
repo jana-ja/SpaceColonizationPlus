@@ -11,6 +11,7 @@ public class KDParentTreeNode {
     private double[] coords;
     private float thickness;
     private float thicknessHelpSum;
+    private Point3D[] points;
 
 
 
@@ -103,5 +104,13 @@ public class KDParentTreeNode {
             return new Point3D(0,0,0);
         else
             return this.point.subtract(parent.getPoint());
+    }
+
+    public Point3D[] getPoints() {
+        return points;
+    }
+
+    public void setPoints(Point3D[] points) {
+        this.points = points;
     }
 }

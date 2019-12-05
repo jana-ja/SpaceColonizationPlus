@@ -102,5 +102,16 @@ public class Tree {
         return sum;
     }
 
+    public void calculateDiscs(){
+
+    }
+
+    private void calculateDiscsRek(KDParentTreeNode node){
+        if(node.getTreeChildren().isEmpty() || node.getParent()==null){
+            return;
+        }
+
+    }
+
 
 }

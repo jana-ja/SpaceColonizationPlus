@@ -112,7 +112,7 @@ public class Building implements Obstacle {
         return shape;
     }
 
-    private void swapArray(Point3f[] array){
+    static void swapArray(Point3f[] array){
         for (int i = 0; i < array.length/2; i++){
             Point3f temp = array[i];
             array[i] = array[array.length-i-1];
