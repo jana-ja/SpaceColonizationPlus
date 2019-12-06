@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static java.awt.geom.Point2D.distance;
 
 
-public class SpaceColonization {
+class SpaceColonization {
 
     private final int beginDay = 60;
     private final int endDay = 300;

@@ -22,7 +22,7 @@ public class Building implements Obstacle {
 
     private float maxX,  minX,  maxZ, minZ, maxY, minY;
 
-    public Building(String name, Point3D corner1, Point3D corner2) {
+    private Building(String name, Point3D corner1, Point3D corner2) {
         this.name = name;
         this.corner1 = corner1;
         this.corner2 = corner2;
@@ -103,13 +103,12 @@ public class Building implements Obstacle {
         giBody.setCoordinates(quadArray);
         NormalGenerator ng = new NormalGenerator();
         ng.generateNormals(giBody);
-        Shape3D shape = new Shape3D(giBody.getGeometryArray(), appearance);
-//        shape.setCapability(Shape3D.ALLOW_BOUNDS_READ);
+        //        shape.setCapability(Shape3D.ALLOW_BOUNDS_READ);
 //        shape.setCapability(Shape3D.ALLOW_BOUNDS_WRITE);
 //        shape.setBoundsAutoCompute(false);
 //        shape.setCollisionBounds(bounds);
 
-        return shape;
+        return new Shape3D(giBody.getGeometryArray(), appearance);
     }
 
     static void swapArray(Point3f[] array){

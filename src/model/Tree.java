@@ -1,11 +1,7 @@
 package model;
 
-import controller.Application;
 import org.jogamp.vecmath.Point3f;
 import view.Point3D;
-
-import java.awt.*;
-import java.util.List;
 
 public class Tree {
 
@@ -47,9 +43,7 @@ public class Tree {
         if (node.getTreeChildren().isEmpty())
             return node.parentAngle();
         Point3D childAngle = new Point3D(0, 0, 0);
-        node.getTreeChildren().forEach(child -> {
-            childAngle.addTo(calculateAngleRek(child));
-        });
+        node.getTreeChildren().forEach(child -> childAngle.addTo(calculateAngleRek(child)));
         return node.parentAngle().add(childAngle);
 
     }
@@ -118,7 +112,7 @@ public class Tree {
         Point3f[] points = new Point3f[N + 1]; // +1 für midde
         points[0] = new Point3f(0,0,0); //midde
         for (int i = 1; i < points.length; i++) {
-            double alpha = 2 * Math.PI / (N - 1) * (N - i); //N-i damit faces nach oben
+            double alpha = 2 * Math.PI / (N - 1) * i; //N-i damit faces nach oben
             float x = (float) (radius * Math.cos(alpha));
             float z = (float) (radius * Math.sin(alpha));
             points[i] = new Point3f(x, 0, z);
@@ -154,7 +148,7 @@ public class Tree {
         }
         node.setPointsTop(pointsTop);
         node.setPointsBot(pointsBot);
-        node.getTreeChildren().forEach(child -> calculateDiscsRek(child));
+        node.getTreeChildren().forEach(this::calculateDiscsRek);
     }
 
     private Point3f[] copy(Point3f[] points) {

@@ -5,11 +5,8 @@ import com.sun.istack.internal.Nullable;
 import model.*;
 import org.jogamp.java3d.*;
 import org.jogamp.java3d.utils.applet.MainFrame;
-import org.jogamp.java3d.utils.geometry.Cylinder;
 import org.jogamp.java3d.utils.geometry.Sphere;
-import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.vecmath.*;
-import org.omg.CORBA.MARSHAL;
 import view.Point3D;
 import view.View;
 import view.ViewInterface;
@@ -26,9 +23,7 @@ public class Application extends Applet {
     private static final float ATT_POINT_NODE_SIZE = 0.015f;
     private static final double THICKNESS_N = 2.1;
     private static final float INIT_BRANCH_THICKNESS = 0.0025f;
-    public static ViewInterface view;
-
-    public static int l =  1;
+    private static ViewInterface view;
 
     private static final int STEP = 1; //every x STEP is visualized
     private static final int STEPS = 250; //max number of space colonization iterations
@@ -85,8 +80,6 @@ public class Application extends Applet {
                 Gson gson = new Gson();
                 while ((st = reader.readLine()) != null)
                     aps.add(gson.fromJson(st, Point3D.class));
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -156,7 +149,7 @@ public class Application extends Applet {
         ViewInterface.log("\n");
 
         stats("iterations", String.valueOf(i));
-        stats("duration", String.valueOf(format(duration)));
+        stats("duration", format(duration));
         stats("type", tree.getType().name());
         stats("height", String.valueOf(tree.getHeight()));
         if(SAVED){
@@ -172,7 +165,7 @@ public class Application extends Applet {
         stats("null", null);
     }
 
-    public static void initi(){
+    private static void initi(){
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
         view = new View((int) (screenSize.getWidth()), (int) (screenSize.getHeight()));
@@ -184,7 +177,7 @@ public class Application extends Applet {
         Color3f black = new Color3f(0, 0, 0);
         Color3f white = new Color3f(255,255,255);
         Color3f darkbrown = new Color3f(0.106f, 0.0314f, 0.0118f);
-        Color3f lightbrown = new Color3f(1/255*222,1/255*184,1/255*135);
+        Color3f lightbrown = new Color3f(1/255.0f*222,1/255.0f*184,1/255.0f*135);
 //        branchAppearance.setMaterial(new Material(brown, brown, black, black, 70f));
         branchAppearance.setMaterial(new Material(brown, darkbrown, brown, lightbrown, 50f));
 //        app.setMaterial(new Material(objColor, black, objColor, white, 80.0f));
@@ -212,7 +205,7 @@ public class Application extends Applet {
 //        IOController.analyzeCSV();
 
         initi();
-//        run();
+        run();
 
 
 //        Point3D drehachse = new Point3D(1,2,0.5f);
@@ -227,43 +220,43 @@ public class Application extends Applet {
 
 
 
-        Tree tree = new Tree(TreeType.PLATANE, 1.0f, new Point3D(0,0,-0.1f));
-
-        KDParentTreeNode node1 = tree.getNodes().getRoot();
-        tree.getNodes().insert(new Point3D(0,0.2f,-0.1f), node1);
-        KDParentTreeNode node2 = node1.getTreeChildren().get(0);
-        tree.getNodes().insert(new Point3D(0,0.3f,-0.3f), node2);
-        KDParentTreeNode node3 = node2.getTreeChildren().get(0);
-        tree.getNodes().insert(new Point3D(0,0.5f,-0.3f), node3);
-        KDParentTreeNode node4 = node3.getTreeChildren().get(0);
-        tree.getNodes().insert(new Point3D(0,0.6f,-0.1f), node4);
-        KDParentTreeNode node5 = node4.getTreeChildren().get(0);
-
-        tree.getNodes().calculateThicknesses(0.01f, THICKNESS_N);
-        tree.calculateDiscs();
-
-
-        KDParentTreeNode[] nodes = new KDParentTreeNode[]{node1, node2, node3, node4, node5};
-
-        BranchGroup bg = new BranchGroup();
-
-        TruncatedCone[] cones = new TruncatedCone[4];
-        for (int i = 0; i < cones.length; i++) {
-            cones[i] = new TruncatedCone(nodes[i+1], (float)nodes[i+1].getPoint().distance(nodes[i+1].getParent().getPoint()), branchAppearance, TruncatedCone.BODY | TruncatedCone.TOP | TruncatedCone.BOT);
-        }
-
-        for (int i = 0; i < cones.length; i++) {
-            TransformGroup tg1 = new TransformGroup();
-            Transform3D t1 = transform(nodes[i].getPoint(), nodes[i+1].getPoint());
-            tg1.setTransform(t1);
-            tg1.addChild(cones[i]);
-            bg.addChild(tg1);
-            view.addLine(nodes[i].getPoint(), nodes[i+1].getPoint(), Color.red);
-        }
-
-
-
-        view.addToTree(bg);
+//        Tree tree = new Tree(TreeType.PLATANE, 1.0f, new Point3D(0,0,-0.1f));
+//
+//        KDParentTreeNode node1 = tree.getNodes().getRoot();
+//        tree.getNodes().insert(new Point3D(0,0.2f,-0.1f), node1);
+//        KDParentTreeNode node2 = node1.getTreeChildren().get(0);
+//        tree.getNodes().insert(new Point3D(0,0.3f,-0.3f), node2);
+//        KDParentTreeNode node3 = node2.getTreeChildren().get(0);
+//        tree.getNodes().insert(new Point3D(0,0.5f,-0.3f), node3);
+//        KDParentTreeNode node4 = node3.getTreeChildren().get(0);
+//        tree.getNodes().insert(new Point3D(0,0.6f,-0.1f), node4);
+//        KDParentTreeNode node5 = node4.getTreeChildren().get(0);
+//
+//        tree.getNodes().calculateThicknesses(0.03f, THICKNESS_N);
+//        tree.calculateDiscs();
+//
+//
+//        KDParentTreeNode[] nodes = new KDParentTreeNode[]{node1, node2, node3, node4, node5};
+//
+//        BranchGroup bg = new BranchGroup();
+//
+//        TruncatedCone[] cones = new TruncatedCone[4];
+//        for (int i = 0; i < cones.length; i++) {
+//            cones[i] = new TruncatedCone(nodes[i+1], (float)nodes[i+1].getPoint().distance(nodes[i+1].getParent().getPoint()), branchAppearance, TruncatedCone.BODY | TruncatedCone.TOP | TruncatedCone.BOT);
+//        }
+//
+//        for (int i = 0; i < cones.length; i++) {
+//            TransformGroup tg1 = new TransformGroup();
+//            Transform3D t1 = transform(nodes[i].getPoint(), nodes[i+1].getPoint());
+//            tg1.setTransform(t1);
+//            tg1.addChild(cones[i]);
+//            bg.addChild(tg1);
+//            view.addLine(nodes[i].getPoint(), nodes[i+1].getPoint(), Color.red);
+//        }
+//
+//
+//
+//        view.addToTree(bg);
 
 
 
@@ -408,11 +401,11 @@ public class Application extends Applet {
             KDParentTreeNode tmp = nodes.pop();
 
             if (tmp.equals(tree.getNodes().getRoot()))
-                bg.addChild(buildCylinder(tmp, tmp.getThickness(), tmp.getThickness(), TruncatedCone.BODY | TruncatedCone.BOT));
+                bg.addChild(buildCylinder(tmp, TruncatedCone.BODY | TruncatedCone.BOT));
             else if (tree.getNodes().getLeaves().contains(tmp))
-                bg.addChild(buildCylinder(tmp, tmp.getThickness(), tmp.getParent().getThickness(), TruncatedCone.BODY | TruncatedCone.TOP));
+                bg.addChild(buildCylinder(tmp, TruncatedCone.BODY | TruncatedCone.TOP));
             else
-                bg.addChild(buildCylinder(tmp, tmp.getThickness(), tmp.getParent().getThickness(), TruncatedCone.BODY));
+                bg.addChild(buildCylinder(tmp, TruncatedCone.BODY /*| TruncatedCone.TOP | TruncatedCone.BOT*/)); //mit top und bot für mehr beauty
 
 
             if (tmp.getLtbChild() != null) {
@@ -440,7 +433,7 @@ public class Application extends Applet {
      * @param node
      * @return
      */
-    private static TransformGroup buildCylinder(KDParentTreeNode node, float thicknessTop, float thicknessBot, int flags) {
+    private static TransformGroup buildCylinder(KDParentTreeNode node, int flags) {
 
         Appearance debugAppearance;
         if (DEBUG) {
@@ -460,27 +453,11 @@ public class Application extends Applet {
 
 //        view.addLine(parent.getPoint(), node.getPoint(), Color.red);
 
-
-
         Transform3D t = transform(parent.getPoint(), node.getPoint());
 
         tg.setTransform(t);
-        Point3D durchschnittChildren = new Point3D(0,0,0);
-        node.getTreeChildren().forEach(child -> durchschnittChildren.addTo(child.getPoint()));
-//        if(durchschnittChildren.vectorLength()==0)
-//            durchschnittChildren=null;
-        Point3D parentParent;
-        if(parent.getParent()!=null)
-            parentParent = parent.getParent().getPoint();
-        else
-            parentParent = null;
-        Point3D[] points = new Point3D[]{parentParent, node.getParent().getPoint(), node.getPoint(), durchschnittChildren};
+
         TruncatedCone branch = new TruncatedCone(node, (float) (node.getPoint().distance(node.getParent().getPoint())), branchAppearance, flags);
-//        TruncatedCone branch = new TruncatedCone(thicknessTop, thicknessBot, (float) (node.getPoint().distance(node.getParent().getPoint())), branchAppearance, flags, points);
-//        if (DEBUG)
-//            branch.setAppearance(debugAppearance);
-//        else
-//            branch.setAppearance(branchAppearance);
 
         tg.addChild(branch);
 

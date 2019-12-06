@@ -2,8 +2,6 @@ package view;
 
 import org.jogamp.vecmath.Matrix3d;
 
-import java.text.DecimalFormat;
-
 public class Point3D {
 
     private float x, y, z;
@@ -130,7 +128,7 @@ public class Point3D {
     }
 
     public String shortString(){
-        return ((double) (Math.round(x * 100.0) / 100.0) + " " + (double) (Math.round(y * 100.0) / 100.0) + " " + (double) (Math.round(z * 100.0) / 100.0));
+        return ((Math.round(x * 100.0) / 100.0) + " " + (Math.round(y * 100.0) / 100.0) + " " + (Math.round(z * 100.0) / 100.0));
     }
 
     public boolean equals(Point3D point) {

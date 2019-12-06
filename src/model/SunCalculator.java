@@ -5,23 +5,23 @@ import java.util.List;
 
 public class SunCalculator {
 
-    static final double LAT = 51.51494;
+    private static final double LAT = 51.51494;
 
-    static double dayAngle(int day) {
+    private static double dayAngle(int day) {
         return (2.0 * Math.PI * day) / 365.25;
     }
 
-    static double hourAngle(double t) {
+    private static double hourAngle(double t) {
         return 0.2617993878 * (t - 12.0);
     }
 
 
-    static double declination(double dayangle) {
+    private static double declination(double dayangle) {
         return Math.asin(0.3978 * Math.sin(dayangle - 1.4 + 0.0355 * Math.sin(dayangle - 0.0489)));
     }
 
 
-    static double sunrise(double lat, double declination) {
+    private static double sunrise(double lat, double declination) {
         double tmp = -Math.tan(lat) * Math.tan(declination);
         if (Math.abs(tmp) <= 1.0) {
             return 12.0 - Math.acos(tmp) / 0.2617993878;
@@ -32,7 +32,7 @@ public class SunCalculator {
     }
 
 
-    static double sunset(double lat, double declination) {
+    private static double sunset(double lat, double declination) {
         double tmp = -Math.tan(lat) * Math.tan(declination);
         if (Math.abs(tmp) <= 1.0) {
             return 12.0 + Math.acos(tmp) / 0.2617993878;
@@ -42,12 +42,12 @@ public class SunCalculator {
         }
     }
 
-    static double elevationAngle(double hourangle, double lat, double declination) {
+    private static double elevationAngle(double hourangle, double lat, double declination) {
         return Math.asin(Math.sin(lat) * Math.sin(declination) + Math.cos(lat) * Math.cos(declination) * Math.cos(hourangle));
     }
 
 
-    static double azimuth(double decl, double lat, double elev, double hourangle) {
+    private static double azimuth(double decl, double lat, double elev, double hourangle) {
         double a = Math.sin(decl) * Math.cos(lat) - Math.cos(decl) * Math.sin(lat) * Math.cos(hourangle);
         a /= Math.cos(elev);
 

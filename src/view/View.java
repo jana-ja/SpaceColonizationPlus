@@ -2,7 +2,6 @@ package view;
 
 import java.applet.Applet;
 import java.awt.*;
-import java.text.DecimalFormat;
 
 import model.SunPosition;
 import org.jogamp.java3d.*;

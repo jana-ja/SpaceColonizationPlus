@@ -28,23 +28,6 @@ public class PointCloud {
         this.attractionPoints = attractionPoints;
     }
 
-    public void intersectWithObstacles(List<Obstacle> obstacles) {
-
-        List<Point3D> cloud2 = new ArrayList<>();
-
-        for (Point3D point : attractionPoints) {
-            boolean yeah = true;
-            for (Obstacle obstacle : obstacles) {
-                if (obstacle.isInside(point))
-                    yeah = false;
-            }
-            if (yeah)
-                cloud2.add(point);
-        }
-
-        this.attractionPoints = cloud2;
-    }
-
     public void updateWithObstacles(List<Obstacle> obstacles){
         for (Point3D point : attractionPoints) {
             boolean outside = true;

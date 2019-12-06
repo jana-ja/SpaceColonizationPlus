@@ -285,14 +285,14 @@ public class KDParentTree {
             node.setThickness(r0);
             return r0;
         }
-        float thickness = ((float)(Math.pow((double)(calculateThicknessSum(node, r0, n)), 1/n)));
+        float thickness = ((float)(Math.pow((calculateThicknessSum(node, r0, n)), 1/n)));
         node.setThickness(thickness);
         return thickness;
     }
 
     private float calculateThicknessSum(KDParentTreeNode node, float r0, double n){
     node.resetThicknessHelpSum(); //auf 0.0f
-        node.getTreeChildren().forEach(child -> node.addToThicknessSum((float)(Math.pow((double)(calculateThickness(child,r0,n)),n))));
+        node.getTreeChildren().forEach(child -> node.addToThicknessSum((float)(Math.pow((calculateThickness(child,r0,n)),n))));
 
         return node.getThicknessHelpSum();
     }
