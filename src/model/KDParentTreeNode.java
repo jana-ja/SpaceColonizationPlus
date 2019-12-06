@@ -1,5 +1,6 @@
 package model;
 
+import org.jogamp.vecmath.Point3f;
 import view.Point3D;
 
 import java.util.ArrayList;
@@ -11,7 +12,8 @@ public class KDParentTreeNode {
     private double[] coords;
     private float thickness;
     private float thicknessHelpSum;
-    private Point3D[] points;
+    private Point3f[] pointsTop;
+    private Point3f[] pointsBot;
 
 
 
@@ -20,7 +22,7 @@ public class KDParentTreeNode {
     private KDParentTreeNode rbfChild;
     private final List<KDParentTreeNode> treeChildren;
 
-    KDParentTreeNode(Point3D point, double[] coords, KDParentTreeNode parent){
+    public KDParentTreeNode(Point3D point, double[] coords, KDParentTreeNode parent){
         this.point = point; this.coords = coords; this.parent=parent;
         treeChildren = new ArrayList<>();
         this.thicknessHelpSum = 0.0f;
@@ -106,11 +108,19 @@ public class KDParentTreeNode {
             return this.point.subtract(parent.getPoint());
     }
 
-    public Point3D[] getPoints() {
-        return points;
+    public Point3f[] getPointsTop() {
+        return pointsTop;
     }
 
-    public void setPoints(Point3D[] points) {
-        this.points = points;
+    public void setPointsTop(Point3f[] pointsTop) {
+        this.pointsTop = pointsTop;
+    }
+
+    public Point3f[] getPointsBot() {
+        return pointsBot;
+    }
+
+    public void setPointsBot(Point3f[] pointsBot) {
+        this.pointsBot = pointsBot;
     }
 }

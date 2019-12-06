@@ -26,12 +26,12 @@ public class Application extends Applet {
     private static final float ATT_POINT_NODE_SIZE = 0.015f;
     private static final double THICKNESS_N = 2.1;
     private static final float INIT_BRANCH_THICKNESS = 0.0025f;
-    private static ViewInterface view;
+    public static ViewInterface view;
 
     public static int l =  1;
 
     private static final int STEP = 1; //every x STEP is visualized
-    private static final int STEPS = 30; //max number of space colonization iterations
+    private static final int STEPS = 250; //max number of space colonization iterations
     private static final long DELAY = 0;
     private static final boolean DEBUG = false;
     private static final boolean SAVED = false;
@@ -150,7 +150,7 @@ public class Application extends Applet {
 //        branchAppearance.setTexCoordGeneration(generation);
 //
         putBranches(tree);
-        putAttractionPoints(cloud);
+//        putAttractionPoints(cloud);
 
 
         ViewInterface.log("\n");
@@ -184,8 +184,9 @@ public class Application extends Applet {
         Color3f black = new Color3f(0, 0, 0);
         Color3f white = new Color3f(255,255,255);
         Color3f darkbrown = new Color3f(0.106f, 0.0314f, 0.0118f);
+        Color3f lightbrown = new Color3f(1/255*222,1/255*184,1/255*135);
 //        branchAppearance.setMaterial(new Material(brown, brown, black, black, 70f));
-        branchAppearance.setMaterial(new Material(brown, darkbrown, brown, white, 70f));
+        branchAppearance.setMaterial(new Material(brown, darkbrown, brown, lightbrown, 50f));
 //        app.setMaterial(new Material(objColor, black, objColor, white, 80.0f));
 
 //        branchAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
@@ -197,7 +198,7 @@ public class Application extends Applet {
         obstacleAppearance.setMaterial(new Material(gray, black, gray, white, 110f));
 
         //coordinates
-        view.addMarker(0, 0, 0, new Color3f(Color.black.getRed(),Color.black.getGreen(),Color.black.getBlue()), 0.02f);
+//        view.addMarker(0, 0, 0, new Color3f(Color.black.getRed(),Color.black.getGreen(),Color.black.getBlue()), 0.02f);
         view.addLine(new Point3D(0,0,0), new Point3D(10,0,0), Color.blue);
 //        view.addMarker(0.5f, 0, 0, new Color3f(Color.blue), 0.04f);
         view.addLine(new Point3D(0,0,0), new Point3D(0,10,0), Color.green);
@@ -214,52 +215,55 @@ public class Application extends Applet {
 //        run();
 
 
-        Point3D drehachse = new Point3D(1,2,0.5f);
-        Point3f[] points = new Point3f[]{new Point3f(-1,1,0), new Point3f(0,1,-1), new Point3f(1,1,0), new Point3f(0,1,1)};
-        for (Point3f point : points) {
-            view.addMarker(point.getX(),point.getY(),point.getZ(),new Color3f(1,1,1), 0.05f);
-        }
-        TruncatedCone.transform(new Point3f(0,1,0), points, drehachse, Math.toRadians(40));
-        for (Point3f point : points) {
-            view.addMarker(point.getX(),point.getY(),point.getZ(),new Color3f(0,0,0), 0.05f);
-        }
+//        Point3D drehachse = new Point3D(1,2,0.5f);
+//        Point3f[] points = new Point3f[]{new Point3f(-1,1,0), new Point3f(0,1,-1), new Point3f(1,1,0), new Point3f(0,1,1)};
+//        for (Point3f point : points) {
+//            view.addMarker(point.getX(),point.getY(),point.getZ(),new Color3f(1,1,1), 0.05f);
+//        }
+//        TruncatedCone.transform(new Point3f(0,1,0), points, drehachse, Math.toRadians(40));
+//        for (Point3f point : points) {
+//            view.addMarker(point.getX(),point.getY(),point.getZ(),new Color3f(0,0,0), 0.05f);
+//        }
 
 
 
-        Point3D nodem1 = new Point3D(0,-0.1f,0);
-        Point3D node0 = new Point3D(0,0,0);
-        Point3D node1 = new Point3D(0,0.2f,0);
-        Point3D node2 = new Point3D(0,0.3f,0.1f);
-        Point3D node3 = new Point3D(0,0.35f,0.1f);
-        Point3D node4 = new Point3D(0,0.5f,0.15f);
-        Point3D node5 = new Point3D(0,0.6f,0.15f);
-        Point3D node6 = new Point3D(0,0.65f,0.20f);
-        Point3D[] nodes = new Point3D[]{nodem1, node0, node1, node2, node3, node4, node5, node6};
+        Tree tree = new Tree(TreeType.PLATANE, 1.0f, new Point3D(0,0,-0.1f));
 
-        TruncatedCone cone1 = new TruncatedCone(0.05f, 0.08f, (float)(node0.distance(node1)), branchAppearance, TruncatedCone.BODY, new Point3D[]{nodem1,node0,node1,node2});
-        TruncatedCone cone2 = new TruncatedCone(0.025f, 0.05f, (float)(node1.distance(node2)), branchAppearance, TruncatedCone.BODY, new Point3D[]{node0,node1,node2,node3});
-        TruncatedCone cone3 = new TruncatedCone(0.02f, 0.025f, (float)(node2.distance(node3)), branchAppearance, TruncatedCone.BODY, new Point3D[]{node1,node2,node3, node4});
-        TruncatedCone cone4 = new TruncatedCone(0.015f, 0.02f, (float)(node3.distance(node4)), branchAppearance, TruncatedCone.BODY, new Point3D[]{node2,node3, node4, node5});
-        TruncatedCone cone5 = new TruncatedCone(0.01f, 0.015f, (float)(node4.distance(node5)), branchAppearance, TruncatedCone.BODY, new Point3D[]{node3, node4, node5, node6});
+        KDParentTreeNode node1 = tree.getNodes().getRoot();
+        tree.getNodes().insert(new Point3D(0,0.2f,-0.1f), node1);
+        KDParentTreeNode node2 = node1.getTreeChildren().get(0);
+        tree.getNodes().insert(new Point3D(0,0.3f,-0.3f), node2);
+        KDParentTreeNode node3 = node2.getTreeChildren().get(0);
+        tree.getNodes().insert(new Point3D(0,0.5f,-0.3f), node3);
+        KDParentTreeNode node4 = node3.getTreeChildren().get(0);
+        tree.getNodes().insert(new Point3D(0,0.6f,-0.1f), node4);
+        KDParentTreeNode node5 = node4.getTreeChildren().get(0);
+
+        tree.getNodes().calculateThicknesses(0.01f, THICKNESS_N);
+        tree.calculateDiscs();
+
+
+        KDParentTreeNode[] nodes = new KDParentTreeNode[]{node1, node2, node3, node4, node5};
 
         BranchGroup bg = new BranchGroup();
 
-        TruncatedCone[] cones = new TruncatedCone[]{cone1,cone2,cone3,cone4,cone5};
+        TruncatedCone[] cones = new TruncatedCone[4];
+        for (int i = 0; i < cones.length; i++) {
+            cones[i] = new TruncatedCone(nodes[i+1], (float)nodes[i+1].getPoint().distance(nodes[i+1].getParent().getPoint()), branchAppearance, TruncatedCone.BODY | TruncatedCone.TOP | TruncatedCone.BOT);
+        }
+
         for (int i = 0; i < cones.length; i++) {
             TransformGroup tg1 = new TransformGroup();
-            Transform3D t1 = transform(nodes[i+1], nodes[i+2]);
+            Transform3D t1 = transform(nodes[i].getPoint(), nodes[i+1].getPoint());
             tg1.setTransform(t1);
             tg1.addChild(cones[i]);
             bg.addChild(tg1);
-            view.addLine(nodes[i+1], nodes[i+2], Color.red);
+            view.addLine(nodes[i].getPoint(), nodes[i+1].getPoint(), Color.red);
         }
 
 
+
         view.addToTree(bg);
-
-
-        view.addMarker(0,0.2f,0);
-        view.addMarker(0,0.7f,0);
 
 
 
@@ -383,6 +387,7 @@ public class Application extends Applet {
     private static void putBranches(Tree tree) {
 
         tree.getNodes().calculateThicknesses(INIT_BRANCH_THICKNESS, THICKNESS_N);
+        tree.calculateDiscs();
 
 
         KDParentTreeNode node = tree.getNodes().getRoot();
@@ -453,7 +458,7 @@ public class Application extends Applet {
         if (parent == null)
             return tg;
 
-        view.addLine(parent.getPoint(), node.getPoint(), Color.red);
+//        view.addLine(parent.getPoint(), node.getPoint(), Color.red);
 
 
 
@@ -470,7 +475,8 @@ public class Application extends Applet {
         else
             parentParent = null;
         Point3D[] points = new Point3D[]{parentParent, node.getParent().getPoint(), node.getPoint(), durchschnittChildren};
-        TruncatedCone branch = new TruncatedCone(thicknessTop, thicknessBot, (float) (node.getPoint().distance(node.getParent().getPoint())), branchAppearance, flags, points);
+        TruncatedCone branch = new TruncatedCone(node, (float) (node.getPoint().distance(node.getParent().getPoint())), branchAppearance, flags);
+//        TruncatedCone branch = new TruncatedCone(thicknessTop, thicknessBot, (float) (node.getPoint().distance(node.getParent().getPoint())), branchAppearance, flags, points);
 //        if (DEBUG)
 //            branch.setAppearance(debugAppearance);
 //        else
@@ -495,40 +501,66 @@ public class Application extends Applet {
             return t;
         }
 
-        Point3D newYAxis = new Point3D(nodePoint.getX() - parentPoint.getX(), nodePoint.getY() - parentPoint.getY(), nodePoint.getZ() - parentPoint.getZ());
+//        Point3D newYAxis = new Point3D(nodePoint.getX() - parentPoint.getX(), nodePoint.getY() - parentPoint.getY(), nodePoint.getZ() - parentPoint.getZ());
+//
+//
+//        //calculate new X and Z vector (orthogonal)
+//        Point3D newXAxis;
+//        Point3D newZAxis;
+//        //check if newY is parallel to one of the old axis
+//        if (newYAxis.getX() == 0 && newYAxis.getY() == 0) {
+//            //Y axis is now Z axis
+//            newXAxis = new Point3D(0, 1.0f, 0);
+//            newZAxis = new Point3D(1.0f, 0, 0);
+//        } else if (newYAxis.getY() == 0 && newYAxis.getZ() == 0) {
+//            //Y axis is now X axis
+//            newXAxis = new Point3D(0, 0, 1.0f);
+//            newZAxis = new Point3D(0, 1.0f, 0);
+//        } else if (newYAxis.getZ() == 0 && newYAxis.getX() == 0) {
+//            //Y axis is still Y axis
+//            newXAxis = new Point3D(1.0f, 0, 0);
+//            newZAxis = new Point3D(0, 0, 1.0f);
+//        } else {
+//            //höchstens eine 0 im vektor der neuen y Achse
+//            newXAxis = new Point3D(-newYAxis.getY(), newYAxis.getX(), 0);
+//            newZAxis = new Point3D(newYAxis.getY() * newXAxis.getZ() - newYAxis.getZ() * newXAxis.getY(),
+//                    newYAxis.getZ() * newXAxis.getX() - newYAxis.getX() * newXAxis.getZ(),
+//                    newYAxis.getX() * newXAxis.getY() - newYAxis.getY() * newXAxis.getX());
+//        }
+//
+//
+//        //build matrix
+//
+//        Matrix3f matrix = new Matrix3f(newXAxis.getX() / newXAxis.vectorLength(), newYAxis.getX() / newYAxis.vectorLength(), newZAxis.getX() / newZAxis.vectorLength(),
+//                                        newXAxis.getY() / newXAxis.vectorLength(), newYAxis.getY() / newYAxis.vectorLength(), newZAxis.getY() / newZAxis.vectorLength(),
+//                                        newXAxis.getZ() / newXAxis.vectorLength(), newYAxis.getZ() / newYAxis.vectorLength(), newZAxis.getZ() / newZAxis.vectorLength());
+//
 
+        Point3D yAchse = new Point3D(0,1,0);
+        vector.normalize();
+        Point3D drehachse = yAchse.cross(vector);
+        double alpha = Math.acos(yAchse.dot(vector) / (yAchse.vectorLength() * vector.vectorLength()));
+        drehachse.normalize();
 
-        //calculate new X and Z vector (orthogonal)
-        Point3D newXAxis;
-        Point3D newZAxis;
-        //check if newY is parallel to one of the old axis
-        if (newYAxis.getX() == 0 && newYAxis.getY() == 0) {
-            //Y axis is now Z axis
-            newXAxis = new Point3D(0, 1.0f, 0);
-            newZAxis = new Point3D(1.0f, 0, 0);
-        } else if (newYAxis.getY() == 0 && newYAxis.getZ() == 0) {
-            //Y axis is now X axis
-            newXAxis = new Point3D(0, 0, 1.0f);
-            newZAxis = new Point3D(0, 1.0f, 0);
-        } else if (newYAxis.getZ() == 0 && newYAxis.getX() == 0) {
-            //Y axis is still Y axis
-            newXAxis = new Point3D(1.0f, 0, 0);
-            newZAxis = new Point3D(0, 0, 1.0f);
-        } else {
-            //höchstens eine 0 im vektor der neuen y Achse
-            newXAxis = new Point3D(-newYAxis.getY(), newYAxis.getX(), 0);
-            newZAxis = new Point3D(newYAxis.getY() * newXAxis.getZ() - newYAxis.getZ() * newXAxis.getY(),
-                    newYAxis.getZ() * newXAxis.getX() - newYAxis.getX() * newXAxis.getZ(),
-                    newYAxis.getX() * newXAxis.getY() - newYAxis.getY() * newXAxis.getX());
+        if(alpha == 0){
+            t.setTranslation(new Vector3d((parentPoint.getX() /*+ 0.5 * vector.getX()*/), (parentPoint.getY() /*+ 0.5 * vector.getY()*/),  (parentPoint.getZ() /*+ 0.5 * vector.getZ()*/)));
+            return t;
         }
+        double n1 = drehachse.getX();
+        double n2 = drehachse.getY();
+        double n3 = drehachse.getZ();
+        double cosA = Math.cos(alpha);
+        double dings = 1 - cosA;
+        double sinA = Math.sin(alpha);
+
+        //reihenweise
+        Matrix3d matrix = new Matrix3d(Math.pow(n1, 2) * dings + cosA, n1 * n2 * dings - n3 * sinA, n1 * n3 * dings + n2 * sinA,
+                n2 * n1 * dings + n3 * sinA, Math.pow(n2, 2) * dings + cosA, n2 * n3 * dings - n1 * sinA,
+                n3 * n1 * dings - n2 * sinA, n3 * n2 * dings + n1 * sinA, Math.pow(n3, 2) * dings + cosA);
 
 
-        //build matrix
 
-        Matrix3f matrix = new Matrix3f(newXAxis.getX() / newXAxis.vectorLength(), newYAxis.getX() / newYAxis.vectorLength(), newZAxis.getX() / newZAxis.vectorLength(),
-                newXAxis.getY() / newXAxis.vectorLength(), newYAxis.getY() / newYAxis.vectorLength(), newZAxis.getY() / newZAxis.vectorLength(),
-                newXAxis.getZ() / newXAxis.vectorLength(), newYAxis.getZ() / newYAxis.vectorLength(), newZAxis.getZ() / newZAxis.vectorLength());
-        t.set(matrix, new Vector3f((float) (parentPoint.getX() /*+ 0.5 * vector.getX()*/), (float) (parentPoint.getY() /*+ 0.5 * vector.getY()*/), (float) (parentPoint.getZ() /*+ 0.5 * vector.getZ()*/)), 1.0f);
+        t.set(matrix, new Vector3d((parentPoint.getX() /*+ 0.5 * vector.getX()*/), (parentPoint.getY() /*+ 0.5 * vector.getY()*/),  (parentPoint.getZ() /*+ 0.5 * vector.getZ()*/)), 1.0f);
 
         return t;
     }

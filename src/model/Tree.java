@@ -1,10 +1,15 @@
 package model;
 
+import controller.Application;
+import org.jogamp.vecmath.Point3f;
 import view.Point3D;
 
+import java.awt.*;
 import java.util.List;
 
 public class Tree {
+
+    public static final int X_DIVISION = 15;
 
     private final TreeType type;
     private final double height;
@@ -103,14 +108,61 @@ public class Tree {
     }
 
     public void calculateDiscs(){
-
+        calculateDiscsRek(nodes.getRoot());
     }
 
     private void calculateDiscsRek(KDParentTreeNode node){
-        if(node.getTreeChildren().isEmpty() || node.getParent()==null){
-            return;
-        }
 
+        int N = X_DIVISION + 1; // +1 fü dopplung - kreis schließen
+        double radius = node.getThickness();
+        Point3f[] points = new Point3f[N + 1]; // +1 für midde
+        points[0] = new Point3f(0,0,0); //midde
+        for (int i = 1; i < points.length; i++) {
+            double alpha = 2 * Math.PI / (N - 1) * (N - i); //N-i damit faces nach oben
+            float x = (float) (radius * Math.cos(alpha));
+            float z = (float) (radius * Math.sin(alpha));
+            points[i] = new Point3f(x, 0, z);
+        }
+        Point3f[] pointsTop = points;
+        Point3f[] pointsBot = points;
+
+        if(!(node.getTreeChildren().isEmpty() || node.getParent()==null)) {
+            //wenn parent und kind(er) hat dann transformieren
+            // parent ist bot, node ist top - node ist bot, children sind bot
+            Point3D vectParent = node.getParent().getPoint().subtract(node.getPoint());
+            Point3D durchschnittChildren = new Point3D(0, 0, 0);
+            node.getTreeChildren().forEach(child -> durchschnittChildren.addTo(child.getPoint()));
+            Point3D vectChildren = durchschnittChildren.subtract(node.getPoint());
+
+            //drehachse
+            Point3D drehachse = vectParent.cross(vectChildren);
+//            Application.view.addLine(node.getPoint().add(drehachse), node.getPoint().subtract(drehachse), Color.black);
+
+                //top
+                //winkel zwischen den vektoren /2
+                double angleTop = -(Math.toRadians(90) -Math.acos(vectParent.dot(vectChildren) / (vectParent.vectorLength() * vectChildren.vectorLength())) / 2);
+                pointsTop = copy(points);
+                TruncatedCone.transform(new Point3f(0, 0, 0), pointsTop, drehachse, angleTop);
+
+                //bot
+                //winkel zwischen den vektoren /2
+                double angleBot = Math.toRadians(90) - Math.acos(vectParent.dot(vectChildren) / (vectParent.vectorLength() * vectChildren.vectorLength())) / 2;
+                pointsBot = copy(points);
+                TruncatedCone.transform(new Point3f(0, 0, 0), pointsBot, drehachse, angleBot);
+
+
+        }
+        node.setPointsTop(pointsTop);
+        node.setPointsBot(pointsBot);
+        node.getTreeChildren().forEach(child -> calculateDiscsRek(child));
+    }
+
+    private Point3f[] copy(Point3f[] points) {
+        Point3f[] copy = new Point3f[points.length];
+        for (int i = 0; i < points.length; i++) {
+            copy[i] = new Point3f(points[i].getX(),points[i].getY(),points[i].getZ());
+        }
+        return copy;
     }
 
 
