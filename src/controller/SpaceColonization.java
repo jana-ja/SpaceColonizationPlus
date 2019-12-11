@@ -107,6 +107,8 @@ class SpaceColonization {
                 finalVector = apVector.add(obstVector);
             } else
                 finalVector = apVector;
+            finalVector.addTo(new Point3D(0, -0.2f, 0)); //TODO bias
+            finalVector.normalize();
 
             //norm final vector
             finalVector.normalize();
@@ -154,7 +156,7 @@ class SpaceColonization {
         if (SHIFT) {
             Point3D avgNode = tree.calculateAvgNode();
             Point3D shiftVector = avgNode.subtract(lastAvgNode);
-            shiftVector.setY(0);
+            shiftVector.setY(shiftVector.getY()* FACTOR * (float)tree.calculateBoundsPercentDings(obstacles)/100.0f); //TODO iwie sonnenintensität einbsuen
             pointCloud.shift(shiftVector);
 
             pointCloud.updateWithObstacles(obstacles);

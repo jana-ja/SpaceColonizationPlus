@@ -22,7 +22,7 @@ public class Building implements Obstacle {
 
     private float maxX,  minX,  maxZ, minZ, maxY, minY;
 
-    private Building(String name, Point3D corner1, Point3D corner2) {
+    public Building(String name, Point3D corner1, Point3D corner2) {
         this.name = name;
         this.corner1 = corner1;
         this.corner2 = corner2;
@@ -152,11 +152,22 @@ public class Building implements Obstacle {
     }
 
     @Override
-    public boolean isInShadow(Point3D node, SunPosition sunPos){ //TODO auch true wen strahl erst node und dann building trifft
+    public boolean isInShadow(Point3D node, SunPosition sunPos){ //TODO auch true wenn strahl erst node und dann building trifft
         Vector3d ray = sunPos.calculateRayVector3d();
         ray.normalize();
 
         return bounds.intersect(new Point3d(node.getX(), node.getY(), node.getZ()), ray);
+    }
+
+    @Override
+    public boolean isInShadowPlus(Point3D node, SunPosition sunPos){
+        if(!isInShadow(node,sunPos))
+            return false;
+        //testen ob ray anderen teil des gebäudes schneidet
+        Vector3d ray = sunPos.calculateRayVector3d();
+        ray.normalize();
+        //TODO MUSS NOCH HER
+        return isInShadow(node,sunPos);
     }
 
 

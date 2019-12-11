@@ -5,6 +5,7 @@ import static model.TreeShape.*;
 public enum TreeType {
     // radOfInf, nodeDist, killRad, topPercentage, attPointsPerHeight, widthPerHeight
     KORKHASE(0.36,0.02, 0.1,80.0,800,1.0, UMBRELLA2),
+    BIRKE(2.0,0.01, 15*0.01,80.0,1000,0.4, ROUND),
 //    TREE(0.5,0.05, 2*0.05,70.0,1100,1.0), //killRad = 2*nodeDist
     TREE(3.0,0.02, 2*0.03,90.0,600,0.6, CONE),
     PLATANE(2.0,0.02, 2*0.06,95.0,400,0.6, ROUND),

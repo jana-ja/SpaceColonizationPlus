@@ -6,6 +6,7 @@ import model.*;
 import org.jogamp.java3d.*;
 import org.jogamp.java3d.utils.applet.MainFrame;
 import org.jogamp.java3d.utils.geometry.Sphere;
+import org.jogamp.java3d.utils.image.TextureLoader;
 import org.jogamp.vecmath.*;
 import view.Point3D;
 import view.View;
@@ -26,12 +27,12 @@ public class Application extends Applet {
     private static ViewInterface view;
 
     private static final int STEP = 1; //every x STEP is visualized
-    private static final int STEPS = 250; //max number of space colonization iterations
+    private static final int STEPS = 300; //max number of space colonization iterations
     private static final long DELAY = 0;
     private static final boolean DEBUG = false;
-    private static final boolean SAVED = false;
+    private static final boolean SAVED = true;
     private static final String NEXTFILE = "exp";
-    private static final String SAVEFILE = "cloud2"; //clud4m, cloud4m, cloud6m, cloud2
+    private static final String SAVEFILE = "t2"; //clud4m, cloud4m, cloud6m, cloud2,
     private static ShaderAppearance branchAppearance;
 
     private static Appearance obstacleAppearance;
@@ -47,16 +48,16 @@ public class Application extends Applet {
         //obstacles
         List<Obstacle> obstacles = new ArrayList<>();
         //onw building
-//        Building southBuilding = new Building("south", new Point3D(-1.5f, 0, 2.0f), new Point3D(1.5f, 3, 0.5f));
-//        obstacles.add(southBuilding);
+        Building southBuilding = new Building("south", new Point3D(-1.5f, 0, 2.0f), new Point3D(1.5f, 3, 0.5f));
+        obstacles.add(southBuilding);
 
         //east building
 //        Building eastBuilding = new Building("east", new Point3D(1.0f, 0, -3.5f), new Point3D(2.0f, 3.0f, 3.5f));
 //        obstacles.add(eastBuilding);
 
         //west building
-//        Building westBuilding = new Building("west", new Point3D(-2.0f, 0, -1.5f), new Point3D(-1.0f, 3.0f, 1.5f));
-//        obstacles.add(westBuilding);
+        Building westBuilding = new Building("west", new Point3D(-2.0f, 0, -1.5f), new Point3D(-1.0f, 3.0f, 1.5f));
+        obstacles.add(westBuilding);
 
         //north
 //        Building northBuilding = new Building("north", new Point3D(-1.5f, 0, -2.0f), new Point3D(1.5f, 3, -1.0f));
@@ -136,12 +137,12 @@ public class Application extends Applet {
         double duration = (double) (stop - start) / 1000;
         ViewInterface.log("finished in " + duration + "seconds");
 
-//        Texture loader = new TextureLoader(View.class.getClassLoader().getResource("bark001-color.jpg").getPath(), ((View) view).getComponent(0)).getTexture();
-//        branchAppearance.setTexture(loader);
-//        TexCoordGeneration generation = new TexCoordGeneration(TexCoordGeneration.EYE_LINEAR, TexCoordGeneration.TEXTURE_COORDINATE_2);
-//        generation.setEnable(true);
-//        branchAppearance.setTexCoordGeneration(generation);
-//
+        Texture loader = new TextureLoader(View.class.getClassLoader().getResource("bark001-color.jpg").getPath(), ((View) view).getComponent(0)).getTexture();
+        branchAppearance.setTexture(loader);
+        TexCoordGeneration generation = new TexCoordGeneration(TexCoordGeneration.EYE_LINEAR, TexCoordGeneration.TEXTURE_COORDINATE_2);
+        generation.setEnable(true);
+        branchAppearance.setTexCoordGeneration(generation);
+
         putBranches(tree);
 //        putAttractionPoints(cloud);
 
@@ -152,6 +153,7 @@ public class Application extends Applet {
         stats("duration", format(duration));
         stats("type", tree.getType().name());
         stats("height", String.valueOf(tree.getHeight()));
+        System.out.println("real height: " + tree.getRealHeight());
         if(SAVED){
             stats("file", SAVEFILE);
         }else{
@@ -160,6 +162,8 @@ public class Application extends Applet {
 
         colo.stats();
         calculateStats(tree);
+        stats("avg#nodes light: ", tree.nodesInLight(obstacles)+"");
+        stats("avg light area: ", tree.calculateBoundsPercentDings(obstacles)+"");
 
         obstacles.forEach(obstacle -> printToStats(obstacle.getName() + ": " + obstacle.getCentroid().cardinalString()));
         stats("null", null);
@@ -179,7 +183,7 @@ public class Application extends Applet {
         Color3f darkbrown = new Color3f(0.106f, 0.0314f, 0.0118f);
         Color3f lightbrown = new Color3f(1/255.0f*222,1/255.0f*184,1/255.0f*135);
 //        branchAppearance.setMaterial(new Material(brown, brown, black, black, 70f));
-        branchAppearance.setMaterial(new Material(brown, darkbrown, brown, lightbrown, 50f));
+        branchAppearance.setMaterial(new Material(brown, darkbrown, brown, lightbrown, 10f));
 //        app.setMaterial(new Material(objColor, black, objColor, white, 80.0f));
 
 //        branchAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
@@ -207,6 +211,7 @@ public class Application extends Applet {
         initi();
         run();
 
+        Bounds bounds = view.getTreeBounds();
 
 //        Point3D drehachse = new Point3D(1,2,0.5f);
 //        Point3f[] points = new Point3f[]{new Point3f(-1,1,0), new Point3f(0,1,-1), new Point3f(1,1,0), new Point3f(0,1,1)};
@@ -267,6 +272,7 @@ public class Application extends Applet {
     }
 
     private static void calculateStats(Tree tree) {
+
         //angle
         Point3D angle = tree.calculateAngle();
         stats("azimuth degr", angle.azimuthDegree());
@@ -296,6 +302,8 @@ public class Application extends Applet {
 //        ViewInterface.log("schwerpunkt normalized " + schwerpunkt.toString());
         schwerpunkt.multTo(3f);
 //        view.addMarker(schwerpunkt.getX(), schwerpunkt.getY(), schwerpunkt.getZ(), new Color3f(Color.blue), 0.05f);
+
+
     }
 
     public static void stats(String description, String value){

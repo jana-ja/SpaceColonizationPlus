@@ -89,6 +89,8 @@ public class View extends Applet implements ViewInterface {
         bgTree.setCapability(Group.ALLOW_CHILDREN_EXTEND);
         bgTree.setCapability(Group.ALLOW_CHILDREN_READ);
         bgTree.setCapability(Group.ALLOW_CHILDREN_WRITE);
+        bgTree.setCapability(Group.ALLOW_AUTO_COMPUTE_BOUNDS_WRITE);
+        bgTree.setCapability(Group.ALLOW_AUTO_COMPUTE_BOUNDS_READ);
         u.addBranchGraph(bgTree);
         bgNodes = new BranchGroup();
         bgNodes.setCapability(Group.ALLOW_CHILDREN_EXTEND);
@@ -390,6 +392,11 @@ public class View extends Applet implements ViewInterface {
 
         bg.setCapability(BranchGroup.ALLOW_DETACH);
         this.tempSceneNodes.addChild(bg);
+    }
+
+    @Override
+    public Bounds getTreeBounds(){
+        return this.bgTree.getBounds();
     }
 }
 

@@ -1,6 +1,7 @@
 package view;
 
 import model.SunPosition;
+import org.jogamp.java3d.Bounds;
 import org.jogamp.java3d.BranchGroup;
 import org.jogamp.vecmath.Color3f;
 
@@ -25,4 +26,6 @@ public interface ViewInterface {
     void addLine(Point3D one, Point3D two, Color color);
     void setLine(Point3D one, Point3D two);
     void setSchwerpunkt(Point3D schwerpunkt);
+
+    public Bounds getTreeBounds();
 }
