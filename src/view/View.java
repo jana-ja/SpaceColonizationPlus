@@ -187,11 +187,12 @@ public class View extends Applet implements ViewInterface {
         Shape3D shape = new Shape3D(gi.getGeometryArray(), app);
 
         // add the Shape3D to the parent BranchGroup
-        bgBackground.addChild(shape);
+//        bgBackground.addChild(shape); //TODO das ist der boden
 
 
         // create a light gray background
-        Background back = new Background(new Color3f(rgbToFloat(new int[]{135, 206, 250})));
+        Background back = new Background(new Color3f(rgbToFloat(new int[]{255,255,255})));
+//        Background back = new Background(new Color3f(rgbToFloat(new int[]{135, 206, 250})));
         back.setApplicationBounds(bounds);
         bgBackground.addChild(back);
 
@@ -398,6 +399,8 @@ public class View extends Applet implements ViewInterface {
     public Bounds getTreeBounds(){
         return this.bgTree.getBounds();
     }
+
+
 }
 
 

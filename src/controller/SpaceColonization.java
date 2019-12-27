@@ -1,6 +1,9 @@
 package controller;
 
 import model.*;
+import org.apache.commons.math.ArgumentOutsideDomainException;
+import org.apache.commons.math.analysis.interpolation.SplineInterpolator;
+import org.apache.commons.math.analysis.polynomials.PolynomialSplineFunction;
 import view.Point3D;
 import view.ViewInterface;
 
@@ -359,8 +362,21 @@ class SpaceColonization {
                 break;
             default:
                 //round
-                fs = rootCoordinates.getY();
-                xForMaxDistance = (float) ((treeRadius) * Math.sin(Math.PI / (treeTopY - fs) * (point3D.getY() - fs)) + rootCoordinates.getX());
+                //x und y getauscht weil ich f(y)=x will
+                double[] x = new double[]{treeHeight - topPercentage/100 * treeHeight, treeHeight - 0.5 * topPercentage/100 * treeHeight, treeHeight};
+                double[] y = new double[]{0, treeRadius, 0};
+                SplineInterpolator interpolator = new SplineInterpolator();
+                PolynomialSplineFunction splineFunction = interpolator.interpolate(x,y);
+                try {
+                    xForMaxDistance = (float) splineFunction.value(point3D.getY());
+                } catch (ArgumentOutsideDomainException e) {
+                    xForMaxDistance = 0;
+                    e.printStackTrace();
+                }
+
+//                //vor dem test mit splines:
+//                fs = rootCoordinates.getY();
+//                xForMaxDistance = (float) ((treeRadius) * Math.sin(Math.PI / (treeTopY - fs) * (point3D.getY() - fs)) + rootCoordinates.getX());
         }
 
 

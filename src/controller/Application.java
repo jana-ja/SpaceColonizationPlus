@@ -30,7 +30,7 @@ public class Application extends Applet {
     private static final int STEPS = 300; //max number of space colonization iterations
     private static final long DELAY = 0;
     private static final boolean DEBUG = false;
-    private static final boolean SAVED = true;
+    private static final boolean SAVED = false;
     private static final String NEXTFILE = "exp";
     private static final String SAVEFILE = "t2"; //clud4m, cloud4m, cloud6m, cloud2,
     private static ShaderAppearance branchAppearance;
@@ -143,7 +143,8 @@ public class Application extends Applet {
         generation.setEnable(true);
         branchAppearance.setTexCoordGeneration(generation);
 
-        putBranches(tree);
+        putSkeleton(tree);
+//        putBranches(tree);
 //        putAttractionPoints(cloud);
 
 
@@ -191,8 +192,9 @@ public class Application extends Applet {
 
 
         obstacleAppearance = new Appearance();
+        obstacleAppearance.setCapability(ShaderAppearance.ALLOW_SHADER_PROGRAM_WRITE);
         Color3f gray = new Color3f(Color.gray.getRed(),Color.gray.getGreen(),Color.gray.getBlue());
-        obstacleAppearance.setMaterial(new Material(gray, black, gray, white, 110f));
+        obstacleAppearance.setMaterial(new Material(black, black, black, black, 10f));
 
         //coordinates
 //        view.addMarker(0, 0, 0, new Color3f(Color.black.getRed(),Color.black.getGreen(),Color.black.getBlue()), 0.02f);
@@ -548,5 +550,55 @@ public class Application extends Applet {
         t.set(matrix, new Vector3d((parentPoint.getX() /*+ 0.5 * vector.getX()*/), (parentPoint.getY() /*+ 0.5 * vector.getY()*/),  (parentPoint.getZ() /*+ 0.5 * vector.getZ()*/)), 1.0f);
 
         return t;
+    }
+
+    private static void putSkeleton(Tree tree){
+        view.resetTree();
+
+        KDParentTreeNode root = tree.getNodes().getRoot();
+        Appearance app = new Appearance();
+        BranchGroup bg = new BranchGroup();
+        Color3f color = new Color3f(0,0,0);
+        app.setMaterial(new Material(color, color, color, color, 70f));
+        ColoringAttributes att = new ColoringAttributes();
+        att.setColor(color);
+        app.setColoringAttributes(att);
+
+        if (root == null) {
+            return;
+        }
+
+
+        Stack<KDParentTreeNode> nodes = new Stack<>();
+        nodes.push(root);
+
+        while (!nodes.empty()){
+            KDParentTreeNode node = nodes.pop();
+            //node
+            TransformGroup tg = new TransformGroup();
+            Transform3D t = new Transform3D();
+
+            t.setTranslation(new Vector3d(node.getPoint().getX(), node.getPoint().getY(), node.getPoint().getZ()));
+            tg.setTransform(t);
+
+            Sphere sphere = new Sphere(0.005f);
+            sphere.setAppearance(app);
+
+            tg.addChild(sphere);
+            bg.addChild(tg);
+
+
+            node.getTreeChildren().forEach(child -> {
+                LineArray lineX = new LineArray(2, LineArray.COORDINATES);
+                lineX.setCoordinate(0, new Point3f(node.getPoint().getX(), node.getPoint().getY(), node.getPoint().getZ()));
+                lineX.setCoordinate(1, new Point3f(child.getPoint().getX(), child.getPoint().getY(), child.getPoint().getZ()));
+                bg.addChild(new Shape3D(lineX, app));
+            });
+            //segment
+
+            node.getTreeChildren().forEach(nodes::push);
+        }
+        view.addToTree(bg);
+
     }
 }
