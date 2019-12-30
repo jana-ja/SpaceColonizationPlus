@@ -144,7 +144,7 @@ public class KDParentTree {
             all.add(newNode);
             parent.addTreeChild(newNode);
             this.leaves.add(newNode);
-            this.leaves.removeIf(parentNode -> parentNode.equals(newNode.getParent()));
+            this.leaves.removeIf(parentNode -> parentNode.equals(newNode.getTreeParent()));
             return newNode;
         }
 

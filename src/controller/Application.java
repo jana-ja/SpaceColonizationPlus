@@ -11,6 +11,7 @@ import org.jogamp.vecmath.*;
 import view.Point3D;
 import view.View;
 import view.ViewInterface;
+
 import java.applet.Applet;
 import java.awt.*;
 import java.io.*;
@@ -26,15 +27,18 @@ public class Application extends Applet {
     private static final float INIT_BRANCH_THICKNESS = 0.0025f;
     private static ViewInterface view;
 
+    private static final double DECIMATE = 0.08;
     private static final int STEP = 1; //every x STEP is visualized
     private static final int STEPS = 300; //max number of space colonization iterations
     private static final long DELAY = 0;
     private static final boolean DEBUG = false;
-    private static final boolean SAVED = false;
+    private static final boolean SAVED = true;
     private static final String NEXTFILE = "exp";
-    private static final String SAVEFILE = "t2"; //clud4m, cloud4m, cloud6m, cloud2,
+    private static final String SAVEFILE = "exp"; //clud4m, cloud4m, cloud6m, cloud2, t2
     private static ShaderAppearance branchAppearance;
+    public static final boolean TWO_D = true;
 
+    public static final boolean PHOTO_MODE = true;
     private static Appearance obstacleAppearance;
 
 
@@ -42,27 +46,27 @@ public class Application extends Applet {
 
         Point3D verschiebung = new Point3D(0, 0, 0);
 
-        Tree tree = new Tree(TreeType.PLATANE, 4.0, verschiebung);
+        Tree tree = new Tree(TreeType.PLATANE, 1.0, verschiebung);
 //        Tree tree = new Tree(TreeType.KORKHASE, 3.0, verschiebung);
 
         //obstacles
         List<Obstacle> obstacles = new ArrayList<>();
-        //onw building
-        Building southBuilding = new Building("south", new Point3D(-1.5f, 0, 2.0f), new Point3D(1.5f, 3, 0.5f));
-        obstacles.add(southBuilding);
-
-        //east building
+//        //onw building
+//        Building southBuilding = new Building("south", new Point3D(-1.5f, 0, 2.0f), new Point3D(1.5f, 3, 0.5f));
+//        obstacles.add(southBuilding);
+//
+//        //east building
 //        Building eastBuilding = new Building("east", new Point3D(1.0f, 0, -3.5f), new Point3D(2.0f, 3.0f, 3.5f));
 //        obstacles.add(eastBuilding);
-
-        //west building
-        Building westBuilding = new Building("west", new Point3D(-2.0f, 0, -1.5f), new Point3D(-1.0f, 3.0f, 1.5f));
-        obstacles.add(westBuilding);
-
-        //north
+//
+//        //west building
+//        Building westBuilding = new Building("west", new Point3D(-2.0f, 0, -1.5f), new Point3D(-1.0f, 3.0f, 1.5f));
+//        obstacles.add(westBuilding);
+//
+//        //north
 //        Building northBuilding = new Building("north", new Point3D(-1.5f, 0, -2.0f), new Point3D(1.5f, 3, -1.0f));
 //        obstacles.add(northBuilding);
-
+//
 //        Building strangeBuilding = new Building("strange", new Point3D(-2.0f, 1, -1.5f), new Point3D(-0.2f, 1.5f, 1.5f));
 //        obstacles.add(strangeBuilding);
 
@@ -116,6 +120,10 @@ public class Application extends Applet {
         long start = System.currentTimeMillis();
         int i = 1;
 
+//        putAttractionPoints(cloud);
+//        if(true)
+//            return;
+
         while (colo.spaceColonize(tree, cloud, obstacles)) {
 
             ViewInterface.log("   step " + i + "/" + STEPS);
@@ -126,7 +134,6 @@ public class Application extends Applet {
             Thread.sleep(DELAY);
 
 //            calculateStats(tree);
-
             if (i >= STEPS)
                 break;
 
@@ -144,6 +151,9 @@ public class Application extends Applet {
         branchAppearance.setTexCoordGeneration(generation);
 
         putSkeleton(tree);
+
+        Thread.sleep(15000);
+
 //        putBranches(tree);
 //        putAttractionPoints(cloud);
 
@@ -155,22 +165,27 @@ public class Application extends Applet {
         stats("type", tree.getType().name());
         stats("height", String.valueOf(tree.getHeight()));
         System.out.println("real height: " + tree.getRealHeight());
-        if(SAVED){
+        if (SAVED) {
             stats("file", SAVEFILE);
-        }else{
+        } else {
             stats("file", "new");
         }
 
         colo.stats();
         calculateStats(tree);
-        stats("avg#nodes light: ", tree.nodesInLight(obstacles)+"");
-        stats("avg light area: ", tree.calculateBoundsPercentDings(obstacles)+"");
+        stats("avg#nodes light: ", tree.nodesInLight(obstacles) + "");
+        stats("avg light area: ", tree.calculateBoundsPercentDings(obstacles) + "");
 
         obstacles.forEach(obstacle -> printToStats(obstacle.getName() + ": " + obstacle.getCentroid().cardinalString()));
         stats("null", null);
+
+        postprocessing(tree);
+        putSkeleton(tree);
+        calculateStats(tree);
+
     }
 
-    private static void initi(){
+    private static void initi() {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
         view = new View((int) (screenSize.getWidth()), (int) (screenSize.getHeight()));
@@ -180,9 +195,9 @@ public class Application extends Applet {
         branchAppearance.setCapability(ShaderAppearance.ALLOW_SHADER_PROGRAM_WRITE);
         Color3f brown = new Color3f(0.318f, 0.212f, 0.051f);
         Color3f black = new Color3f(0, 0, 0);
-        Color3f white = new Color3f(255,255,255);
+        Color3f white = new Color3f(255, 255, 255);
         Color3f darkbrown = new Color3f(0.106f, 0.0314f, 0.0118f);
-        Color3f lightbrown = new Color3f(1/255.0f*222,1/255.0f*184,1/255.0f*135);
+        Color3f lightbrown = new Color3f(1 / 255.0f * 222, 1 / 255.0f * 184, 1 / 255.0f * 135);
 //        branchAppearance.setMaterial(new Material(brown, brown, black, black, 70f));
         branchAppearance.setMaterial(new Material(brown, darkbrown, brown, lightbrown, 10f));
 //        app.setMaterial(new Material(objColor, black, objColor, white, 80.0f));
@@ -193,16 +208,19 @@ public class Application extends Applet {
 
         obstacleAppearance = new Appearance();
         obstacleAppearance.setCapability(ShaderAppearance.ALLOW_SHADER_PROGRAM_WRITE);
-        Color3f gray = new Color3f(Color.gray.getRed(),Color.gray.getGreen(),Color.gray.getBlue());
+        Color3f gray = new Color3f(Color.gray.getRed(), Color.gray.getGreen(), Color.gray.getBlue());
         obstacleAppearance.setMaterial(new Material(black, black, black, black, 10f));
 
         //coordinates
 //        view.addMarker(0, 0, 0, new Color3f(Color.black.getRed(),Color.black.getGreen(),Color.black.getBlue()), 0.02f);
-        view.addLine(new Point3D(0,0,0), new Point3D(10,0,0), Color.blue);
+        if (!PHOTO_MODE)
+            view.addLine(new Point3D(0, 0, 0), new Point3D(10, 0, 0), Color.blue);
 //        view.addMarker(0.5f, 0, 0, new Color3f(Color.blue), 0.04f);
-        view.addLine(new Point3D(0,0,0), new Point3D(0,10,0), Color.green);
+        if (!PHOTO_MODE)
+            view.addLine(new Point3D(0, 0, 0), new Point3D(0, 10, 0), Color.green);
 //        view.addMarker(0, 0.5f, 0, new Color3f(Color.green), 0.04f);
-        view.addLine(new Point3D(0,0,0), new Point3D(0,0,10), Color.red);
+        if (!PHOTO_MODE)
+            view.addLine(new Point3D(0, 0, 0), new Point3D(0, 0, 10), Color.red);
 //        view.addMarker(0, 0, 0.5f, new Color3f(Color.red), 0.04f);
     }
 
@@ -224,7 +242,6 @@ public class Application extends Applet {
 //        for (Point3f point : points) {
 //            view.addMarker(point.getX(),point.getY(),point.getZ(),new Color3f(0,0,0), 0.05f);
 //        }
-
 
 
 //        Tree tree = new Tree(TreeType.PLATANE, 1.0f, new Point3D(0,0,-0.1f));
@@ -266,7 +283,6 @@ public class Application extends Applet {
 //        view.addToTree(bg);
 
 
-
 //        Point3D angle = new Point3D(-1f,0,1);
 //        System.out.println(angle.azimuthDegree());
 //        System.out.println(angle.elevationDegree());
@@ -280,7 +296,8 @@ public class Application extends Applet {
         stats("azimuth degr", angle.azimuthDegree());
         stats("elevation degr", angle.elevationDegree());
         Point3D zero = new Point3D(0, 0, 0);
-        view.setLine(zero, zero.add(angle.mult(tree.getHeight())));
+        if(!PHOTO_MODE)
+            view.setLine(zero, zero.add(angle.mult(tree.getHeight())));
 
         //number of nodes
         stats("number of nodes", String.valueOf(tree.getNodes().getAll().size()));
@@ -291,6 +308,7 @@ public class Application extends Applet {
         //avgNode
         Point3D avgNode = tree.calculateAvgNode();
         stats("average Node", avgNode.cardinalString());
+        if(!PHOTO_MODE)
         view.setSchwerpunkt(avgNode);
         avgNode.normalize();
 //        ViewInterface.log("avg normalized " + avgNode.toString());
@@ -308,7 +326,7 @@ public class Application extends Applet {
 
     }
 
-    public static void stats(String description, String value){
+    public static void stats(String description, String value) {
         printToStats(value);
         ViewInterface.log(description + ": " + value);
     }
@@ -317,7 +335,7 @@ public class Application extends Applet {
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter("E:\\Users\\JanaJ\\IdeaProjects\\jana.jansen\\stats.txt", true));
 
-            if(string == null)
+            if (string == null)
                 writer.newLine();
             else
                 writer.write(string + "\t\t");
@@ -329,7 +347,7 @@ public class Application extends Applet {
     }
 
     private static String format(double duration) {
-        return (Math.round(duration/60) + "m" + Math.round(duration%60) +"s");
+        return (Math.round(duration / 60) + "m" + Math.round(duration % 60) + "s");
     }
 
     private static void putObstacles(List<Obstacle> obstacles) {
@@ -350,11 +368,11 @@ public class Application extends Applet {
         BranchGroup bg = new BranchGroup();
 
         Appearance app = new Appearance();
-        Color3f blue = new Color3f(Color.BLUE.getRed(),Color.BLUE.getGreen(),Color.BLUE.getBlue());
+        Color3f blue = new Color3f(Color.BLUE.getRed(), Color.BLUE.getGreen(), Color.BLUE.getBlue());
         app.setMaterial(new Material(blue, blue, blue, blue, 70f));
 
         Appearance app2 = new Appearance();
-        Color3f darkblue = new Color3f(Color.YELLOW.getRed(),Color.YELLOW.getGreen(),Color.YELLOW.getBlue());
+        Color3f darkblue = new Color3f(Color.YELLOW.getRed(), Color.YELLOW.getGreen(), Color.YELLOW.getBlue());
         app2.setMaterial(new Material(darkblue, darkblue, darkblue, darkblue, 70f));
 
         nodes.forEach(point -> {
@@ -365,11 +383,10 @@ public class Application extends Applet {
             tg.setTransform(t);
 
             Sphere sphere = new Sphere(ATT_POINT_NODE_SIZE);
-            if(point.isActivated()){
+            if (point.isActivated()) {
 
                 sphere.setAppearance(app);
-            }
-            else {
+            } else {
                 sphere.setAppearance(app2);
 
             }
@@ -457,7 +474,7 @@ public class Application extends Applet {
 
         TransformGroup tg = new TransformGroup();
 
-        KDParentTreeNode parent = node.getParent();
+        KDParentTreeNode parent = node.getTreeParent();
         if (parent == null)
             return tg;
 
@@ -467,7 +484,7 @@ public class Application extends Applet {
 
         tg.setTransform(t);
 
-        TruncatedCone branch = new TruncatedCone(node, (float) (node.getPoint().distance(node.getParent().getPoint())), branchAppearance, flags);
+        TruncatedCone branch = new TruncatedCone(node, (float) (node.getPoint().distance(node.getTreeParent().getPoint())), branchAppearance, flags);
 
         tg.addChild(branch);
 
@@ -478,7 +495,7 @@ public class Application extends Applet {
         view.setSun(sunPos);
     }
 
-    private static Transform3D transform(Point3D parentPoint, Point3D nodePoint){
+    private static Transform3D transform(Point3D parentPoint, Point3D nodePoint) {
 
         Point3D vector = nodePoint.subtract(parentPoint);
         Transform3D t = new Transform3D();
@@ -523,14 +540,14 @@ public class Application extends Applet {
 //                                        newXAxis.getZ() / newXAxis.vectorLength(), newYAxis.getZ() / newYAxis.vectorLength(), newZAxis.getZ() / newZAxis.vectorLength());
 //
 
-        Point3D yAchse = new Point3D(0,1,0);
+        Point3D yAchse = new Point3D(0, 1, 0);
         vector.normalize();
         Point3D drehachse = yAchse.cross(vector);
         double alpha = Math.acos(yAchse.dot(vector) / (yAchse.vectorLength() * vector.vectorLength()));
         drehachse.normalize();
 
-        if(alpha == 0){
-            t.setTranslation(new Vector3d((parentPoint.getX() /*+ 0.5 * vector.getX()*/), (parentPoint.getY() /*+ 0.5 * vector.getY()*/),  (parentPoint.getZ() /*+ 0.5 * vector.getZ()*/)));
+        if (alpha == 0) {
+            t.setTranslation(new Vector3d((parentPoint.getX() /*+ 0.5 * vector.getX()*/), (parentPoint.getY() /*+ 0.5 * vector.getY()*/), (parentPoint.getZ() /*+ 0.5 * vector.getZ()*/)));
             return t;
         }
         double n1 = drehachse.getX();
@@ -546,19 +563,18 @@ public class Application extends Applet {
                 n3 * n1 * dings - n2 * sinA, n3 * n2 * dings + n1 * sinA, Math.pow(n3, 2) * dings + cosA);
 
 
-
-        t.set(matrix, new Vector3d((parentPoint.getX() /*+ 0.5 * vector.getX()*/), (parentPoint.getY() /*+ 0.5 * vector.getY()*/),  (parentPoint.getZ() /*+ 0.5 * vector.getZ()*/)), 1.0f);
+        t.set(matrix, new Vector3d((parentPoint.getX() /*+ 0.5 * vector.getX()*/), (parentPoint.getY() /*+ 0.5 * vector.getY()*/), (parentPoint.getZ() /*+ 0.5 * vector.getZ()*/)), 1.0f);
 
         return t;
     }
 
-    private static void putSkeleton(Tree tree){
+    private static void putSkeleton(Tree tree) {
         view.resetTree();
 
         KDParentTreeNode root = tree.getNodes().getRoot();
         Appearance app = new Appearance();
         BranchGroup bg = new BranchGroup();
-        Color3f color = new Color3f(0,0,0);
+        Color3f color = new Color3f(0, 0, 0);
         app.setMaterial(new Material(color, color, color, color, 70f));
         ColoringAttributes att = new ColoringAttributes();
         att.setColor(color);
@@ -572,7 +588,7 @@ public class Application extends Applet {
         Stack<KDParentTreeNode> nodes = new Stack<>();
         nodes.push(root);
 
-        while (!nodes.empty()){
+        while (!nodes.empty()) {
             KDParentTreeNode node = nodes.pop();
             //node
             TransformGroup tg = new TransformGroup();
@@ -581,7 +597,7 @@ public class Application extends Applet {
             t.setTranslation(new Vector3d(node.getPoint().getX(), node.getPoint().getY(), node.getPoint().getZ()));
             tg.setTransform(t);
 
-            Sphere sphere = new Sphere(0.005f);
+            Sphere sphere = new Sphere(0.010f);
             sphere.setAppearance(app);
 
             tg.addChild(sphere);
@@ -598,7 +614,53 @@ public class Application extends Applet {
 
             node.getTreeChildren().forEach(nodes::push);
         }
+        bg.setCapability(BranchGroup.ALLOW_DETACH);
         view.addToTree(bg);
+
+    }
+
+    private static void postprocessing(Tree tree) {
+        System.out.println(tree.getNodes().getAll().size());
+//        if(tree.getNodes().getRoot().getTreeChildren().size()==1) //sonst wird der root knoten gelöscht
+//            decimate(tree, tree.getNodes().getRoot().getTreeChildren().get(0), 0.2);
+//        else
+        decimate(tree, tree.getNodes().getRoot(), 0);
+
+    }
+
+    private static void decimate(Tree tree, KDParentTreeNode node, double akku) {
+        int children = node.getTreeChildren().size();
+        if (children == 0) // spitze
+            return;
+
+        if (children == 1) { //inner knoten vom ast
+            KDParentTreeNode childs = node.getTreeChildren().get(0);
+            //node.getPoint().distance(node.getTreeParent().getPoint()); //müsste eig immer d sein
+            //wenn < decimate dann kommt der weg und seinen parent mit seinem kind verbinden
+            if (akku < DECIMATE && akku != 0) { //wenn akku = 0 dann ist es ein startpunnkt eines astes
+                //node entfernen bis decimate erreicht ist
+                tree.getNodes().getAll().remove(node); //TODO macht kd tree kaputt
+                node.getTreeParent().getTreeChildren().remove(node);
+                node.getTreeChildren().forEach(child -> {
+                    node.getTreeParent().getTreeChildren().add(child);
+                    child.setTreeParent(node.getTreeParent());
+                });
+                //für kind aufrufen
+                decimate(tree, childs, akku + tree.getType().getNodeDist());
+            } else {
+                //node behalten ab decimate
+                //für kind aufrufen
+                decimate(tree, childs, 0 + tree.getType().getNodeDist());
+            }
+        }
+
+        if (children > 1) { //nächster branchingpoint, hier beginnt neuer ast
+            List<KDParentTreeNode> nodes = new ArrayList<>();
+            node.getTreeChildren().forEach(child -> nodes.add(child));
+            for (KDParentTreeNode child : nodes) {
+                decimate(tree, child, 0 + tree.getType().getNodeDist());
+            }
+        }
 
     }
 }

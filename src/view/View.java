@@ -3,6 +3,7 @@ package view;
 import java.applet.Applet;
 import java.awt.*;
 
+import controller.Application;
 import model.SunPosition;
 import org.jogamp.java3d.*;
 import org.jogamp.java3d.utils.geometry.GeometryInfo;
@@ -41,10 +42,13 @@ public class View extends Applet implements ViewInterface {
 
     public View(int screenWidth, int screenHeight) {
 
+        screenHeight = (int)(0.9*screenHeight);
+        this.setBackground(Color.gray);
         //create View1
         Canvas3D birdsEye = new Canvas3D(SimpleUniverse.getPreferredConfiguration());
         birdsEye.setSize((int) (0.4 * screenWidth), (int) (0.4 * screenWidth));
-        add(birdsEye);
+        if(!Application.PHOTO_MODE)
+            add(birdsEye);
 
         // create a ViewingPlatform with 2 TransformGroups above the ViewPlatform
         ViewingPlatform vp = new ViewingPlatform(2);
@@ -69,10 +73,14 @@ public class View extends Applet implements ViewInterface {
         //create View2
         Canvas3D firstPerson = new Canvas3D(SimpleUniverse.getPreferredConfiguration());
         firstPerson.setSize((int) (0.4 * screenWidth), (int) (0.4 * screenWidth));
+        if(Application.PHOTO_MODE)
+            firstPerson.setSize(screenHeight, screenHeight);
         add(firstPerson);
 
 
         text.setPreferredSize(new Dimension((int) (0.8 * screenWidth), (int) (0.8 * (screenHeight - (0.4 * screenWidth)))));
+        if(Application.PHOTO_MODE)
+            text.setPreferredSize(new Dimension((int)(screenWidth-1.1*screenHeight), screenHeight));
         text.setFont(new Font("Lucida Console", Font.PLAIN, 18));
         Panel panel = new Panel();
         panel.add(text);

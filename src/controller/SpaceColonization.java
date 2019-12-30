@@ -21,9 +21,9 @@ class SpaceColonization {
     private boolean marker;
     private final boolean SUN = false;
     private final int SUN_DELAY = 30;
-    private final boolean SHIFT = true;
-    private final boolean LIGHT = true;
-    private final boolean SHADOW = true;
+    private final boolean SHIFT = false;
+    private final boolean LIGHT = false;
+    private final boolean SHADOW = false;
     private final float FACTOR = 0.5f;
 
 
@@ -278,6 +278,7 @@ class SpaceColonization {
         float zMin = rootCoordinates.getZ() - (float) treeWidth / 2;
         float zMax = rootCoordinates.getZ() + (float) treeWidth / 2;
 
+
         float yMin = rootCoordinates.getY() + (float) (treeHeight - crownHeight);
         float yMax = rootCoordinates.getY() + (float) treeHeight;
 
@@ -296,7 +297,11 @@ class SpaceColonization {
         for (int i = 1; i <= lim; i++) {
             float x = random.nextFloat() * (xMax - xMin) + xMin;
             float y = random.nextFloat() * (yMax - yMin) + yMin;
-            float z = random.nextFloat() * (zMax - zMin) + zMin;
+            float z;
+            if(Application.TWO_D)
+                z= 0;
+            else
+                z = random.nextFloat() * (zMax - zMin) + zMin;
 
             Point3D point3D = new Point3D(x, y, z);
             if (buildTreeShape2(tree, point3D, true))
@@ -311,7 +316,11 @@ class SpaceColonization {
         for (int i = lim; i <= (int) (type.getAttPointsPerHeight() * treeHeight); i++) {
             float x = random.nextFloat() * (xMax - xMin) + xMin;
             float y = random.nextFloat() * (yMax - yMin) + yMin;
-            float z = random.nextFloat() * (zMax - zMin) + zMin;
+            float z;
+            if(Application.TWO_D)
+                z= 0;
+            else
+                z = random.nextFloat() * (zMax - zMin) + zMin;
 
             Point3D point3D = new Point3D(x, y, z);
             if (buildTreeShape2(tree, point3D, false))
@@ -362,11 +371,12 @@ class SpaceColonization {
                 break;
             default:
                 //round
-                //x und y getauscht weil ich f(y)=x will
-                double[] x = new double[]{treeHeight - topPercentage/100 * treeHeight, treeHeight - 0.5 * topPercentage/100 * treeHeight, treeHeight};
-                double[] y = new double[]{0, treeRadius, 0};
+                double topHeight = topPercentage/100 * treeHeight;
+                double[] x = new double[]{0, treeRadius, treeRadius, 0};
+                double[] y = new double[]{treeHeight - topHeight, treeHeight - 0.66 * topHeight, treeHeight - 0.33 * topHeight, treeHeight};
                 SplineInterpolator interpolator = new SplineInterpolator();
-                PolynomialSplineFunction splineFunction = interpolator.interpolate(x,y);
+                //x und y getauscht weil ich f(y)=x will
+                PolynomialSplineFunction splineFunction = interpolator.interpolate(y,x);
                 try {
                     xForMaxDistance = (float) splineFunction.value(point3D.getY());
                 } catch (ArgumentOutsideDomainException e) {

@@ -17,13 +17,13 @@ public class KDParentTreeNode {
 
 
 
-    private KDParentTreeNode parent;
+    private KDParentTreeNode treeParent;
     private KDParentTreeNode ltbChild;
     private KDParentTreeNode rbfChild;
-    private final List<KDParentTreeNode> treeChildren;
+    private List<KDParentTreeNode> treeChildren;
 
     public KDParentTreeNode(Point3D point, double[] coords, KDParentTreeNode parent){
-        this.point = point; this.coords = coords; this.parent=parent;
+        this.point = point; this.coords = coords; this.treeParent =parent;
         treeChildren = new ArrayList<>();
         this.thicknessHelpSum = 0.0f;
     }
@@ -70,15 +70,15 @@ public class KDParentTreeNode {
     }
 
     boolean hasParent(){
-        return parent!=null;
+        return treeParent !=null;
     }
 
-    public KDParentTreeNode getParent() {
-        return parent;
+    public KDParentTreeNode getTreeParent() {
+        return treeParent;
     }
 
-    public void setParent(KDParentTreeNode parent) {
-        this.parent = parent;
+    public void setTreeParent(KDParentTreeNode treeParent) {
+        this.treeParent = treeParent;
     }
 
     public KDParentTreeNode getLtbChild() {
@@ -102,10 +102,10 @@ public class KDParentTreeNode {
     }
 
     public Point3D parentAngle() {
-        if(parent == null)
+        if(treeParent == null)
             return new Point3D(0,0,0);
         else
-            return this.point.subtract(parent.getPoint());
+            return this.point.subtract(treeParent.getPoint());
     }
 
     public Point3f[] getPointsTop() {
@@ -122,5 +122,9 @@ public class KDParentTreeNode {
 
     public void setPointsBot(Point3f[] pointsBot) {
         this.pointsBot = pointsBot;
+    }
+
+    public void setTreeChildren(List<KDParentTreeNode> treeChildren){
+        this.treeChildren = treeChildren;
     }
 }

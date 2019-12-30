@@ -46,7 +46,7 @@ public class TruncatedCone extends Group {
         Building.swapArray(coordsTop);
 
         //bottom
-        Point3f[] coordsBot = node.getParent().getPointsBot();
+        Point3f[] coordsBot = node.getTreeParent().getPointsBot();
 //        Building.swapArray(coordsBot);
 
         if ((flags & BOT) == BOT) {
