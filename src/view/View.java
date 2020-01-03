@@ -280,19 +280,21 @@ public class View extends Applet implements ViewInterface {
 
     @Override
     public void addMarker(float x, float y, float z) {
-        addMarker(x, y, z, new Color3f(Color.RED.getRed(),Color.RED.getGreen(),Color.RED.getBlue()));
+        addMarker(x, y, z, Color.RED);
     }
 
     @Override
-    public void addMarker(float x, float y, float z, Color3f color) {
+    public void addMarker(float x, float y, float z, Color color) {
         addMarker(x,y,z,color, MARKER_NODE_SIZE);
     }
     @Override
-    public void addMarker(float x, float y, float z, Color3f color, float size) {
+    public void addMarker(float x, float y, float z, Color color, float size) {
         Appearance app = new Appearance();
         BranchGroup bg = new BranchGroup();
 
-        app.setMaterial(new Material(color, color, color, color, 70f));
+        Color3f color3f = new Color3f(color.getRed(),color.getGreen(),color.getBlue());
+
+        app.setMaterial(new Material(color3f, color3f, color3f, color3f, 70f));
 
         TransformGroup tg = new TransformGroup();
         Transform3D t = new Transform3D();

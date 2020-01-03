@@ -3,7 +3,7 @@ package controller;
 import com.google.gson.Gson;
 import com.sun.istack.internal.Nullable;
 import model.*;
-import org.apache.commons.math.analysis.interpolation.SplineInterpolator;
+import org.apache.commons.math.ArgumentOutsideDomainException;
 import org.apache.commons.math.analysis.polynomials.PolynomialSplineFunction;
 import org.jogamp.java3d.*;
 import org.jogamp.java3d.utils.applet.MainFrame;
@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.Stack;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Application extends Applet {
 
@@ -36,7 +37,7 @@ public class Application extends Applet {
     private static final int STEPS = 300; //max number of space colonization iterations
     private static final long DELAY = 0;
     private static final boolean DEBUG = false;
-    private static final boolean SAVED = true;
+    private static final boolean SAVED = false;
     private static final String NEXTFILE = "exp";
     private static final String SAVEFILE = "ske"; //clud4m, cloud4m, cloud6m, cloud2, t2, ske (1.0)
     private static ShaderAppearance branchAppearance;
@@ -50,7 +51,9 @@ public class Application extends Applet {
 
         Point3D verschiebung = new Point3D(0, 0, 0);
 
-        Tree tree = new Tree(TreeType.PLATANE, 3.0, verschiebung);
+//        Tree tree = new Tree(TreeType.BSP1, 3.0, verschiebung);
+        Tree tree = new Tree(TreeType.BSP4, 4.0, verschiebung);
+//        Tree tree = new Tree(TreeType.TREE, 3.0, verschiebung);
 //        Tree tree = new Tree(TreeType.KORKHASE, 3.0, verschiebung);
 
         //obstacles
@@ -80,6 +83,9 @@ public class Application extends Applet {
         ViewInterface.log("generating point cloud");
 
         PointCloud cloud = new PointCloud();
+
+        ViewInterface.log("fertig");
+        System.out.println("hä");
 
         if (SAVED) {
             List<Point3D> aps = new ArrayList<>();
@@ -116,8 +122,14 @@ public class Application extends Applet {
 
 
         }
+        System.out.println("hä");
 
         cloud.updateWithObstacles(obstacles);
+
+//        Thread.sleep(10000);
+        System.out.println("hä");
+        putAttractionPoints(cloud);
+        System.out.println("hä");
 
         ViewInterface.log("starting space colonization");
         long start = System.currentTimeMillis();
@@ -151,33 +163,37 @@ public class Application extends Applet {
 
 
         putBranches(tree);
+//        putSkeleton(tree);
         Thread.sleep(10000);
         postprocessing(tree);
         putBranches(tree);
-//        putAttractionPoints(cloud);
+//        putSkeleton(tree);
+        putAttractionPoints(cloud);
 
 
-        ViewInterface.log("\n");
+        //stats
+        {
+            ViewInterface.log("\n");
 
-        stats("iterations", String.valueOf(i));
-        stats("duration", format(duration));
-        stats("type", tree.getType().name());
-        stats("height", String.valueOf(tree.getHeight()));
-        System.out.println("real height: " + tree.getRealHeight());
-        if (SAVED) {
-            stats("file", SAVEFILE);
-        } else {
-            stats("file", "new");
+            stats("iterations", String.valueOf(i));
+            stats("duration", format(duration));
+            stats("type", tree.getType().name());
+            stats("height", String.valueOf(tree.getHeight()));
+            System.out.println("real height: " + tree.getRealHeight());
+            if (SAVED) {
+                stats("file", SAVEFILE);
+            } else {
+                stats("file", "new");
+            }
+
+            colo.stats();
+            calculateStats(tree);
+            stats("avg#nodes light: ", tree.nodesInLight(obstacles) + "");
+            stats("avg light area: ", tree.calculateBoundsPercentDings(obstacles) + "");
+
+            obstacles.forEach(obstacle -> printToStats(obstacle.getName() + ": " + obstacle.getCentroid().cardinalString()));
+            stats("null", null);
         }
-
-        colo.stats();
-        calculateStats(tree);
-        stats("avg#nodes light: ", tree.nodesInLight(obstacles) + "");
-        stats("avg light area: ", tree.calculateBoundsPercentDings(obstacles) + "");
-
-        obstacles.forEach(obstacle -> printToStats(obstacle.getName() + ": " + obstacle.getCentroid().cardinalString()));
-        stats("null", null);
-
 
 //        putSkeleton(tree);
 //        Thread.sleep(5000);
@@ -706,7 +722,65 @@ public class Application extends Applet {
 
         if (children == 0 || children > 1) {// spitze
             //ast ist jetzt vollständig.
-            if(ast.size()>=3) {
+            if (ast.size() == 2) {
+                if (ast.get(0).getTreeParent() != null)
+                    ast.add(0, ast.get(0).getTreeParent()); //zusatz für subdivision
+                //wenn ast zu kurz zum subdividen mit splines dann parent von vorher einhängen
+                //problem: parent soll nicht verändert werden und auch nicht subdivided dazwischen
+
+                Vec3D[] astPoints = new Vec3D[ast.size()];
+                for (int i = 0; i < astPoints.length; i++) {
+                    astPoints[i] = new Vec3D(ast.get(i).getPoint().getX(), ast.get(i).getPoint().getY(), ast.get(i).getPoint().getZ());
+                }
+
+                Spline3D spline3D = new Spline3D(astPoints);
+                List<Vec3D> subdivided = spline3D.getDecimatedVertices((float) tree.getType().getNodeDist(), true);
+
+
+                List<Point3D> subbi = new ArrayList<>();
+                AtomicBoolean da = new AtomicBoolean(false);
+                //nur die in subbi kopieren ab first, dann sidn alle zusätzlichen weg
+                subdivided.forEach(punkt -> {
+                    Point3D punkto = new Point3D(punkt.getComponent(0), punkt.getComponent(1), punkt.getComponent(2));
+//                    if(equal(punkt, test))//equal geht nicht weil ich decimatedvertices benutze
+                    if (punkto.distance(ast.get(0).getPoint()) > ast.get(1).getPoint().distance(ast.get(0).getPoint())) // wenn abstand zu hilfsknoten größer ist als abstand von first zu hilfsknoten
+                        da.set(true);
+                    if (da.get())
+                        subbi.add(punkto);
+                });
+
+                //zusatz entfernen
+                ast.remove(0);
+
+
+                //subdivided hat jetzt subdividedte punkte zwischen beginn und ende des astes
+                //also alle inneren knoten abhängen und löschen
+
+                KDParentTreeNode first = ast.get(0);
+                KDParentTreeNode last = ast.get(ast.size() - 1);
+
+                //bei first abhängen
+                first.getTreeChildren().remove(ast.get(1));
+                //bei last abhängen
+                last.setTreeParent(null); //TODO überflüssig
+
+                //alle inneren entfernen
+                ast.remove(0);
+                ast.remove(ast.size() - 1);
+                tree.getNodes().getAll().removeAll(ast);
+
+                //zwischen dem ersten und dem letzten die knoten aus subdivided einhängen
+                KDParentTreeNode nextParent = first;
+                for (int i = 1; i < subbi.size() - 1; i++) {
+                    KDParentTreeNode tmp = new KDParentTreeNode(subbi.get(i), new double[]{}, nextParent);//hat parent
+                    nextParent.getTreeChildren().add(tmp);//ist kind von parent
+                    tree.getNodes().getAll().add(tmp);//zum baum
+                    nextParent = tmp;//next
+                }
+                //unten wieder anhängen an last
+                nextParent.getTreeChildren().add(last);
+                last.setTreeParent(nextParent);
+            } else if (ast.size() >= 3) {
                 Vec3D[] astPoints = new Vec3D[ast.size()];
                 for (int i = 0; i < astPoints.length; i++) {
                     astPoints[i] = new Vec3D(ast.get(i).getPoint().getX(), ast.get(i).getPoint().getY(), ast.get(i).getPoint().getZ());
@@ -730,12 +804,12 @@ public class Application extends Applet {
 
                 //alle inneren entfernen
                 ast.remove(0);
-                ast.remove(ast.size()-1);
+                ast.remove(ast.size() - 1);
                 tree.getNodes().getAll().removeAll(ast);
 
                 //zwischen dem ersten und dem letzten die knoten aus subdivided einhängen
                 KDParentTreeNode nextParent = first;
-                for (int i = 1; i < subbi.size()-1; i++) {
+                for (int i = 1; i < subbi.size() - 1; i++) {
                     KDParentTreeNode tmp = new KDParentTreeNode(subbi.get(i), new double[]{}, nextParent);//hat parent
                     nextParent.getTreeChildren().add(tmp);//ist kind von parent
                     tree.getNodes().getAll().add(tmp);//zum baum
@@ -761,6 +835,28 @@ public class Application extends Applet {
         if (children == 1) { //inner knoten vom ast
             KDParentTreeNode child = node.getTreeChildren().get(0);
             curveSubdivision(tree, child, ast);
+        }
+    }
+
+    public static void putSpline(PolynomialSplineFunction function, Point3D[] points){
+        for (Point3D point : points) {
+            view.addMarker(point.getX(), point.getY(), point.getZ());
+        }
+        double d = 0.01;
+        double minY = points[0].getY();
+        double maxY = points[points.length-1].getY();
+
+        System.out.println(maxY);
+        Point3D one = points[0];
+        for (double i = minY; i<=maxY; i+=d){
+            try {
+                Point3D two = new Point3D((float)function.value(i), (float)i , 0);
+                view.addLine(one,two, Color.black);
+                one = two;
+            } catch (ArgumentOutsideDomainException e) {
+                e.printStackTrace();
+            }
+
         }
     }
 }

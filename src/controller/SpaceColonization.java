@@ -26,6 +26,8 @@ class SpaceColonization {
     private final boolean SHADOW = false;
     private final float FACTOR = 0.5f;
 
+    private boolean bah;
+
 
     public void stats() {
         Application.stats("days", beginDay + "-" + endDay);
@@ -102,6 +104,11 @@ class SpaceColonization {
             //attraction vector
             Point3D apVector = calculateInfluenceVector(node, attractionPoints);
 
+            //bias
+            Point3D bias = new Point3D(0, 0.0f, 0);
+            apVector.addTo(bias);
+            apVector.normalize();
+
             Point3D obstVector;
             Point3D finalVector;
             if (LIGHT || SHADOW) {
@@ -159,7 +166,7 @@ class SpaceColonization {
         if (SHIFT) {
             Point3D avgNode = tree.calculateAvgNode();
             Point3D shiftVector = avgNode.subtract(lastAvgNode);
-            shiftVector.setY(shiftVector.getY()* FACTOR * (float)tree.calculateBoundsPercentDings(obstacles)/100.0f); //TODO iwie sonnenintensität einbsuen
+            shiftVector.setY(shiftVector.getY() * FACTOR * (float) tree.calculateBoundsPercentDings(obstacles) / 100.0f); //TODO iwie sonnenintensität einbsuen
             pointCloud.shift(shiftVector);
 
             pointCloud.updateWithObstacles(obstacles);
@@ -285,9 +292,9 @@ class SpaceColonization {
         int lim;
         switch (tree.getType().getTreeShape()) {
             case UMBRELLA2:
-            case UMBRELLA:
-                lim = (int) (0.55 * type.getAttPointsPerHeight() * treeHeight); //prozent für rahmen
+                lim = (int) (0.7 * type.getAttPointsPerHeight() * treeHeight); //prozent für rahmen
                 break;
+//            case UMBRELLA:
             default:
                 lim = (int) (type.getAttPointsPerHeight() * treeHeight);
                 break;
@@ -295,11 +302,12 @@ class SpaceColonization {
         //quader random gleichverteilt füllen
         //für umbrella erst rahmen
         for (int i = 1; i <= lim; i++) {
+
             float x = random.nextFloat() * (xMax - xMin) + xMin;
             float y = random.nextFloat() * (yMax - yMin) + yMin;
             float z;
-            if(Application.TWO_D)
-                z= 0;
+            if (Application.TWO_D)
+                z = 0;
             else
                 z = random.nextFloat() * (zMax - zMin) + zMin;
 
@@ -310,15 +318,14 @@ class SpaceColonization {
         }
 
         //für umbrella dann inneres
-        crownHeight = treeHeight * 95 / 100;
-        yMin = rootCoordinates.getY() + (float) (treeHeight - crownHeight);
 
+        bah = true;
         for (int i = lim; i <= (int) (type.getAttPointsPerHeight() * treeHeight); i++) {
             float x = random.nextFloat() * (xMax - xMin) + xMin;
             float y = random.nextFloat() * (yMax - yMin) + yMin;
             float z;
-            if(Application.TWO_D)
-                z= 0;
+            if (Application.TWO_D)
+                z = 0;
             else
                 z = random.nextFloat() * (zMax - zMin) + zMin;
 
@@ -334,6 +341,7 @@ class SpaceColonization {
 
     private boolean buildTreeShape2(Tree tree, Point3D point3D, boolean indicator) {
 
+
         Point3D rootCoordinates = tree.getNodes().getRoot().getPoint();
         TreeType type = tree.getType();
         double treeHeight = tree.getHeight();
@@ -342,83 +350,134 @@ class SpaceColonization {
         double treeTopY = rootCoordinates.getY() + treeHeight;
         double topPercentage = type.getTopPercentage();
 
-
-
         float xForMaxDistance;
         float xForMinDistance = rootCoordinates.getX();
-        double fs; //function start, where sin should go positive on y axis
-        double thickness;//TODO abwarten ob das tatsächlich in mehreren fällen gebraucht wird
+        double thickness = 0;//TODO abwarten ob das tatsächlich in mehreren fällen gebraucht wird
 
 //        if (!indicator) {
 //            topPercentage = 95;
 //        }
+        Point3D[] points;
+
+        //je nach typ die punkte der form festlegen
         switch (type.getTreeShape()) {
             case UMBRELLA2:
                 thickness = 0.15;
-                fs = rootCoordinates.getY() + treeHeight - 2 * topPercentage / 100 * treeHeight;
-                xForMaxDistance = (float) ((treeRadius) * Math.sin(Math.PI / (treeTopY - fs) * (point3D.getY() - fs)) + rootCoordinates.getX());
-                xForMinDistance = (float) ((treeRadius) * (1.0 - 2 * thickness) * Math.sin(((Math.PI) / ((treeTopY - fs) * (1.0 - 2 * thickness))) * (point3D.getY() - (fs + (treeTopY - fs) * thickness))) + rootCoordinates.getX());
+                points = new Point3D[]{
+                        new Point3D((float) (treeRadius), (float) (treeHeight - crownHeight), 0),
+                        new Point3D((float) (treeRadius - 0.25 * treeRadius), (float) (treeHeight - 0.4 * crownHeight), 0),
+                        new Point3D(0, (float) treeHeight, 0)};
                 break;
             case UMBRELLA:
                 thickness = 0.1;
-                fs = rootCoordinates.getY() + treeHeight - 2 * topPercentage / 100 * treeHeight;
-                xForMaxDistance = (float) ((treeRadius) * Math.sin(Math.PI / (treeTopY - fs) * (point3D.getY() - fs)) + rootCoordinates.getX());
-                xForMinDistance = (float) ((treeRadius) * (1.0 - 2 * thickness) * Math.sin(((Math.PI) / ((treeTopY - fs) * (1.0 - 2 * thickness))) * (point3D.getY() - (fs + (treeTopY - fs) * thickness))) + rootCoordinates.getX());
+                points = new Point3D[]{
+                        new Point3D((float) (treeRadius), (float) (treeHeight - crownHeight), 0),
+                        new Point3D((float) (treeRadius - 0.25 * treeRadius), (float) (treeHeight - 0.4 * crownHeight), 0),
+                        new Point3D(0, (float) treeHeight, 0)};
                 break;
             case CONE:
-                // f(x) = (float) ( (crownHeight / (treeWidth/2)) * (point3D.getX() - rootCoordinates.getX()) + treeHeight); //minus verschiebt nach rechts
-                xForMaxDistance = (float) ((point3D.getY() - treeTopY) * treeRadius / (crownHeight) + rootCoordinates.getX()); //f(y)
+
+                points = new Point3D[]{
+                        new Point3D((float) treeRadius, (float) (treeHeight - crownHeight), 0),
+                        new Point3D((float) (treeRadius * 0.5), (float) (treeHeight - 0.5 * crownHeight), 0),
+                        new Point3D(0, (float) treeHeight, 0)};
+
                 break;
+
             default:
                 //round
-                double topHeight = topPercentage/100 * treeHeight;
-                double[] x = new double[]{0, treeRadius, treeRadius, 0};
-                double[] y = new double[]{treeHeight - topHeight, treeHeight - 0.66 * topHeight, treeHeight - 0.33 * topHeight, treeHeight};
-                SplineInterpolator interpolator = new SplineInterpolator();
-                //x und y getauscht weil ich f(y)=x will
-                PolynomialSplineFunction splineFunction = interpolator.interpolate(y,x);
-                try {
-                    xForMaxDistance = (float) splineFunction.value(point3D.getY());
-                } catch (ArgumentOutsideDomainException e) {
-                    xForMaxDistance = 0;
-                    e.printStackTrace();
-                }
-
-//                //vor dem test mit splines:
-//                fs = rootCoordinates.getY();
-//                xForMaxDistance = (float) ((treeRadius) * Math.sin(Math.PI / (treeTopY - fs) * (point3D.getY() - fs)) + rootCoordinates.getX());
+//                points = new Point3D[]{
+//                        new Point3D((float) (treeRadius), (float) (treeHeight - topHeight), 0),
+//                        new Point3D((float) (treeRadius - 0.25 * treeRadius), (float) (treeHeight - 0.4 * topHeight), 0),
+//                        new Point3D(0, (float) treeHeight, 0)};
+                points = new Point3D[]{
+                        new Point3D(0, (float) (treeHeight - crownHeight), 0),
+                        new Point3D((float) (treeRadius - 0.25 * treeRadius), (float) (treeHeight - 0.8 * crownHeight), 0),
+                        new Point3D((float) treeRadius, (float) (treeHeight - 0.5 * crownHeight), 0),
+                        new Point3D((float) (treeRadius - 0.25 * treeRadius), (float) (treeHeight - 0.2 * crownHeight), 0),
+                        new Point3D(0, (float) treeHeight, 0)};
         }
 
+        {
+            double[] x = new double[points.length];
+            double[] y = new double[points.length];
+            for (int i = 0; i < points.length; i++) {
+                x[i] = points[i].getX();
+                y[i] = points[i].getY();
+            }
+            SplineInterpolator interpolator = new SplineInterpolator();
+            //x und y getauscht weil ich f(y)=x will
+            PolynomialSplineFunction splineFunction = interpolator.interpolate(y, x);
+            if (bah) {
+                Application.putSpline(splineFunction, points);
+                bah = false;
+            }
+            try {
+                xForMaxDistance = (float) splineFunction.value(point3D.getY());
+            } catch (ArgumentOutsideDomainException e) {
+                xForMaxDistance = 0;
+                e.printStackTrace();
+            }
+        }
 
-        double maxDistance = distance(rootCoordinates.getX(), point3D.getY(), xForMaxDistance, point3D.getY());
-        double realDistance = point3D.distance(new Point3D(rootCoordinates.getX(), point3D.getY(), rootCoordinates.getZ()));
+        double minDistanceMaxY;
+        double minDistanceMinY;
 
         switch (type.getTreeShape()) {
             case UMBRELLA2:
             case UMBRELLA:
-                double minDistance = distance(rootCoordinates.getX(), point3D.getY(), xForMinDistance, point3D.getY());
-                if (indicator) {
-                    //rahmen
-                    if(xForMinDistance < 0) //TODO shitty lösung für problem oben sin zu viel punkte ne
-                        break;
-                    if ((realDistance <= maxDistance && realDistance >= minDistance)) {
-                        return true;
-                    }
-                    break;
+                //alle punkte um thickness % in richtung mittelpunkt der krone achse
+                Point3D crownMid = new Point3D(rootCoordinates.getX(), (float) (treeHeight - crownHeight * 0.5), rootCoordinates.getZ());
+                for (Point3D point : points) {
+                    Point3D midVector = crownMid.subtract(point);
+                    float length = midVector.vectorLength();
+                    midVector.normalize();
+                    midVector.multTo((float) thickness * length);
+                    point.addTo(midVector);
                 }
+                points[0].setY((float) (treeHeight - crownHeight));
+                minDistanceMaxY = points[points.length-1].getY();
+                minDistanceMinY = points[0].getY();
+
+                //mindistance nehmen
+            {
+                double[] x = new double[points.length];
+                double[] y = new double[points.length];
+                for (int i = 0; i < points.length; i++) {
+                    x[i] = points[i].getX();
+                    y[i] = points[i].getY();
+                }
+                //wenn über oder unter innerer funktion dann ist eh nicht alos minDistance = 0;
+                if (point3D.getY() > minDistanceMaxY || point3D.getY() < minDistanceMinY)
+                    xForMinDistance = 0;
                 else {
-                    if(xForMinDistance < 0) //TODO shitty lösung für problem oben sin zu viel punkte ne
-                        break;
-                    if (realDistance <= minDistance) {
-                        return true;
+                    SplineInterpolator interpolator = new SplineInterpolator();
+                    //x und y getauscht weil ich f(y)=x will
+                    PolynomialSplineFunction splineFunction = interpolator.interpolate(y, x);
+                    if (bah) {
+                        Application.putSpline(splineFunction, points);
+                        bah = false;
+                    }
+                    try {
+                        xForMinDistance = (float) splineFunction.value(point3D.getY());
+                    } catch (ArgumentOutsideDomainException e) {
+                        e.printStackTrace();
                     }
                 }
-            default:
-                //normaler schnitt
-                if (realDistance <= maxDistance) {
-                    return true;
-                }
+            }
+            break;
         }
+
+        double maxDistance = distance(rootCoordinates.getX(), point3D.getY(), xForMaxDistance, point3D.getY());
+        double realDistance = point3D.distance(new Point3D(rootCoordinates.getX(), point3D.getY(), rootCoordinates.getZ()));
+        double minDistance = distance(rootCoordinates.getX(), point3D.getY(), xForMinDistance, point3D.getY());
+
+            //rahmen
+            if ((realDistance <= maxDistance && realDistance >= minDistance)) {
+                return true;
+            }
+
+
         return false;
     }
 

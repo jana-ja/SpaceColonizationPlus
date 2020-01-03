@@ -18,8 +18,8 @@ public interface ViewInterface {
         text.append("\r\n");
     }
     void addMarker(float x, float y, float z);
-    void addMarker(float x, float y, float z, Color3f color);
-    void addMarker(float x, float y, float z, Color3f color, float size);
+    void addMarker(float x, float y, float z, Color color);
+    void addMarker(float x, float y, float z, Color color, float size);
     void addToScene(BranchGroup bg);
 
     void setSun(SunPosition sunPos);
