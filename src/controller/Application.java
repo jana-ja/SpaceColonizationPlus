@@ -3,11 +3,15 @@ package controller;
 import com.google.gson.Gson;
 import com.sun.istack.internal.Nullable;
 import model.*;
+import org.apache.commons.math.analysis.interpolation.SplineInterpolator;
+import org.apache.commons.math.analysis.polynomials.PolynomialSplineFunction;
 import org.jogamp.java3d.*;
 import org.jogamp.java3d.utils.applet.MainFrame;
 import org.jogamp.java3d.utils.geometry.Sphere;
 import org.jogamp.java3d.utils.image.TextureLoader;
 import org.jogamp.vecmath.*;
+import toxi.geom.Spline3D;
+import toxi.geom.Vec3D;
 import view.Point3D;
 import view.View;
 import view.ViewInterface;
@@ -27,16 +31,16 @@ public class Application extends Applet {
     private static final float INIT_BRANCH_THICKNESS = 0.0025f;
     private static ViewInterface view;
 
-    private static final double DECIMATE = 0.08;
+    private static final double DECIMATE = 0.06;
     private static final int STEP = 1; //every x STEP is visualized
     private static final int STEPS = 300; //max number of space colonization iterations
     private static final long DELAY = 0;
     private static final boolean DEBUG = false;
     private static final boolean SAVED = true;
     private static final String NEXTFILE = "exp";
-    private static final String SAVEFILE = "exp"; //clud4m, cloud4m, cloud6m, cloud2, t2
+    private static final String SAVEFILE = "ske"; //clud4m, cloud4m, cloud6m, cloud2, t2, ske (1.0)
     private static ShaderAppearance branchAppearance;
-    public static final boolean TWO_D = true;
+    public static final boolean TWO_D = false;
 
     public static final boolean PHOTO_MODE = true;
     private static Appearance obstacleAppearance;
@@ -46,7 +50,7 @@ public class Application extends Applet {
 
         Point3D verschiebung = new Point3D(0, 0, 0);
 
-        Tree tree = new Tree(TreeType.PLATANE, 1.0, verschiebung);
+        Tree tree = new Tree(TreeType.PLATANE, 3.0, verschiebung);
 //        Tree tree = new Tree(TreeType.KORKHASE, 3.0, verschiebung);
 
         //obstacles
@@ -113,16 +117,12 @@ public class Application extends Applet {
 
         }
 
-//        cloud.intersectWithObstacles(obstacles);
         cloud.updateWithObstacles(obstacles);
 
         ViewInterface.log("starting space colonization");
         long start = System.currentTimeMillis();
         int i = 1;
 
-//        putAttractionPoints(cloud);
-//        if(true)
-//            return;
 
         while (colo.spaceColonize(tree, cloud, obstacles)) {
 
@@ -133,7 +133,6 @@ public class Application extends Applet {
             }
             Thread.sleep(DELAY);
 
-//            calculateStats(tree);
             if (i >= STEPS)
                 break;
 
@@ -150,11 +149,11 @@ public class Application extends Applet {
         generation.setEnable(true);
         branchAppearance.setTexCoordGeneration(generation);
 
-        putSkeleton(tree);
 
-        Thread.sleep(15000);
-
-//        putBranches(tree);
+        putBranches(tree);
+        Thread.sleep(10000);
+        postprocessing(tree);
+        putBranches(tree);
 //        putAttractionPoints(cloud);
 
 
@@ -179,9 +178,21 @@ public class Application extends Applet {
         obstacles.forEach(obstacle -> printToStats(obstacle.getName() + ": " + obstacle.getCentroid().cardinalString()));
         stats("null", null);
 
-        postprocessing(tree);
-        putSkeleton(tree);
-        calculateStats(tree);
+
+//        putSkeleton(tree);
+//        Thread.sleep(5000);
+//
+//        decimate(tree, tree.getNodes().getRoot(), 0);
+//        putSkeleton(tree);
+//        calculateStats(tree);
+//
+//        Thread.sleep(5000);
+//        reduceAngles(tree.getNodes().getRoot());
+//        putSkeleton(tree);
+//
+//        Thread.sleep(5000);
+//        curveSubdivision(tree, tree.getNodes().getRoot(), new ArrayList<>());
+//        putSkeleton(tree);
 
     }
 
@@ -230,6 +241,16 @@ public class Application extends Applet {
 
         initi();
         run();
+
+//        List<Vec3D> points = new ArrayList<>();
+//        points.add(new Vec3D(0,0,0));
+//        points.add(new Vec3D(0,1,0));
+//        points.add(new Vec3D(0,1,1));
+//        Spline3D spline3D = new Spline3D(points);
+//        List<Vec3D> subdivided = spline3D.getDecimatedVertices((float) 0.2, true);
+//        for(int i = 0; i < subdivided.size()-1; i++){
+//            view.addLine(new Point3D(subdivided.get(i).getComponent(0), subdivided.get(i).getComponent(1), subdivided.get(i).getComponent(2)),new Point3D(subdivided.get(i+1).getComponent(0), subdivided.get(i+1).getComponent(1), subdivided.get(i+1).getComponent(2)), Color.BLUE);
+//        }
 
         Bounds bounds = view.getTreeBounds();
 
@@ -296,7 +317,7 @@ public class Application extends Applet {
         stats("azimuth degr", angle.azimuthDegree());
         stats("elevation degr", angle.elevationDegree());
         Point3D zero = new Point3D(0, 0, 0);
-        if(!PHOTO_MODE)
+        if (!PHOTO_MODE)
             view.setLine(zero, zero.add(angle.mult(tree.getHeight())));
 
         //number of nodes
@@ -308,8 +329,8 @@ public class Application extends Applet {
         //avgNode
         Point3D avgNode = tree.calculateAvgNode();
         stats("average Node", avgNode.cardinalString());
-        if(!PHOTO_MODE)
-        view.setSchwerpunkt(avgNode);
+        if (!PHOTO_MODE)
+            view.setSchwerpunkt(avgNode);
         avgNode.normalize();
 //        ViewInterface.log("avg normalized " + avgNode.toString());
         avgNode.multTo(3f);
@@ -410,16 +431,15 @@ public class Application extends Applet {
         tree.calculateDiscs();
 
 
-        KDParentTreeNode node = tree.getNodes().getRoot();
+        KDParentTreeNode root = tree.getNodes().getRoot();
         BranchGroup bg = new BranchGroup();
 
-        if (node == null) {
+        if (root == null) {
             return;
         }
 
         Stack<KDParentTreeNode> nodes = new Stack<>();
-
-        nodes.push(node);
+        nodes.push(root);
 
         int nodeCounter = 1;
 
@@ -431,19 +451,24 @@ public class Application extends Applet {
                 bg.addChild(buildCylinder(tmp, TruncatedCone.BODY | TruncatedCone.BOT));
             else if (tree.getNodes().getLeaves().contains(tmp))
                 bg.addChild(buildCylinder(tmp, TruncatedCone.BODY | TruncatedCone.TOP));
-            else
-                bg.addChild(buildCylinder(tmp, TruncatedCone.BODY /*| TruncatedCone.TOP | TruncatedCone.BOT*/)); //mit top und bot für mehr beauty
-
-
-            if (tmp.getLtbChild() != null) {
-                nodes.push(tmp.getLtbChild());
-                nodeCounter++;
+            else {
+                if (PHOTO_MODE)
+                    bg.addChild(buildCylinder(tmp, TruncatedCone.BODY | TruncatedCone.TOP | TruncatedCone.BOT)); //mit top und bot für mehr beauty
+                else
+                    bg.addChild(buildCylinder(tmp, TruncatedCone.BODY));
             }
-            if (tmp.getRbfChild() != null) {
-                nodes.push(tmp.getRbfChild());
-                nodeCounter++;
 
-            }
+            tmp.getTreeChildren().forEach(nodes::push);
+            nodeCounter += tmp.getTreeChildren().size();
+//            if (tmp.getLtbChild() != null) {
+//                nodes.push(tmp.getLtbChild());
+//                nodeCounter++;
+//            }
+//            if (tmp.getRbfChild() != null) {
+//                nodes.push(tmp.getRbfChild());
+//                nodeCounter++;
+//
+//            }
         }
         ViewInterface.log("      processed " + nodeCounter + " nodes");
         view.resetTree();
@@ -620,11 +645,9 @@ public class Application extends Applet {
     }
 
     private static void postprocessing(Tree tree) {
-        System.out.println(tree.getNodes().getAll().size());
-//        if(tree.getNodes().getRoot().getTreeChildren().size()==1) //sonst wird der root knoten gelöscht
-//            decimate(tree, tree.getNodes().getRoot().getTreeChildren().get(0), 0.2);
-//        else
         decimate(tree, tree.getNodes().getRoot(), 0);
+        reduceAngles(tree.getNodes().getRoot());
+        curveSubdivision(tree, tree.getNodes().getRoot(), new ArrayList<>());
 
     }
 
@@ -662,5 +685,82 @@ public class Application extends Applet {
             }
         }
 
+    }
+
+    private static void reduceAngles(KDParentTreeNode node) {
+        List<KDParentTreeNode> children = node.getTreeChildren();
+        children.forEach(child -> reduceAngles(child));
+        if (node.getTreeParent() == null)
+            return;
+
+        Point3D point = node.getPoint();
+        Point3D parentVec = node.getTreeParent().getPoint().subtract(point); //von punkt zu parent
+        node.setPoint(point.add(parentVec.divide(2))); //punkt halben weg zu parent bewegen
+
+    }
+
+    private static void curveSubdivision(Tree tree, KDParentTreeNode node, List<KDParentTreeNode> ast) {
+        ast.add(node); //node zu ast
+
+        int children = node.getTreeChildren().size();
+
+        if (children == 0 || children > 1) {// spitze
+            //ast ist jetzt vollständig.
+            if(ast.size()>=3) {
+                Vec3D[] astPoints = new Vec3D[ast.size()];
+                for (int i = 0; i < astPoints.length; i++) {
+                    astPoints[i] = new Vec3D(ast.get(i).getPoint().getX(), ast.get(i).getPoint().getY(), ast.get(i).getPoint().getZ());
+                }
+
+                Spline3D spline3D = new Spline3D(astPoints);
+                List<Vec3D> subdivided = spline3D.getDecimatedVertices((float) tree.getType().getNodeDist(), true);
+                List<Point3D> subbi = new ArrayList<>();
+                subdivided.forEach(punkt -> subbi.add(new Point3D(punkt.getComponent(0), punkt.getComponent(1), punkt.getComponent(2))));
+
+                //subdivided hat jetzt subdividedte punkte zwischen beginn und ende des astes
+                //also alle inneren knoten abhängen und löschen
+
+                KDParentTreeNode first = ast.get(0);
+                KDParentTreeNode last = ast.get(ast.size() - 1);
+
+                //bei first abhängen
+                first.getTreeChildren().remove(ast.get(1));
+                //bei last abhängen
+                last.setTreeParent(null); //TODO überflüssig
+
+                //alle inneren entfernen
+                ast.remove(0);
+                ast.remove(ast.size()-1);
+                tree.getNodes().getAll().removeAll(ast);
+
+                //zwischen dem ersten und dem letzten die knoten aus subdivided einhängen
+                KDParentTreeNode nextParent = first;
+                for (int i = 1; i < subbi.size()-1; i++) {
+                    KDParentTreeNode tmp = new KDParentTreeNode(subbi.get(i), new double[]{}, nextParent);//hat parent
+                    nextParent.getTreeChildren().add(tmp);//ist kind von parent
+                    tree.getNodes().getAll().add(tmp);//zum baum
+                    nextParent = tmp;//next
+                }
+                //unten wieder anhängen an last
+                nextParent.getTreeChildren().add(last);
+                last.setTreeParent(nextParent);
+            }
+            //wenn der kindknoten hat muss ich für jeden kindknoten curve subdividen aber aktueller node muss schon mti drin sein
+            List<KDParentTreeNode> nextAst = new ArrayList<>();
+            nextAst.add(node);
+
+            List<KDParentTreeNode> childrenList = new ArrayList<>();
+            node.getTreeChildren().forEach(child -> childrenList.add(child));
+            childrenList.forEach(child -> {
+                List<KDParentTreeNode> nextAstfinal = new ArrayList<>();
+                nextAstfinal.add(node);
+                curveSubdivision(tree, child, nextAstfinal);
+            });
+        }
+
+        if (children == 1) { //inner knoten vom ast
+            KDParentTreeNode child = node.getTreeChildren().get(0);
+            curveSubdivision(tree, child, ast);
+        }
     }
 }

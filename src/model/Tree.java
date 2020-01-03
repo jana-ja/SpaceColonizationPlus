@@ -132,7 +132,7 @@ public class Tree {
 
         if (!(node.getTreeChildren().isEmpty() || node.getTreeParent() == null)) {
             //wenn parent und kind(er) hat dann transformieren
-            // parent ist bot, node ist top - node ist bot, children sind bot
+            // parent ist bot, node ist top - node ist bot, children sind top
             Point3D vectParent = node.getTreeParent().getPoint().subtract(node.getPoint());
             Point3D durchschnittChildren = new Point3D(0, 0, 0);
             node.getTreeChildren().forEach(child -> durchschnittChildren.addTo(child.getPoint()));
