@@ -33,6 +33,10 @@ public class Point3D {
         return Math.sqrt(Math.pow((point.getX() - x), 2) + Math.pow((point.getY() - y), 2) + Math.pow((point.getZ() - z), 2));
     }
 
+    public double horDistance(Point3D point){
+        return Math.sqrt(Math.pow((point.getX() - x), 2) + Math.pow((point.getZ() - z), 2));
+    }
+
     public float vectorLength() {
         return (float) (Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2)));
     }

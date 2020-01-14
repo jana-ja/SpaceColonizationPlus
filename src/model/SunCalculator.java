@@ -66,7 +66,7 @@ public class SunCalculator {
 
         double lat = Math.toRadians(LAT);
 
-        double da = dayAngle(day);
+        double da = dayAngle(day);//winkel der schräge zwischen himmelshorizont und ekliptik an diesem tag? oder zu beginn dieses tages?
         double decl = declination(da);
 
         double s = sunset(lat, decl);

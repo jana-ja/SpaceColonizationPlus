@@ -10,5 +10,7 @@ public enum TreeShape {
     VASE(),
     WEEPING(),
     SPREADING(),
-    FASTIGIATE()
+    FASTIGIATE(),
+    FINGERHUT(),
+    V()
 }

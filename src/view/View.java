@@ -331,7 +331,7 @@ public class View extends Applet implements ViewInterface {
 
         //ray (sonnenstrahl vektor)
         Vector3d ray = sunPos.calculateRayVector3d();
-        ray.scale(6);
+        ray.scale(9);
 
 //        DecimalFormat df = new DecimalFormat("#.##");
 //        ViewInterface.log(df.format(ray.x) + " " + df.format(ray.y) + " " + df.format(ray.z));

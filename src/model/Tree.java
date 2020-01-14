@@ -134,9 +134,11 @@ public class Tree {
             //wenn parent und kind(er) hat dann transformieren
             // parent ist bot, node ist top - node ist bot, children sind top
             Point3D vectParent = node.getTreeParent().getPoint().subtract(node.getPoint());
+            vectParent.normalize();
             Point3D durchschnittChildren = new Point3D(0, 0, 0);
             node.getTreeChildren().forEach(child -> durchschnittChildren.addTo(child.getPoint()));
             Point3D vectChildren = durchschnittChildren.subtract(node.getPoint());
+            vectChildren.normalize();
 
             //drehachse
             Point3D drehachse = vectParent.cross(vectChildren);
@@ -145,14 +147,20 @@ public class Tree {
             //top
             //winkel zwischen den vektoren /2
             double angleTop = -(Math.toRadians(90) - Math.acos(vectParent.dot(vectChildren) / (vectParent.vectorLength() * vectChildren.vectorLength())) / 2);
+            if(Double.isNaN(angleTop))
+                angleTop = 0;
             pointsTop = copy(points);
             TruncatedCone.transform(new Point3f(0, 0, 0), pointsTop, drehachse, angleTop);
 
             //bot
             //winkel zwischen den vektoren /2
             double angleBot = Math.toRadians(90) - Math.acos(vectParent.dot(vectChildren) / (vectParent.vectorLength() * vectChildren.vectorLength())) / 2;
+            if(Double.isNaN(angleBot))
+                angleBot = 0;
             pointsBot = copy(points);
             TruncatedCone.transform(new Point3f(0, 0, 0), pointsBot, drehachse, angleBot);
+
+
 
 
         }

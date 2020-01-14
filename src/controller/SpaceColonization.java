@@ -1,5 +1,6 @@
 package controller;
 
+import com.jogamp.nativewindow.util.Point;
 import model.*;
 import org.apache.commons.math.ArgumentOutsideDomainException;
 import org.apache.commons.math.analysis.interpolation.SplineInterpolator;
@@ -21,13 +22,18 @@ class SpaceColonization {
     private boolean marker;
     private final boolean SUN = false;
     private final int SUN_DELAY = 30;
-    private final boolean SHIFT = false;
-    private final boolean LIGHT = false;
-    private final boolean SHADOW = false;
-    private final float FACTOR = 0.5f;
+    private final boolean SHIFT = true; //TODO ich shifte grade nicht y
+    private final boolean LIGHT = true;
+    private final boolean SHADOW = true;
+    private final float FACTOR = 0.2f;
 
-    private boolean bah;
+    private int initPointcloudSize;
 
+    private boolean bah = true;
+
+    public void setInitPointcloudSize(int initPointcloudSize) {
+        this.initPointcloudSize = initPointcloudSize;
+    }
 
     public void stats() {
         Application.stats("days", beginDay + "-" + endDay);
@@ -92,12 +98,16 @@ class SpaceColonization {
         //second step: calculate new node for every node in map
 
 //        currentDay = 100;
-        List<SunPosition> sunPositions = SunCalculator.positionsForDay(currentDay, 1.0);
-        ViewInterface.log("\t day: " + currentDay + ", " + sunPositions.size() + "  hours");
-        if (currentDay == endDay)
-            currentDay = beginDay;
-        else
-            currentDay++;
+//        List<SunPosition> sunPositions = SunCalculator.positionsForDay(currentDay, 1.0);
+//        ViewInterface.log("\t day: " + currentDay + ", " + sunPositions.size() + "  hours");
+//        if (currentDay == endDay)
+//            currentDay = beginDay;
+//        else
+//            currentDay++;
+
+        List<SunPosition> sunPositions = new ArrayList<>();
+        sunPositions.add(new SunPosition(Math.toRadians(90), Math.toRadians(50)));
+
 
 
         attractionMap.forEach((node, attractionPoints) -> {
@@ -105,7 +115,7 @@ class SpaceColonization {
             Point3D apVector = calculateInfluenceVector(node, attractionPoints);
 
             //bias
-            Point3D bias = new Point3D(0, 0.0f, 0);
+            Point3D bias = new Point3D(0, 0f, 0);
             apVector.addTo(bias);
             apVector.normalize();
 
@@ -113,7 +123,9 @@ class SpaceColonization {
             Point3D finalVector;
             if (LIGHT || SHADOW) {
                 obstVector = calculateShadowDetractionVector(node, obstacles, sunPositions);
-                obstVector.multTo(FACTOR);
+                float fac = FACTOR * (-0.99f * (attractionPoints.size()/initPointcloudSize) +1f);
+//                System.out.println(attractionPoints.size() + " / " + initPointcloudSize + " " + fac + " " + (-0.8f * ((float)attractionPoints.size()/(float)initPointcloudSize) +1f));
+                obstVector.multTo(fac); // 1 -1 = 0, 1.5 -1 = 0.5, 1-0 = 1
                 finalVector = apVector.add(obstVector);
             } else
                 finalVector = apVector;
@@ -164,10 +176,13 @@ class SpaceColonization {
 //                tree.getNodes().hasInRange(attractionPoint, tree.getType().getKillRad()));
 
         if (SHIFT) {
+
             Point3D avgNode = tree.calculateAvgNode();
             Point3D shiftVector = avgNode.subtract(lastAvgNode);
-            shiftVector.setY(shiftVector.getY() * FACTOR * (float) tree.calculateBoundsPercentDings(obstacles) / 100.0f); //TODO iwie sonnenintensität einbsuen
-            pointCloud.shift(shiftVector);
+//            shiftVector.setY(shiftVector.getY() * FACTOR * (float) tree.calculateBoundsPercentDings(obstacles) / 100.0f); //TODO iwie sonnenintensität einbsuen
+            shiftVector.setY(0);
+//            pointCloud.shift(shiftVector);
+            pointCloud.shift2(lastAvgNode, avgNode);
 
             pointCloud.updateWithObstacles(obstacles);
         }
@@ -253,8 +268,9 @@ class SpaceColonization {
      * @return
      */
     PointCloud generatePointCloud(Tree tree/*, List<Obstacle> obstacles*/) {
+        PointCloud cloud = new PointCloud();
         //würfel um volumen bauen
-        List<Point3D> cloud = fillPointCloudCuboid(tree);
+         fillPointCloudCuboid(tree,cloud);
 
         //schnitt(würfel,volumen) behalten -> für jeden punkt: ist in volumen?
 //        cloud = buildTreeShape(tree, cloud);
@@ -265,11 +281,11 @@ class SpaceColonization {
         //jetzt separat auszuführen damit die cloud gespeichert werden kann
         //wird in pointcloud verschoben
 
-        return new PointCloud(cloud);
+        return (cloud);
     }
 
-    private List<Point3D> fillPointCloudCuboid(Tree tree) {
-        List<Point3D> cloud = new ArrayList<>();
+    private void fillPointCloudCuboid(Tree tree, PointCloud cloud) {
+        List<Point3D> cloudPoints = cloud.getAttractionPoints();
         Random random = new Random();
 
         Point3D rootCoordinates = tree.getNodes().getRoot().getPoint();
@@ -292,8 +308,11 @@ class SpaceColonization {
         int lim;
         switch (tree.getType().getTreeShape()) {
             case UMBRELLA2:
-                lim = (int) (0.7 * type.getAttPointsPerHeight() * treeHeight); //prozent für rahmen
+                lim = (int) (0.9 * type.getAttPointsPerHeight() * treeHeight); //prozent für rahmen
                 break;
+//            case V:
+//                lim = (int) ( /*0.4 **/ 0.05 * type.getAttPointsPerHeight() * treeHeight); //prozent für rahmen
+//                break;
 //            case UMBRELLA:
             default:
                 lim = (int) (type.getAttPointsPerHeight() * treeHeight);
@@ -312,14 +331,14 @@ class SpaceColonization {
                 z = random.nextFloat() * (zMax - zMin) + zMin;
 
             Point3D point3D = new Point3D(x, y, z);
-            if (buildTreeShape2(tree, point3D, true))
-                cloud.add(point3D);
+            if (buildTreeShape2(tree, point3D, true, cloud))
+                cloudPoints.add(point3D);
             else i--;
         }
 
         //für umbrella dann inneres
 
-        bah = true;
+
         for (int i = lim; i <= (int) (type.getAttPointsPerHeight() * treeHeight); i++) {
             float x = random.nextFloat() * (xMax - xMin) + xMin;
             float y = random.nextFloat() * (yMax - yMin) + yMin;
@@ -328,18 +347,18 @@ class SpaceColonization {
                 z = 0;
             else
                 z = random.nextFloat() * (zMax - zMin) + zMin;
-
+            System.out.println("lel");
             Point3D point3D = new Point3D(x, y, z);
-            if (buildTreeShape2(tree, point3D, false))
-                cloud.add(point3D);
+            if (buildTreeShape2(tree, point3D, false, cloud))
+                cloudPoints.add(point3D);
             else i--;
         }
 
 
-        return cloud;
+//        return cloudPoints;
     }
 
-    private boolean buildTreeShape2(Tree tree, Point3D point3D, boolean indicator) {
+    private boolean buildTreeShape2(Tree tree, Point3D point3D, boolean indicator, PointCloud cloud) {
 
 
         Point3D rootCoordinates = tree.getNodes().getRoot().getPoint();
@@ -375,20 +394,31 @@ class SpaceColonization {
                         new Point3D((float) (treeRadius - 0.25 * treeRadius), (float) (treeHeight - 0.4 * crownHeight), 0),
                         new Point3D(0, (float) treeHeight, 0)};
                 break;
+            case FINGERHUT:
+                points = new Point3D[]{
+                        new Point3D((float) (treeRadius), (float) (treeHeight - crownHeight), 0),
+                        new Point3D((float) (treeRadius - 0.25 * treeRadius), (float) (treeHeight - 0.4 * crownHeight), 0),
+                        new Point3D(0, (float) treeHeight, 0)};
+                break;
             case CONE:
-
                 points = new Point3D[]{
                         new Point3D((float) treeRadius, (float) (treeHeight - crownHeight), 0),
                         new Point3D((float) (treeRadius * 0.5), (float) (treeHeight - 0.5 * crownHeight), 0),
                         new Point3D(0, (float) treeHeight, 0)};
+                break;
+            case V:
+                thickness = 0.1;
+                points = new Point3D[]{
+                        new Point3D((float)(0.2*treeRadius), (float) (treeHeight - crownHeight), 0),
+                        new Point3D((float) treeRadius, (float) (treeHeight - 0.3 * crownHeight), 0),
+                        new Point3D(0, (float) treeHeight, 0)};
 
                 break;
-
             default:
                 //round
 //                points = new Point3D[]{
-//                        new Point3D((float) (treeRadius), (float) (treeHeight - topHeight), 0),
-//                        new Point3D((float) (treeRadius - 0.25 * treeRadius), (float) (treeHeight - 0.4 * topHeight), 0),
+//                        new Point3D((float) (treeRadius), (float) (treeHeight - crownHeight), 0),
+//                        new Point3D((float) (treeRadius - 0.25 * treeRadius), (float) (treeHeight - 0.4 * crownHeight), 0),
 //                        new Point3D(0, (float) treeHeight, 0)};
                 points = new Point3D[]{
                         new Point3D(0, (float) (treeHeight - crownHeight), 0),
@@ -408,6 +438,7 @@ class SpaceColonization {
             SplineInterpolator interpolator = new SplineInterpolator();
             //x und y getauscht weil ich f(y)=x will
             PolynomialSplineFunction splineFunction = interpolator.interpolate(y, x);
+            cloud.setFunction(splineFunction);
             if (bah) {
                 Application.putSpline(splineFunction, points);
                 bah = false;
@@ -426,56 +457,68 @@ class SpaceColonization {
         switch (type.getTreeShape()) {
             case UMBRELLA2:
             case UMBRELLA:
-                //alle punkte um thickness % in richtung mittelpunkt der krone achse
-                Point3D crownMid = new Point3D(rootCoordinates.getX(), (float) (treeHeight - crownHeight * 0.5), rootCoordinates.getZ());
-                for (Point3D point : points) {
-                    Point3D midVector = crownMid.subtract(point);
-                    float length = midVector.vectorLength();
-                    midVector.normalize();
-                    midVector.multTo((float) thickness * length);
-                    point.addTo(midVector);
-                }
-                points[0].setY((float) (treeHeight - crownHeight));
-                minDistanceMaxY = points[points.length-1].getY();
-                minDistanceMinY = points[0].getY();
+//            case V:
+                //wenn indicator true ist dannmach ich bei umbrella den rahmen, wenn es false ist mach ich überall, dann muss ich xformindistance nicht ändern
+                if (indicator) {//wenn indicator true dann rahmen
 
-                //mindistance nehmen
-            {
-                double[] x = new double[points.length];
-                double[] y = new double[points.length];
-                for (int i = 0; i < points.length; i++) {
-                    x[i] = points[i].getX();
-                    y[i] = points[i].getY();
-                }
-                //wenn über oder unter innerer funktion dann ist eh nicht alos minDistance = 0;
-                if (point3D.getY() > minDistanceMaxY || point3D.getY() < minDistanceMinY)
-                    xForMinDistance = 0;
-                else {
-                    SplineInterpolator interpolator = new SplineInterpolator();
-                    //x und y getauscht weil ich f(y)=x will
-                    PolynomialSplineFunction splineFunction = interpolator.interpolate(y, x);
-                    if (bah) {
-                        Application.putSpline(splineFunction, points);
-                        bah = false;
+//                    //TODO für V busch
+////                    if(point3D.getY() < (float) (treeHeight - 0.5 * crownHeight)){
+//                    if(point3D.getY() > (float) (treeHeight - 0.9 * crownHeight)){
+//                        return false;
+//                    }
+                    //alle punkte um thickness % in richtung mittelpunkt der krone achse
+                    Point3D crownMid = new Point3D(rootCoordinates.getX(), (float) (treeHeight - crownHeight * 0.5), rootCoordinates.getZ());
+                    for (Point3D point : points) {
+                        Point3D midVector = crownMid.subtract(point);
+                        float length = midVector.vectorLength();
+                        midVector.normalize();
+                        midVector.multTo((float) thickness * length);
+                        if(thickness!=0.0)
+                            point.addTo(midVector);
                     }
-                    try {
-                        xForMinDistance = (float) splineFunction.value(point3D.getY());
-                    } catch (ArgumentOutsideDomainException e) {
-                        e.printStackTrace();
+                    points[0].setY((float) (treeHeight - crownHeight));
+                    minDistanceMaxY = points[points.length - 1].getY();
+                    minDistanceMinY = points[0].getY();
+
+                    //mindistance nehmen
+                    {
+                        double[] x = new double[points.length];
+                        double[] y = new double[points.length];
+                        for (int i = 0; i < points.length; i++) {
+                            x[i] = points[i].getX();
+                            y[i] = points[i].getY();
+                        }
+                        //wenn über oder unter innerer funktion dann ist eh nicht alos minDistance = 0;
+                        if (point3D.getY() > minDistanceMaxY || point3D.getY() < minDistanceMinY)
+                            xForMinDistance = 0;
+                        else {
+                            SplineInterpolator interpolator = new SplineInterpolator();
+                            //x und y getauscht weil ich f(y)=x will
+                            PolynomialSplineFunction splineFunction = interpolator.interpolate(y, x);
+                            if (bah) {
+                                Application.putSpline(splineFunction, points);
+                                bah = false;
+                            }
+                            try {
+                                xForMinDistance = (float) splineFunction.value(point3D.getY());
+                            } catch (ArgumentOutsideDomainException e) {
+                                e.printStackTrace();
+                            }
+                        }
                     }
                 }
-            }
-            break;
+                break;
         }
+
 
         double maxDistance = distance(rootCoordinates.getX(), point3D.getY(), xForMaxDistance, point3D.getY());
         double realDistance = point3D.distance(new Point3D(rootCoordinates.getX(), point3D.getY(), rootCoordinates.getZ()));
         double minDistance = distance(rootCoordinates.getX(), point3D.getY(), xForMinDistance, point3D.getY());
 
-            //rahmen
-            if ((realDistance <= maxDistance && realDistance >= minDistance)) {
-                return true;
-            }
+        //rahmen
+        if ((realDistance <= maxDistance && realDistance >= minDistance)) {
+            return true;
+        }
 
 
         return false;
