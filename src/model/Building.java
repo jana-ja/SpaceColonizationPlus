@@ -5,12 +5,11 @@ import org.jogamp.java3d.utils.geometry.Box;
 import org.jogamp.java3d.utils.geometry.GeometryInfo;
 import org.jogamp.java3d.utils.geometry.NormalGenerator;
 import org.jogamp.java3d.utils.image.TextureLoader;
-import org.jogamp.vecmath.Point3d;
-import org.jogamp.vecmath.Point3f;
-import org.jogamp.vecmath.Vector3d;
-import org.jogamp.vecmath.Vector4f;
+import org.jogamp.vecmath.*;
 import view.Point3D;
 import view.View;
+
+import java.awt.*;
 
 
 public class Building implements Obstacle {
@@ -21,7 +20,7 @@ public class Building implements Obstacle {
 
     private BoundingBox bounds;
 
-    private float maxX,  minX,  maxZ, minZ, maxY, minY;
+    private float maxX, minX, maxZ, minZ, maxY, minY;
 
     public Building(String name, Point3D corner1, Point3D corner2) {
         this.name = name;
@@ -38,38 +37,36 @@ public class Building implements Obstacle {
 
         bounds = new BoundingBox(new Point3d(minX, minY, minZ), new Point3d(maxX, maxY, maxZ));
     }
+
     public Building(Point3D corner1, Point3D corner2) {
         this("", corner1, corner2);
     }
 
     @Override
-    public TransformGroup getBox(Texture texture){
+    public TransformGroup getBox(Texture texture, boolean tex) {
 
         Appearance appearance = new ShaderAppearance();
         appearance.setCapability(ShaderAppearance.ALLOW_SHADER_PROGRAM_WRITE);
-//        TexCoordGeneration generation = new TexCoordGeneration(TexCoordGeneration.EYE_LINEAR, TexCoordGeneration.TEXTURE_COORDINATE_3);
-//        generation.setEnable(true);
-//        appearance.setTexCoordGeneration(generation);
-//        appearance.setTexture(texture);
+        Color3f gray = new Color3f((float) (1.0 / 255) * Color.darkGray.getRed(), (float) (1.0 / 255) *Color.darkGray.getGreen(), (float) (1.0 / 255) *Color.darkGray.getBlue());
+        appearance.setMaterial(new Material(gray, gray, gray, gray, 1.0f));
 
-        float xl = maxX-minX;
-        float yl = maxY-minY;
-        float zl = maxZ-minZ;
-        Box obstBox = new Box(xl/2,yl/2,zl/2,new Appearance()); //durch 2 weil die nehmen das wie nen radius?? why
+        float xl = maxX - minX;
+        float yl = maxY - minY;
+        float zl = maxZ - minZ;
+        Box obstBox = new Box(xl / 2, yl / 2, zl / 2, appearance); //durch 2 weil die nehmen das wie nen radius?? why
 
-        int[] sides = new int[]{Box.TOP,Box.BOTTOM,Box.LEFT,Box.RIGHT, Box.FRONT, Box.BACK};
+        int[] sides = new int[]{Box.TOP, Box.BOTTOM, Box.LEFT, Box.RIGHT, Box.FRONT, Box.BACK};
 
-        for (int side : sides) {
-            Appearance appearance1 = new ShaderAppearance();
-            appearance1.setTexCoordGeneration(this.generateTexCoord(obstBox.getShape(side)));
-            appearance1.setTexture(texture);
-            obstBox.setAppearance(side,appearance1);
+        if (tex) {
+            for (int side : sides) {
+                Appearance appearance1 = new ShaderAppearance();
+                appearance1.setTexCoordGeneration(this.generateTexCoord(obstBox.getShape(side)));
+                appearance1.setTexture(texture);
+                obstBox.setAppearance(side, appearance1);
+            }
         }
-
-
-
         Transform3D t = new Transform3D();
-        t.setTranslation(new Vector3d(xl/2 + minX, yl/2 + minY, zl/2 + minZ));
+        t.setTranslation(new Vector3d(xl / 2 + minX, yl / 2 + minY, zl / 2 + minZ));
         TransformGroup tg = new TransformGroup(t);
         tg.addChild(obstBox);
         return tg;
@@ -85,15 +82,15 @@ public class Building implements Obstacle {
         double width = upper.x - lower.x;
         double height = upper.y - lower.y;
         double deep = upper.z - lower.z;
-        Vector4f planeX = new Vector4f((float)(1.0/width), 0.0f, 0.0f, (float)(-lower.x/width));
-        Vector4f planeY = new Vector4f(0.0f, (float)(1.0/height), 0.0f, (float)(-lower.y/height));
-        Vector4f planeZ = new Vector4f(0.0f, 0.0f, (float)(1.0/deep), (float)(-lower.z/deep));
+        Vector4f planeX = new Vector4f((float) (1.0 / width), 0.0f, 0.0f, (float) (-lower.x / width));
+        Vector4f planeY = new Vector4f(0.0f, (float) (1.0 / height), 0.0f, (float) (-lower.y / height));
+        Vector4f planeZ = new Vector4f(0.0f, 0.0f, (float) (1.0 / deep), (float) (-lower.z / deep));
 
         TexCoordGeneration tcg = new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR, TexCoordGeneration.TEXTURE_COORDINATE_2);
-        if(width == 0) { // RIGHT, LEFT: YZ
+        if (width == 0) { // RIGHT, LEFT: YZ
             tcg.setPlaneS(planeZ);
             tcg.setPlaneT(planeY);
-        } else if(height == 0) { // TOP, BOTTOM: XZ
+        } else if (height == 0) { // TOP, BOTTOM: XZ
             tcg.setPlaneS(planeX);
             tcg.setPlaneT(planeZ);
         } else { // FRONT, BACK: XY
@@ -173,31 +170,31 @@ public class Building implements Obstacle {
 //        return new Shape3D(giBody.getGeometryArray(), appearance);
 //    }
 
-    static void swapArray(Point3f[] array){
-        for (int i = 0; i < array.length/2; i++){
+    static void swapArray(Point3f[] array) {
+        for (int i = 0; i < array.length / 2; i++) {
             Point3f temp = array[i];
-            array[i] = array[array.length-i-1];
-            array[array.length-i-1] = temp;
+            array[i] = array[array.length - i - 1];
+            array[array.length - i - 1] = temp;
         }
     }
 
     @Override
     public Point3D getCentroidBottom() {
-        if(centroid == null)
+        if (centroid == null)
             calculateCentroid();
         return new Point3D(centroid.getX(), 0, centroid.getZ());
     }
 
     @Override
     public Point3D getCentroid() {
-        if(centroid == null)
+        if (centroid == null)
             calculateCentroid();
         return centroid;
     }
 
-    private void calculateCentroid(){
+    private void calculateCentroid() {
         //weil quader: (sonst alle punkte addieren und durch anzahl teilen)
-        this.centroid = new Point3D((minX+maxX)/2, (minY+maxY)/2, (minZ+maxZ)/2);
+        this.centroid = new Point3D((minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
     }
 
     private static Point3D lineIntersection(Point3D planePoint, Point3D planeNormal, Point3D linePoint, Point3D lineDirection) {
@@ -214,7 +211,7 @@ public class Building implements Obstacle {
     }
 
     @Override
-    public boolean isInShadow(Point3D node, SunPosition sunPos){ //TODO auch true wenn strahl erst node und dann building trifft
+    public boolean isInShadow(Point3D node, SunPosition sunPos) { //TODO auch true wenn strahl erst node und dann building trifft
         Vector3d ray = sunPos.calculateRayVector3d();
         ray.normalize();
 
@@ -222,19 +219,19 @@ public class Building implements Obstacle {
     }
 
     @Override
-    public boolean isInShadowPlus(Point3D node, SunPosition sunPos){
-        if(!isInShadow(node,sunPos))
+    public boolean isInShadowPlus(Point3D node, SunPosition sunPos) {
+        if (!isInShadow(node, sunPos))
             return false;
         //testen ob ray anderen teil des gebäudes schneidet
         Vector3d ray = sunPos.calculateRayVector3d();
         ray.normalize();
         //TODO MUSS NOCH HER
-        return isInShadow(node,sunPos);
+        return isInShadow(node, sunPos);
     }
 
 
     @Override
-    public Point3D getVectorFromShadow(Point3D node, SunPosition sunPos){
+    public Point3D getVectorFromShadow(Point3D node, SunPosition sunPos) {
         Point3D ray = sunPos.calculateRayVector();
 
         //richtung des vektors: senkrecht von gerade(ray durch centroid) durch node

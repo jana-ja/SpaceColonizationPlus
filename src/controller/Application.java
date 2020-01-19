@@ -38,9 +38,9 @@ public class Application extends Applet {
     private static final int STEPS = 900; //max number of space colonization iterations
     private static final long DELAY = 0;
     private static final boolean DEBUG = false;
-    private static final boolean SAVED = false;
-    private static final String NEXTFILE = "busch";
-    private static final String SAVEFILE = "postpr"; //clud4m, cloud4m, cloud6m, cloud2, t2, ske (1.0), ver (4.0), postpr, popr2d, busch
+    private static final boolean SAVED = true;
+    private static final String NEXTFILE = "exp";
+    private static final String SAVEFILE = "sonne1"; //clud4m, cloud4m, cloud6m, cloud2, t2, ske (1.0), ver (4.0), postpr, popr2d, busch
     private static ShaderAppearance branchAppearance;
     public static final boolean TWO_D = false;
 
@@ -62,6 +62,7 @@ public class Application extends Applet {
 //        Tree tree = new Tree(TreeType.BUSCH, 3.4, verschiebung);
 //
         Tree tree = new Tree(TreeType.SONNE1, 3, verschiebung);
+//        Tree tree = new Tree(TreeType.HINDERNISSE1, 5, verschiebung);
 
 //        Tree tree = new Tree(TreeType.BSP5, 2.0, verschiebung);
 //        Tree tree = new Tree(TreeType.ERSTBILD, 3.0, verschiebung);
@@ -83,10 +84,10 @@ public class Application extends Applet {
 //        Building southBuilding = new Building("south", new Point3D(-1.5f, 0, 2.0f), new Point3D(1.5f, 4, 1.0f));
 //        obstacles.add(southBuilding);
 
-        SunPosition sp = new SunPosition(Math.toRadians(90), Math.toRadians(50));
-        view.setSun(sp);
-        Point3D pu = new Point3D(1,4, 0);
-        view.addLine(pu, pu.add(sp.calculateRayVector().mult(-5)), Color.black);
+//        SunPosition sp = new SunPosition(Math.toRadians(90), Math.toRadians(50));
+//        view.setSun(sp);
+//        Point3D pu = new Point3D(1,4, 0);
+//        view.addLine(pu, pu.add(sp.calculateRayVector().mult(-5)), Color.black);
 //
         //east building
         Building eastBuilding = new Building("east", new Point3D(1.0f, 0, -2f), new Point3D(2.0f, 4.0f, 2f));
@@ -102,6 +103,17 @@ public class Application extends Applet {
 //
 //        Building strangeBuilding = new Building("strange", new Point3D(-2.0f, 1, -1.5f), new Point3D(-0.2f, 1.5f, 1.5f));
 //        obstacles.add(strangeBuilding);
+
+//        //TODO BAUM 5m
+//        Building bild1 = new Building("bild1", new Point3D(0.5f, 0, -2f), new Point3D(2.0f, 4.0f, 2f));
+//        obstacles.add(bild1);
+//        Building bild2 = new Building("bild2", new Point3D(-1.5f, 0, 2.0f), new Point3D(1.5f, 4, 1.0f));
+//        obstacles.add(bild2);
+//        //TODO BAUM 4m
+//        Building bild3 = new Building("bild3", new Point3D(0.5f, 0, -1f), new Point3D(2.0f, 2.0f, 1f));
+//        obstacles.add(bild3);
+//        Building bild4 = new Building("bild4", new Point3D(-0.5f, 0, -1f), new Point3D(-2.0f, 2.0f, 1f));
+//        obstacles.add(bild4);
 
 
         putObstacles(obstacles);
@@ -266,14 +278,14 @@ public class Application extends Applet {
 
         obstacleAppearance = new ShaderAppearance();
         obstacleAppearance.setCapability(ShaderAppearance.ALLOW_SHADER_PROGRAM_WRITE);
-        Texture loader = new TextureLoader(View.class.getClassLoader().getResource("mauer.jpg").getPath(), ((View) view).getComponent(0)).getTexture();
-        obstacleAppearance.setTexture(loader);
-        TexCoordGeneration generation = new TexCoordGeneration(TexCoordGeneration.EYE_LINEAR, TexCoordGeneration.TEXTURE_COORDINATE_3);
-        generation.setEnable(true);
-        obstacleAppearance.setTexCoordGeneration(generation);
+//        Texture loader = new TextureLoader(View.class.getClassLoader().getResource("mauer.jpg").getPath(), ((View) view).getComponent(0)).getTexture();
+//        obstacleAppearance.setTexture(loader);
+//        TexCoordGeneration generation = new TexCoordGeneration(TexCoordGeneration.EYE_LINEAR, TexCoordGeneration.TEXTURE_COORDINATE_3);
+//        generation.setEnable(true);
+//        obstacleAppearance.setTexCoordGeneration(generation);
 
-//        Color3f gray = new Color3f((float) (1.0 / 255) *Color.gray.getRed(), (float) (1.0 / 255) *Color.gray.getGreen(), (float) (1.0 / 255) *Color.gray.getBlue());
-//        obstacleAppearance.setMaterial(new Material(gray, gray, gray, gray, 10f));
+        Color3f gray = new Color3f((float) (1.0 / 255) *Color.gray.getRed(), (float) (1.0 / 255) *Color.gray.getGreen(), (float) (1.0 / 255) *Color.gray.getBlue());
+        obstacleAppearance.setMaterial(new Material(gray, gray, gray, gray, 10f));
 
         //coordinates
 //        view.addMarker(0, 0, 0, new Color3f(Color.black.getRed(),Color.black.getGreen(),Color.black.getBlue()), 0.02f);
@@ -437,7 +449,7 @@ public class Application extends Applet {
 //                obstacle -> bg.addChild(obstacle.getShape3D(obstacleAppearance));
             Texture texture = new TextureLoader(view.View.class.getClassLoader().getResource("mauer.jpg").getPath(), ((View) view).getComponent(0)).getTexture();
 
-            bg.addChild(obst.getBox(texture));
+            bg.addChild(obst.getBox(texture, false));
         });
         view.addToScene(bg);
     }
@@ -452,13 +464,15 @@ public class Application extends Applet {
         List<Point3D> nodes = cloud.getAttractionPoints();
         BranchGroup bg = new BranchGroup();
 
+        Color3f white = new Color3f(0.7f,0.7f,0.7f);
+
         Appearance app = new Appearance();
         Color3f blue = new Color3f(Color.BLUE.getRed(), Color.BLUE.getGreen(), Color.BLUE.getBlue());
-        app.setMaterial(new Material(blue, blue, blue, blue, 70f));
+        app.setMaterial(new Material(blue, blue, white, blue, 70f));
 
         Appearance app2 = new Appearance();
-        Color3f darkblue = new Color3f(Color.YELLOW.getRed(), Color.YELLOW.getGreen(), Color.YELLOW.getBlue());
-        app2.setMaterial(new Material(darkblue, darkblue, darkblue, darkblue, 70f));
+        Color3f red = new Color3f(Color.RED.getRed(), Color.RED.getGreen(), Color.RED.getBlue());
+        app2.setMaterial(new Material(white, red, red, red, 70f));
 
         nodes.forEach(point -> {
             TransformGroup tg = new TransformGroup();
@@ -471,11 +485,12 @@ public class Application extends Applet {
             if (point.isActivated()) {
 
                 sphere.setAppearance(app);
+                tg.addChild(sphere);
             } else {
                 sphere.setAppearance(app2);
+//                tg.addChild(sphere);
 
             }
-            tg.addChild(sphere);
             bg.addChild(tg);
         });
 

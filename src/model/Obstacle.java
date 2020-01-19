@@ -11,7 +11,7 @@ public interface Obstacle {
     String getName();
 
 //    Shape3D getShape3D(Appearance appearance);
-    TransformGroup getBox(Texture texture);
+    TransformGroup getBox(Texture texture, boolean tex);
     boolean isInside(Point3D point);
 
     boolean isInShadow(Point3D node, SunPosition sunPos);

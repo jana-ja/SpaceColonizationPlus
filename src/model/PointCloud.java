@@ -60,6 +60,8 @@ public class PointCloud {
     public void shift2(Point3D lastAvgNode, Point3D avgNode) {
         Point3D shiftVector = avgNode.subtract(lastAvgNode);
 
+        List<Point3D> additional = new ArrayList<>();
+
         attractionPoints.forEach(ap -> {
             try {
                 double radius = function.value(ap.getY()); //radius an der höhe
@@ -70,14 +72,17 @@ public class PointCloud {
                     //erstmal punktsymmetrisch und dann schieben
                     Point3D apZUlastAvg = lastAvgNode.subtract(ap);
                     apZUlastAvg.setY(0);
-                    ap.addTo(apZUlastAvg.mult(2));
-                    ap.addTo(shiftVector);
-
+                    Point3D copy = new Point3D(ap.getX(),ap.getY(),ap.getZ());
+                    copy.addTo(apZUlastAvg.mult(2));
+                    copy.addTo(shiftVector);
+                    additional.add(copy);
                 }
             } catch (ArgumentOutsideDomainException e) {
                 e.printStackTrace();
             }
         });
+
+        this.getAttractionPoints().addAll(additional);
 
 
     }

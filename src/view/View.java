@@ -36,12 +36,15 @@ public class View extends Applet implements ViewInterface {
     private final BranchGroup tempSceneNodes;
     private final BranchGroup sun;
 
+    private DirectionalLight sunLight;
+
 
     private final BoundingSphere bounds = new BoundingSphere(new Point3d(0, 0, 0), 100);
 
 
     public View(int screenWidth, int screenHeight) {
 
+        sunLight = new DirectionalLight();
         screenHeight = (int)(0.9*screenHeight);
         this.setBackground(Color.gray);
         //create View1
@@ -200,7 +203,7 @@ public class View extends Applet implements ViewInterface {
 
         // create a light gray background
         Background back = new Background(new Color3f(rgbToFloat(new int[]{255,255,255})));
-//        Background back = new Background(new Color3f(rgbToFloat(new int[]{135, 206, 250})));
+//        Background back = new Background(new Color3f(rgbToFloat(new int[]{135, 206, 250}))); //TODO das ist der himmel
         back.setApplicationBounds(bounds);
         bgBackground.addChild(back);
 
@@ -253,18 +256,18 @@ public class View extends Applet implements ViewInterface {
     private void addLights(BranchGroup bg) {
 
         Color3f dlColor = new Color3f(0.7f, 0.7f, 0.7f);
-        Vector3f dir = new Vector3f(0.0f, -0.2f, 1.0f);
+        Vector3f dir = new Vector3f(-1.0f, -0.2f, 1.0f);
         Color3f alColor = new Color3f(0.4f, 0.4f, 0.4f);
 
         AmbientLight ambLight = new AmbientLight(alColor);
         ambLight.setInfluencingBounds(bounds);
 //        PointLight pointLight = new PointLight(true, dlColor, new Point3f(0,1.5f,0), new Point3f(5,0,0));
-        DirectionalLight dirLight = new DirectionalLight(dlColor, dir);
-        dirLight.setInfluencingBounds(bounds);
+        sunLight = new DirectionalLight(dlColor, dir);
+        sunLight.setInfluencingBounds(bounds);
 
         // add the lights to the parent BranchGroup
         bg.addChild(ambLight);
-        bg.addChild(dirLight);
+        bg.addChild(sunLight);
     }
 
     private float[] rgbToFloat(int[] rgb) {
@@ -348,6 +351,10 @@ public class View extends Applet implements ViewInterface {
         bg.setCapability(BranchGroup.ALLOW_DETACH);
 
         this.sun.addChild(bg);
+
+
+        sunLight.setDirection((float)(ray.getX()), (float)(ray.getY()), (float)(ray.getZ()));
+
     }
 
     @Override

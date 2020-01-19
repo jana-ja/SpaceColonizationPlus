@@ -22,14 +22,16 @@ class SpaceColonization {
     private boolean marker;
     private final boolean SUN = false;
     private final int SUN_DELAY = 30;
-    private final boolean SHIFT = true; //TODO ich shifte grade nicht y
+    private final boolean SHIFT = false; //TODO ich shifte grade nicht y
     private final boolean LIGHT = true;
     private final boolean SHADOW = true;
     private final float FACTOR = 0.2f;
+    Point3D alles;
+    Map<KDParentTreeNode, List<Point3D>> lastAttractionMap;
 
     private int initPointcloudSize;
 
-    private boolean bah = true;
+    private boolean bah = false;
 
     public void setInitPointcloudSize(int initPointcloudSize) {
         this.initPointcloudSize = initPointcloudSize;
@@ -61,6 +63,7 @@ class SpaceColonization {
      */
     boolean spaceColonize(Tree tree, PointCloud pointCloud, List<Obstacle> obstacles) {
 
+        alles = new Point3D(0, 0, 0);
 
         marker = true;
         if (pointCloud.isEmpty())
@@ -93,6 +96,7 @@ class SpaceColonization {
             return false;
         }
 
+
         ViewInterface.log("      mapped nodes: " + attractionMap.size());
 
         //second step: calculate new node for every node in map
@@ -109,13 +113,12 @@ class SpaceColonization {
         sunPositions.add(new SunPosition(Math.toRadians(90), Math.toRadians(50)));
 
 
-
         attractionMap.forEach((node, attractionPoints) -> {
             //attraction vector
             Point3D apVector = calculateInfluenceVector(node, attractionPoints);
 
             //bias
-            Point3D bias = new Point3D(0, 0f, 0);
+            Point3D bias = new Point3D(0, 0.0f, 0);
             apVector.addTo(bias);
             apVector.normalize();
 
@@ -123,13 +126,16 @@ class SpaceColonization {
             Point3D finalVector;
             if (LIGHT || SHADOW) {
                 obstVector = calculateShadowDetractionVector(node, obstacles, sunPositions);
-                float fac = FACTOR * (-0.99f * (attractionPoints.size()/initPointcloudSize) +1f);
+                alles.addTo(obstVector);
+                if (obstVector.vectorLength() != 0)
+                    obstVector.normalize();
+                float fac = FACTOR * (-0.99f * (attractionPoints.size() / initPointcloudSize) + 1f);
 //                System.out.println(attractionPoints.size() + " / " + initPointcloudSize + " " + fac + " " + (-0.8f * ((float)attractionPoints.size()/(float)initPointcloudSize) +1f));
                 obstVector.multTo(fac); // 1 -1 = 0, 1.5 -1 = 0.5, 1-0 = 1
-                finalVector = apVector.add(obstVector);
+                finalVector = apVector;//.add(obstVector);
             } else
                 finalVector = apVector;
-            finalVector.addTo(new Point3D(0, -0.2f, 0)); //TODO bias
+//            finalVector.addTo(new Point3D(0, -0.2f, 0)); //TODO bias
             finalVector.normalize();
 
             //norm final vector
@@ -139,19 +145,32 @@ class SpaceColonization {
 
             //vector zu node point addieren
             newPoint.addTo(node.getPoint());
-            //testen ob newNode.point = point von nem kind von node
-            boolean isNew = true;
-            if (attractionPoints.size() == 2) {
-                for (KDParentTreeNode child : node.getTreeChildren()) {
 
-                    if (child.getPoint().distance(newPoint) < 0.001) {
+            boolean isNew = true;
+
+            if (lastAttractionMap != null) {
+                if (lastAttractionMap.get(node) != null) {
+                    if (lastAttractionMap.get(node).equals(attractionPoints)) {
                         isNew = false;
                         pointCloud.getAttractionPoints().removeAll(attractionPoints);
                         ViewInterface.log("   unlimited growing problem prevented"); //TODO schwierig mit wandernder sonne. so funktioniert das dann nicht
-                        break;
                     }
                 }
             }
+//            //testen ob newNode.point = point von nem kind von node
+//            boolean isNew = true;
+//            if (attractionPoints.size() == 2) {
+//                for (KDParentTreeNode child : node.getTreeChildren()) {
+//
+//                    if (child.getPoint().distance(newPoint) < 0.002) {
+//                        isNew = false;
+//                        pointCloud.getAttractionPoints().removeAll(attractionPoints);
+//                        ViewInterface.log("   unlimited growing problem prevented"); //TODO schwierig mit wandernder sonne. so funktioniert das dann nicht
+//                        break;
+//                    }
+//                }
+//            }
+
 
             if (isNew) {
                 AtomicBoolean legitim = new AtomicBoolean(true);
@@ -164,6 +183,8 @@ class SpaceColonization {
                     System.err.println("NE REIN GEWACHSEN"); //TODO unlimitetd nicht-growing
             }
         });
+
+        lastAttractionMap = attractionMap;
 
 
         //third step: remove attraction points that have a node in kill radius distance or less
@@ -181,8 +202,12 @@ class SpaceColonization {
             Point3D shiftVector = avgNode.subtract(lastAvgNode);
 //            shiftVector.setY(shiftVector.getY() * FACTOR * (float) tree.calculateBoundsPercentDings(obstacles) / 100.0f); //TODO iwie sonnenintensität einbsuen
             shiftVector.setY(0);
-//            pointCloud.shift(shiftVector);
-            pointCloud.shift2(lastAvgNode, avgNode);
+            shiftVector = new Point3D(0.009f, 0, 0);
+//            alles.setY(0);
+            alles.normalize();
+            alles.multTo(0.002f);
+            pointCloud.shift(alles);
+//            pointCloud.shift2(lastAvgNode, avgNode);
 
             pointCloud.updateWithObstacles(obstacles);
         }
@@ -257,8 +282,7 @@ class SpaceColonization {
         });
 //        System.out.println("\t new day");
         marker = false;
-        if (shadowVector.vectorLength() != 0)
-            shadowVector.normalize();
+
         return shadowVector;
     }
 
@@ -270,7 +294,7 @@ class SpaceColonization {
     PointCloud generatePointCloud(Tree tree/*, List<Obstacle> obstacles*/) {
         PointCloud cloud = new PointCloud();
         //würfel um volumen bauen
-         fillPointCloudCuboid(tree,cloud);
+        fillPointCloudCuboid(tree, cloud);
 
         //schnitt(würfel,volumen) behalten -> für jeden punkt: ist in volumen?
 //        cloud = buildTreeShape(tree, cloud);
@@ -352,7 +376,22 @@ class SpaceColonization {
             if (buildTreeShape2(tree, point3D, false, cloud))
                 cloudPoints.add(point3D);
             else i--;
+
+
         }
+
+//        //stamm
+//        for (int i = 1; i <= 200; i++) {
+//
+//            float x = random.nextFloat() * (0.03f - -0.03f) + -0.03f;
+//            float y = random.nextFloat() * (yMax - 0) + 0;
+//            float z = random.nextFloat() * (0.03f - -0.03f) + -0.03f;
+//
+//            Point3D point3D = new Point3D(x, y, z);
+//
+//                cloudPoints.add(point3D);
+//
+//        }
 
 
 //        return cloudPoints;
@@ -409,7 +448,7 @@ class SpaceColonization {
             case V:
                 thickness = 0.1;
                 points = new Point3D[]{
-                        new Point3D((float)(0.2*treeRadius), (float) (treeHeight - crownHeight), 0),
+                        new Point3D((float) (0.2 * treeRadius), (float) (treeHeight - crownHeight), 0),
                         new Point3D((float) treeRadius, (float) (treeHeight - 0.3 * crownHeight), 0),
                         new Point3D(0, (float) treeHeight, 0)};
 
@@ -473,7 +512,7 @@ class SpaceColonization {
                         float length = midVector.vectorLength();
                         midVector.normalize();
                         midVector.multTo((float) thickness * length);
-                        if(thickness!=0.0)
+                        if (thickness != 0.0)
                             point.addTo(midVector);
                     }
                     points[0].setY((float) (treeHeight - crownHeight));
@@ -508,6 +547,7 @@ class SpaceColonization {
                     }
                 }
                 break;
+
         }
 
 
@@ -522,6 +562,14 @@ class SpaceColonization {
 
 
         return false;
+    }
+
+    private void treeStem(PointCloud cloud, Tree tree) {
+
+        //extra stamm point
+        //von root bis treeheight in der mitte dünnenzylinder
+
+
     }
 
     private List<Point3D> buildTreeShape(Tree tree, List<Point3D> cuboidCloud) {
