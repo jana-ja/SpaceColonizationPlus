@@ -22,10 +22,12 @@ class SpaceColonization {
     private boolean marker;
     private final boolean SUN = false;
     private final int SUN_DELAY = 30;
-    private final boolean SHIFT = false; //TODO ich shifte grade nicht y
+    private final boolean SHIFT = true; //TODO ich shifte grade nicht y
     private final boolean LIGHT = true;
     private final boolean SHADOW = true;
-    private final float FACTOR = 0.2f;
+    private final float FACTOR = 0.3f;
+    private final float SHIFTFACTOR = 0.006f;
+    private final boolean SHIFTY = true;
     Point3D alles;
     Map<KDParentTreeNode, List<Point3D>> lastAttractionMap;
 
@@ -52,6 +54,7 @@ class SpaceColonization {
         else
             Application.stats("shadow", "-");
         Application.stats("factor", String.valueOf(FACTOR));
+//        Application.evaluierung(String.valueOf(SHIFTFACTOR));
     }
 
     /**
@@ -61,7 +64,7 @@ class SpaceColonization {
      * @param tree
      * @param pointCloud
      */
-    boolean spaceColonize(Tree tree, PointCloud pointCloud, List<Obstacle> obstacles) {
+    boolean spaceColonize(Tree tree, PointCloud pointCloud, List<Obstacle> obstacles, double factor) {
 
         alles = new Point3D(0, 0, 0);
 
@@ -109,8 +112,10 @@ class SpaceColonization {
 //        else
 //            currentDay++;
 
-        List<SunPosition> sunPositions = new ArrayList<>();
-        sunPositions.add(new SunPosition(Math.toRadians(90), Math.toRadians(50)));
+        List<SunPosition> sunPositions = SunCalculator.positionsForDay(150, 1.0); //TODO
+
+//        List<SunPosition> sunPositions = new ArrayList<>();
+//        sunPositions.add(new SunPosition(Math.toRadians(90), Math.toRadians(50)));
 
 
         attractionMap.forEach((node, attractionPoints) -> {
@@ -203,9 +208,10 @@ class SpaceColonization {
 //            shiftVector.setY(shiftVector.getY() * FACTOR * (float) tree.calculateBoundsPercentDings(obstacles) / 100.0f); //TODO iwie sonnenintensität einbsuen
             shiftVector.setY(0);
             shiftVector = new Point3D(0.009f, 0, 0);
-//            alles.setY(0);
+            if(!SHIFTY)
+                alles.setY(0);
             alles.normalize();
-            alles.multTo(0.002f);
+            alles.multTo((float)factor);//SHIFTFACTOR);
             pointCloud.shift(alles);
 //            pointCloud.shift2(lastAvgNode, avgNode);
 

@@ -8,6 +8,8 @@ import org.apache.commons.math.analysis.polynomials.PolynomialSplineFunction;
 import org.jogamp.java3d.*;
 import org.jogamp.java3d.utils.applet.MainFrame;
 import org.jogamp.java3d.utils.geometry.Box;
+import org.jogamp.java3d.utils.geometry.GeometryInfo;
+import org.jogamp.java3d.utils.geometry.NormalGenerator;
 import org.jogamp.java3d.utils.geometry.Sphere;
 import org.jogamp.java3d.utils.image.TextureLoader;
 import org.jogamp.vecmath.*;
@@ -40,17 +42,41 @@ public class Application extends Applet {
     private static final boolean DEBUG = false;
     private static final boolean SAVED = true;
     private static final String NEXTFILE = "exp";
-    private static final String SAVEFILE = "sonne1"; //clud4m, cloud4m, cloud6m, cloud2, t2, ske (1.0), ver (4.0), postpr, popr2d, busch
+    private static final String SAVEFILE = "eval"; //clud4m, cloud4m, cloud6m, cloud2, t2, ske (1.0), ver (4.0), postpr, popr2d, busch, sonne1, eval1, eval2, eval3
     private static ShaderAppearance branchAppearance;
     public static final boolean TWO_D = false;
 
-    public static final boolean PHOTO_MODE = true;
+    public static final boolean PHOTO_MODE = false;
     private static Appearance obstacleAppearance;
 
+    private static double[] factors;
+    private static List<Obstacle> obstacles;
+    private static Tree tree;
+    private static SpaceColonization colo;
+    private static PointCloud pointCloud;
 
-    private static void run() throws InterruptedException {
+    private static void run(double[] factors) throws InterruptedException {
 
-        Point3D verschiebung = new Point3D(0, 0, 0);
+
+        colo = new SpaceColonization();
+
+
+//        Thread.sleep(10000);
+//        putAttractionPoints(cloud);
+
+        ViewInterface.log("starting space colonization");
+        long start = System.currentTimeMillis();
+        int i = 1;
+
+        colo.setInitPointcloudSize(pointCloud.getAttractionPoints().size());
+
+        for (double factor : factors) {
+
+
+            //ganze view resetten
+
+            //baum für diese runde
+            Point3D verschiebung = new Point3D(0, 0, 0);
 
 //        Tree tree = new Tree(TreeType.BSP1, 3.0, verschiebung);
 //        Tree tree = new Tree(TreeType.VERTEILUNG1, 3.0, verschiebung);
@@ -60,38 +86,211 @@ public class Application extends Applet {
 //        Tree tree = new Tree(TreeType.POSTPRO, 3.0, verschiebung);
 
 //        Tree tree = new Tree(TreeType.BUSCH, 3.4, verschiebung);
-//
-        Tree tree = new Tree(TreeType.SONNE1, 3, verschiebung);
+
+//        Tree tree = new Tree(TreeType.SONNE1, 4, verschiebung);
 //        Tree tree = new Tree(TreeType.HINDERNISSE1, 5, verschiebung);
 
 //        Tree tree = new Tree(TreeType.BSP5, 2.0, verschiebung);
+            tree = new Tree(TreeType.EVAL, 4.0, verschiebung);
+
 //        Tree tree = new Tree(TreeType.ERSTBILD, 3.0, verschiebung);
 //        Tree tree = new Tree(TreeType.PLATANE, 2.0, verschiebung);
 //        Tree tree = new Tree(TreeType.KORKHASE, 3.0, verschiebung);
 
-//        //stammvorgenereiren
-//        KDParentTreeNode vorgänger = tree.getNodes().getRoot();
-//        for(float i = 0.1f; i<tree.getHeight(); i+=0.1f){
-//            Point3D next = new Point3D(0,i,0);
-////            KDParentTreeNode next = new KDParentTreeNode(new Point3D(0,i,0),new double[]{},vorgänger);
-//            tree.getNodes().insert(next,vorgänger);
-//            vorgänger = tree.getNodes().getLeaves().get(0);
+            PointCloud cloud = copyPointCloud();
+
+
+            //eine runde
+            while (colo.spaceColonize(tree, cloud, obstacles, factor)) {
+
+                ViewInterface.log("   step " + i + "/" + STEPS);
+                if (i % STEP == 0) {
+//                putBranches(tree);
+//                putAttractionPoints(cloud);
+//                putSkeleton(tree);
+                }
+                Thread.sleep(DELAY);
+
+                if (i >= STEPS)
+                    break;
+
+                i++;
+            }
+
+            long stop = System.currentTimeMillis();
+            double duration = (double) (stop - start) / 1000;
+            ViewInterface.log("finished in " + duration + "seconds");
+
+
+//        postprocessing(tree);
+//        putBranches(tree);
+
+
+            //stats
+            {
+                ViewInterface.log("\n");
+
+                stats("iterations", String.valueOf(i));
+                stats("duration", format(duration));
+                stats("type", tree.getType().name());
+                stats("height", String.valueOf(tree.getHeight()));
+                System.out.println("real height: " + tree.getRealHeight());
+                if (SAVED) {
+                    stats("file", SAVEFILE);
+                } else {
+                    stats("file", "new");
+                }
+
+                evaluierung(SAVEFILE);
+                evaluierung(String.valueOf(tree.getType()));
+                evaluierung(String.valueOf(factor));
+
+                colo.stats();
+                calculateStats(tree);
+                stats("avg#nodes light: ", tree.nodesInLight(obstacles) + "");
+                evaluierung(tree.nodesInLight(obstacles) + "");
+                stats("avg light area: ", tree.calculateBoundsPercentDings(obstacles) + "");
+                evaluierung(tree.calculateBoundsPercentDings(obstacles) + "");
+                evaluierung(String.valueOf(tree.getRealHeight()));
+                obstacles.forEach(obstacle -> {
+                    printToStats(obstacle.getName() + ": " + obstacle.getCentroid().cardinalString());
+                    evaluierung(obstacle.getName() + ": " + obstacle.getCentroid().cardinalString());
+                });
+                stats("null", null);
+                evaluierung(null);
+            }
+
+        }
+
+
+    }
+
+    private static PointCloud copyPointCloud() {
+        List<Point3D> points = new ArrayList<>();
+
+        pointCloud.getAttractionPoints().forEach(ap -> points.add(new Point3D(ap.getX(),ap.getY(),ap.getZ())));
+
+        return new PointCloud(points);
+    }
+
+    private static void putShadow(Point3D pu1, Point3D pu2, SunPosition sp) {
+        Appearance appearance = new ShaderAppearance();
+        appearance.setCapability(ShaderAppearance.ALLOW_SHADER_PROGRAM_WRITE);
+        Color3f gray = new Color3f((float) (1.0 / 255) * Color.darkGray.getRed(), (float) (1.0 / 255) * Color.darkGray.getGreen(), (float) (1.0 / 255) * Color.darkGray.getBlue());
+        Material mat = new Material(gray, gray, gray, gray, 1.0f);
+        appearance.setMaterial(mat);
+        appearance.setTransparencyAttributes(new TransparencyAttributes(TransparencyAttributes.FASTEST, 0.8f));
+
+        Point3D ray = sp.calculateRayVector();
+
+        Group shadow = new Group();
+
+        Point3f base1 = new Point3f(pu1.getX(), 0, pu1.getZ());
+        Point3f base2 = new Point3f(pu2.getX(), 0, pu2.getZ());
+        Point3f top1 = new Point3f(pu1.getX(), pu1.getY(), pu1.getZ());
+        Point3f top2 = new Point3f(pu2.getX(), pu2.getY(), pu2.getZ());
+        //top1Y + rayY * s = 0 <=> s * rayY = -top1Y <=> s = -top1Y / rayY
+        float s = -top1.getY() / ray.getY();
+        ray.multTo(s);
+        //top + ray*s = ground
+        Point3f ground1 = new Point3f();
+        ground1.add(top1, new Point3f(ray.getX(), ray.getY(), ray.getZ()));
+        Point3f ground2 = new Point3f();
+        ground2.add(top2, new Point3f(ray.getX(), ray.getY(), ray.getZ()));
+
+        NormalGenerator ng = new NormalGenerator();
+
+        //viereck
+        Point3f[] quadArray = new Point3f[]{top1, ground1, ground2, top2};
+        GeometryInfo vier = new GeometryInfo(GeometryInfo.QUAD_ARRAY);
+        vier.setCoordinates(quadArray);
+        ng.generateNormals(vier);
+        shadow.addChild(new Shape3D(vier.getGeometryArray(), appearance));
+
+        //dreieck1
+        Point3f[] triangleArray1 = new Point3f[]{top1, base1, ground1};
+        GeometryInfo drei1 = new GeometryInfo(GeometryInfo.TRIANGLE_ARRAY);
+        drei1.setCoordinates(triangleArray1);
+        ng.generateNormals(drei1);
+        shadow.addChild(new Shape3D(drei1.getGeometryArray(), appearance));
+
+        //dreeick2
+        Point3f[] triangleArray2 = new Point3f[]{top2, ground2, base2};
+        GeometryInfo drei2 = new GeometryInfo(GeometryInfo.TRIANGLE_ARRAY);
+        drei2.setCoordinates(triangleArray2);
+        ng.generateNormals(drei2);
+        shadow.addChild(new Shape3D(drei2.getGeometryArray(), appearance));
+
+        BranchGroup bg = new BranchGroup();
+        bg.addChild(shadow);
+        view.addToScene(bg);
+    }
+
+    private static void initi() {
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+
+        view = new View((int) (screenSize.getWidth()), (int) (screenSize.getHeight()));
+        new MainFrame((View) view, (int) (screenSize.getWidth()), (int) (screenSize.getHeight()));
+
+
+
+//        branchAppearance = new ShaderAppearance();
+//        branchAppearance.setCapability(ShaderAppearance.ALLOW_SHADER_PROGRAM_WRITE);
+//        Color3f brown = new Color3f(0.318f, 0.212f, 0.051f);
+//        Color3f black = new Color3f(0, 0, 0);
+//        Color3f white = new Color3f(255, 255, 255);
+//        Color3f darkbrown = new Color3f(0.106f, 0.0314f, 0.0118f);
+//        Color3f lightbrown = new Color3f(1 / 255.0f * 222, 1 / 255.0f * 184, 1 / 255.0f * 135);
+////        branchAppearance.setMaterial(new Material(brown, brown, black, black, 70f));
+//        branchAppearance.setMaterial(new Material(brown, darkbrown, brown, lightbrown, 10f));
+////        app.setMaterial(new Material(objColor, black, objColor, white, 80.0f));
+//
+////        branchAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+////        branchAppearance.setCapability(Appearance.ALLOW_TEXGEN_WRITE);
+
+        obstacleAppearance = new ShaderAppearance();
+        obstacleAppearance.setCapability(ShaderAppearance.ALLOW_SHADER_PROGRAM_WRITE);
+//        Texture loader = new TextureLoader(View.class.getClassLoader().getResource("mauer.jpg").getPath(), ((View) view).getComponent(0)).getTexture();
+//        obstacleAppearance.setTexture(loader);
+//        TexCoordGeneration generation = new TexCoordGeneration(TexCoordGeneration.EYE_LINEAR, TexCoordGeneration.TEXTURE_COORDINATE_3);
+//        generation.setEnable(true);
+//        obstacleAppearance.setTexCoordGeneration(generation);
+
+        Color3f gray = new Color3f((float) (1.0 / 255) * Color.gray.getRed(), (float) (1.0 / 255) * Color.gray.getGreen(), (float) (1.0 / 255) * Color.gray.getBlue());
+        obstacleAppearance.setMaterial(new Material(gray, gray, gray, gray, 10f));
+
+        //coordinates
+//        view.addMarker(0, 0, 0, new Color3f(Color.black.getRed(),Color.black.getGreen(),Color.black.getBlue()), 0.02f);
+        if (!PHOTO_MODE) {
+            view.addLine(new Point3D(0, 0, 0), new Point3D(10, 0, 0), Color.blue);
+            new Point3D(0, 0, 10).azimuthPur();
+            view.addLine(new Point3D(0, 0, 0), new Point3D(0, 10, 0), Color.green);
+            view.addLine(new Point3D(0, 0, 0), new Point3D(0, 0, 10), Color.red);
+        }
+
+//        //metermaß
+//        int hoehe = 5;
+//        float xPos = -1.5f;
+//        view.addLine(new Point3D(xPos, 0, 0), new Point3D(xPos, hoehe, 0), Color.black);
+//        for (int i = 0; i <= hoehe; i++) {
+//            view.addLine(new Point3D(xPos - 0.05f, i, 0), new Point3D(xPos + 0.05f, i, 0), Color.black);
 //        }
+    }
+
+    private static void createScene() {
+
 
         //obstacles
-        List<Obstacle> obstacles = new ArrayList<>();
+        obstacles = new ArrayList<>();
 //        //onw building
 //        Building southBuilding = new Building("south", new Point3D(-1.5f, 0, 2.0f), new Point3D(1.5f, 4, 1.0f));
 //        obstacles.add(southBuilding);
 
-//        SunPosition sp = new SunPosition(Math.toRadians(90), Math.toRadians(50));
-//        view.setSun(sp);
-//        Point3D pu = new Point3D(1,4, 0);
-//        view.addLine(pu, pu.add(sp.calculateRayVector().mult(-5)), Color.black);
+
 //
         //east building
-        Building eastBuilding = new Building("east", new Point3D(1.0f, 0, -2f), new Point3D(2.0f, 4.0f, 2f));
-        obstacles.add(eastBuilding);
+//        Building eastBuilding = new Building("east", new Point3D(1.5f, 0, -2f), new Point3D(2.0f, 4.0f, 2f));
+//        obstacles.add(eastBuilding);
 //
 //        //west building
 //        Building westBuilding = new Building("west", new Point3D(-2.0f, 0, -1.5f), new Point3D(-1.0f, 3.0f, 1.5f));
@@ -104,11 +303,31 @@ public class Application extends Applet {
 //        Building strangeBuilding = new Building("strange", new Point3D(-2.0f, 1, -1.5f), new Point3D(-0.2f, 1.5f, 1.5f));
 //        obstacles.add(strangeBuilding);
 
-//        //TODO BAUM 5m
-//        Building bild1 = new Building("bild1", new Point3D(0.5f, 0, -2f), new Point3D(2.0f, 4.0f, 2f));
+        //TODO für erste bilder mit sonne
+//        Building bild1 = new Building("bild1", new Point3D(1.5f, 0, -2f), new Point3D(3.0f, 4.0f, 1f));
 //        obstacles.add(bild1);
-//        Building bild2 = new Building("bild2", new Point3D(-1.5f, 0, 2.0f), new Point3D(1.5f, 4, 1.0f));
+//        Building bild2 = new Building("bild2", new Point3D(-1.5f, 0, 3.0f), new Point3D(0.5f, 4, 2.0f));
 //        obstacles.add(bild2);
+//        Building sonne1 = new Building("sonne1", new Point3D(1.0f, 0, -2f), new Point3D(2.0f, 4.0f, 2f));
+//        obstacles.add(sonne1);
+
+        SunPosition sp = new SunPosition(Math.toRadians(90), Math.toRadians(50));
+        Point3D ray = sp.calculateRayVector();
+        ray.azimuthPur();
+        ray.azimuthDegree();
+        ray.elevationDegree();
+        view.setSun(sp);
+        Point3D pu1 = new Point3D(1.5f, 4, -2);
+        Point3D pu2 = new Point3D(1.5f, 4, 2);
+        putShadow(pu1, pu2, sp);
+        //view.addLine(pu, pu.add(sp.calculateRayVector().mult(-5)), Color.black);
+//        //TODO BAUM 5m
+//        Building bild1 = new Building("bild1", new Point3D(0.5f, 0, -2f), new Point3D(2.0f, 4.0f, 1f));
+//        obstacles.add(bild1);
+//        Building bild2 = new Building("bild2", new Point3D(-1.5f, 0, 2.0f), new Point3D(0.5f, 4, 1.0f));
+//        obstacles.add(bild2);
+//        Building bild3 = new Building("bild3", new Point3D(-1.5f, 0, 2.0f), new Point3D(1.5f, 4, 1.0f));
+//        obstacles.add(bild3);
 //        //TODO BAUM 4m
 //        Building bild3 = new Building("bild3", new Point3D(0.5f, 0, -1f), new Point3D(2.0f, 2.0f, 1f));
 //        obstacles.add(bild3);
@@ -118,7 +337,8 @@ public class Application extends Applet {
 
         putObstacles(obstacles);
 
-        SpaceColonization colo = new SpaceColonization();
+
+        //cloud
         ViewInterface.log("generating point cloud");
 
         PointCloud cloud = new PointCloud();
@@ -162,218 +382,26 @@ public class Application extends Applet {
 
         }
 
+
         cloud.updateWithObstacles(obstacles);
+        pointCloud = cloud;
 
-//        Thread.sleep(10000);
-//        putAttractionPoints(cloud);
-
-        ViewInterface.log("starting space colonization");
-        long start = System.currentTimeMillis();
-        int i = 1;
-
-        colo.setInitPointcloudSize(cloud.getAttractionPoints().size());
-
-        while (colo.spaceColonize(tree, cloud, obstacles)) {
-
-            ViewInterface.log("   step " + i + "/" + STEPS);
-            if (i % STEP == 0) {
-//                putBranches(tree);
-                putAttractionPoints(cloud);
-                putSkeleton(tree);
-            }
-            Thread.sleep(DELAY);
-
-            if (i >= STEPS)
-                break;
-
-            i++;
-        }
-
-        long stop = System.currentTimeMillis();
-        double duration = (double) (stop - start) / 1000;
-        ViewInterface.log("finished in " + duration + "seconds");
-
-        Texture loader = new TextureLoader(View.class.getClassLoader().getResource("bark001-color.jpg").getPath(), ((View) view).getComponent(0)).getTexture();
-        branchAppearance.setTexture(loader);
-        TexCoordGeneration generation = new TexCoordGeneration(TexCoordGeneration.EYE_LINEAR, TexCoordGeneration.TEXTURE_COORDINATE_2);
-        generation.setEnable(true);
-        branchAppearance.setTexCoordGeneration(generation);
-
-
-//        putSkeleton(tree);
-//        Thread.sleep(10000);
-//        putBranches(tree);
-//        putSkeleton(tree);
-//        Thread.sleep(10000);
-        postprocessing(tree);
-        putBranches(tree);
-//                Thread.sleep(5000);
-//        putSkeleton(tree);
-//        putAttractionPoints(cloud);
-
-
-        //stats
-        {
-            ViewInterface.log("\n");
-
-            stats("iterations", String.valueOf(i));
-            stats("duration", format(duration));
-            stats("type", tree.getType().name());
-            stats("height", String.valueOf(tree.getHeight()));
-            System.out.println("real height: " + tree.getRealHeight());
-            if (SAVED) {
-                stats("file", SAVEFILE);
-            } else {
-                stats("file", "new");
-            }
-
-            colo.stats();
-            calculateStats(tree);
-            stats("avg#nodes light: ", tree.nodesInLight(obstacles) + "");
-            stats("avg light area: ", tree.calculateBoundsPercentDings(obstacles) + "");
-
-            obstacles.forEach(obstacle -> printToStats(obstacle.getName() + ": " + obstacle.getCentroid().cardinalString()));
-            stats("null", null);
-        }
-
-//        putBranches(tree);
-
-//        putSkeleton(tree);
-//        Thread.sleep(5000);
-//
-//        decimate(tree, tree.getNodes().getRoot(), 0);
-//        putSkeleton(tree);
-//        calculateStats(tree);
-//
-//        Thread.sleep(5000);
-//        reduceAngles(tree.getNodes().getRoot());
-//        putSkeleton(tree);
-//
-//        Thread.sleep(5000);
-//        curveSubdivision(tree, tree.getNodes().getRoot(), new ArrayList<>());
-//        putSkeleton(tree);
-
-//        putBranches(tree);
-    }
-
-    private static void initi() {
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-
-        view = new View((int) (screenSize.getWidth()), (int) (screenSize.getHeight()));
-        new MainFrame((View) view, (int) (screenSize.getWidth()), (int) (screenSize.getHeight()));
-
-        branchAppearance = new ShaderAppearance();
-        branchAppearance.setCapability(ShaderAppearance.ALLOW_SHADER_PROGRAM_WRITE);
-        Color3f brown = new Color3f(0.318f, 0.212f, 0.051f);
-        Color3f black = new Color3f(0, 0, 0);
-        Color3f white = new Color3f(255, 255, 255);
-        Color3f darkbrown = new Color3f(0.106f, 0.0314f, 0.0118f);
-        Color3f lightbrown = new Color3f(1 / 255.0f * 222, 1 / 255.0f * 184, 1 / 255.0f * 135);
-//        branchAppearance.setMaterial(new Material(brown, brown, black, black, 70f));
-        branchAppearance.setMaterial(new Material(brown, darkbrown, brown, lightbrown, 10f));
-//        app.setMaterial(new Material(objColor, black, objColor, white, 80.0f));
-
-//        branchAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
-//        branchAppearance.setCapability(Appearance.ALLOW_TEXGEN_WRITE);
-
-        obstacleAppearance = new ShaderAppearance();
-        obstacleAppearance.setCapability(ShaderAppearance.ALLOW_SHADER_PROGRAM_WRITE);
-//        Texture loader = new TextureLoader(View.class.getClassLoader().getResource("mauer.jpg").getPath(), ((View) view).getComponent(0)).getTexture();
-//        obstacleAppearance.setTexture(loader);
-//        TexCoordGeneration generation = new TexCoordGeneration(TexCoordGeneration.EYE_LINEAR, TexCoordGeneration.TEXTURE_COORDINATE_3);
-//        generation.setEnable(true);
-//        obstacleAppearance.setTexCoordGeneration(generation);
-
-        Color3f gray = new Color3f((float) (1.0 / 255) *Color.gray.getRed(), (float) (1.0 / 255) *Color.gray.getGreen(), (float) (1.0 / 255) *Color.gray.getBlue());
-        obstacleAppearance.setMaterial(new Material(gray, gray, gray, gray, 10f));
-
-        //coordinates
-//        view.addMarker(0, 0, 0, new Color3f(Color.black.getRed(),Color.black.getGreen(),Color.black.getBlue()), 0.02f);
-        if (!PHOTO_MODE)
-            view.addLine(new Point3D(0, 0, 0), new Point3D(10, 0, 0), Color.blue);
-//        view.addMarker(0.5f, 0, 0, new Color3f(Color.blue), 0.04f);
-        if (!PHOTO_MODE)
-            view.addLine(new Point3D(0, -10, 0), new Point3D(0, 10, 0), Color.green);
-//        view.addMarker(0, 0.5f, 0, new Color3f(Color.green), 0.04f);
-        if (!PHOTO_MODE)
-            view.addLine(new Point3D(0, 0, 0), new Point3D(0, 0, 10), Color.red);
-//        view.addMarker(0, 0, 0.5f, new Color3f(Color.red), 0.04f);
     }
 
     public static void main(String[] args) throws InterruptedException {
 
 //        IOController.analyzeCSV();
 
+        factors = new double[args.length];
+        for (int i = 0; i < args.length; i++) {
+            factors[i] = Double.parseDouble(args[i]);
+        }
+
+
         initi();
-        run();
+        createScene();
+        run(factors);
 
-//        SunPosition sunpos = new SunPosition(Math.toRadians(180), Math.toRadians(45));
-//        view.setSun(sunpos);
-//        List<Vec3D> points = new ArrayList<>();
-//        points.add(new Vec3D(0,0,0));
-//        points.add(new Vec3D(0,1,0));
-//        points.add(new Vec3D(0,1,1));
-//        Spline3D spline3D = new Spline3D(points);
-//        List<Vec3D> subdivided = spline3D.getDecimatedVertices((float) 0.2, true);
-//        for(int i = 0; i < subdivided.size()-1; i++){
-//            view.addLine(new Point3D(subdivided.get(i).getComponent(0), subdivided.get(i).getComponent(1), subdivided.get(i).getComponent(2)),new Point3D(subdivided.get(i+1).getComponent(0), subdivided.get(i+1).getComponent(1), subdivided.get(i+1).getComponent(2)), Color.BLUE);
-//        }
-
-        Bounds bounds = view.getTreeBounds();
-
-//        Point3D drehachse = new Point3D(1,2,0.5f);
-//        Point3f[] points = new Point3f[]{new Point3f(-1,1,0), new Point3f(0,1,-1), new Point3f(1,1,0), new Point3f(0,1,1)};
-//        for (Point3f point : points) {
-//            view.addMarker(point.getX(),point.getY(),point.getZ(),new Color3f(1,1,1), 0.05f);
-//        }
-//        TruncatedCone.transform(new Point3f(0,1,0), points, drehachse, Math.toRadians(40));
-//        for (Point3f point : points) {
-//            view.addMarker(point.getX(),point.getY(),point.getZ(),new Color3f(0,0,0), 0.05f);
-//        }
-
-
-//        Tree tree = new Tree(TreeType.PLATANE, 1.0f, new Point3D(0,0,-0.1f));
-//
-//        KDParentTreeNode node1 = tree.getNodes().getRoot();
-//        tree.getNodes().insert(new Point3D(0,0.2f,-0.1f), node1);
-//        KDParentTreeNode node2 = node1.getTreeChildren().get(0);
-//        tree.getNodes().insert(new Point3D(0,0.3f,-0.3f), node2);
-//        KDParentTreeNode node3 = node2.getTreeChildren().get(0);
-//        tree.getNodes().insert(new Point3D(0,0.5f,-0.3f), node3);
-//        KDParentTreeNode node4 = node3.getTreeChildren().get(0);
-//        tree.getNodes().insert(new Point3D(0,0.6f,-0.1f), node4);
-//        KDParentTreeNode node5 = node4.getTreeChildren().get(0);
-//
-//        tree.getNodes().calculateThicknesses(0.03f, THICKNESS_N);
-//        tree.calculateDiscs();
-//
-//
-//        KDParentTreeNode[] nodes = new KDParentTreeNode[]{node1, node2, node3, node4, node5};
-//
-//        BranchGroup bg = new BranchGroup();
-//
-//        TruncatedCone[] cones = new TruncatedCone[4];
-//        for (int i = 0; i < cones.length; i++) {
-//            cones[i] = new TruncatedCone(nodes[i+1], (float)nodes[i+1].getPoint().distance(nodes[i+1].getParent().getPoint()), branchAppearance, TruncatedCone.BODY | TruncatedCone.TOP | TruncatedCone.BOT);
-//        }
-//
-//        for (int i = 0; i < cones.length; i++) {
-//            TransformGroup tg1 = new TransformGroup();
-//            Transform3D t1 = transform(nodes[i].getPoint(), nodes[i+1].getPoint());
-//            tg1.setTransform(t1);
-//            tg1.addChild(cones[i]);
-//            bg.addChild(tg1);
-//            view.addLine(nodes[i].getPoint(), nodes[i+1].getPoint(), Color.red);
-//        }
-//
-//
-//
-//        view.addToTree(bg);
-
-
-//        Point3D angle = new Point3D(-1f,0,1);
-//        System.out.println(angle.azimuthDegree());
-//        System.out.println(angle.elevationDegree());
 
     }
 
@@ -381,25 +409,31 @@ public class Application extends Applet {
 
         //angle
         Point3D angle = tree.calculateAngle();
+        view.addLine(new Point3D(0, 0, 0), angle.mult(9), Color.orange);
         stats("azimuth degr", angle.azimuthDegree());
         stats("elevation degr", angle.elevationDegree());
+        evaluierung(angle.azimuthPur());
+        evaluierung(angle.elevationDegree());
         Point3D zero = new Point3D(0, 0, 0);
-        if (!PHOTO_MODE){
+        if (!PHOTO_MODE) {
             view.setLine(zero, zero.add(angle.mult(tree.getHeight())));
             angle.setY(0);
             angle.normalize();
-            view.addLine(zero, zero.add(angle.mult(tree.getHeight())),Color.black);
+            view.addLine(zero, zero.add(angle.mult(tree.getHeight())), Color.black);
         }
 
         //number of nodes
         stats("number of nodes", String.valueOf(tree.getNodes().getAll().size()));
+        evaluierung(String.valueOf(tree.getNodes().getAll().size()));
 
         //number of branches
         stats("number of branches", String.valueOf(tree.calculateBranches()));
+        evaluierung(String.valueOf(tree.calculateBranches()));
 
         //avgNode
         Point3D avgNode = tree.calculateAvgNode();
         stats("average Node", avgNode.cardinalString());
+        evaluierung(avgNode.shortString());
         if (!PHOTO_MODE)
             view.setSchwerpunkt(avgNode);
         avgNode.normalize();
@@ -421,6 +455,21 @@ public class Application extends Applet {
     public static void stats(String description, String value) {
         printToStats(value);
         ViewInterface.log(description + ": " + value);
+    }
+
+    public static void evaluierung(@Nullable String string) {
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("E:\\Users\\JanaJ\\IdeaProjects\\jana.jansen\\evaluierung.txt", true));
+
+            if (string == null)
+                writer.newLine();
+            else
+                writer.write(string + ",");
+            writer.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private static void printToStats(@Nullable String string) {
@@ -445,7 +494,7 @@ public class Application extends Applet {
     private static void putObstacles(List<Obstacle> obstacles) {
         BranchGroup bg = new BranchGroup();
 
-        obstacles.forEach( obst -> {
+        obstacles.forEach(obst -> {
 //                obstacle -> bg.addChild(obstacle.getShape3D(obstacleAppearance));
             Texture texture = new TextureLoader(view.View.class.getClassLoader().getResource("mauer.jpg").getPath(), ((View) view).getComponent(0)).getTexture();
 
@@ -464,7 +513,7 @@ public class Application extends Applet {
         List<Point3D> nodes = cloud.getAttractionPoints();
         BranchGroup bg = new BranchGroup();
 
-        Color3f white = new Color3f(0.7f,0.7f,0.7f);
+        Color3f white = new Color3f(0.7f, 0.7f, 0.7f);
 
         Appearance app = new Appearance();
         Color3f blue = new Color3f(Color.BLUE.getRed(), Color.BLUE.getGreen(), Color.BLUE.getBlue());
@@ -472,7 +521,7 @@ public class Application extends Applet {
 
         Appearance app2 = new Appearance();
         Color3f red = new Color3f(Color.RED.getRed(), Color.RED.getGreen(), Color.RED.getBlue());
-        app2.setMaterial(new Material(white, red, red, red, 70f));
+        app2.setMaterial(new Material(red, red, white, red, 70f));
 
         nodes.forEach(point -> {
             TransformGroup tg = new TransformGroup();
@@ -488,7 +537,7 @@ public class Application extends Applet {
                 tg.addChild(sphere);
             } else {
                 sphere.setAppearance(app2);
-//                tg.addChild(sphere);
+                tg.addChild(sphere);
 
             }
             bg.addChild(tg);
@@ -565,6 +614,12 @@ public class Application extends Applet {
      * @return
      */
     private static TransformGroup buildCylinder(KDParentTreeNode node, int flags) {
+
+        Texture loader = new TextureLoader(View.class.getClassLoader().getResource("bark001-color.jpg").getPath(), ((View) view).getComponent(0)).getTexture();
+        branchAppearance.setTexture(loader);
+        TexCoordGeneration generation = new TexCoordGeneration(TexCoordGeneration.EYE_LINEAR, TexCoordGeneration.TEXTURE_COORDINATE_2);
+        generation.setEnable(true);
+        branchAppearance.setTexCoordGeneration(generation);
 
         Appearance debugAppearance;
         if (DEBUG) {

@@ -48,7 +48,11 @@ public class Building implements Obstacle {
         Appearance appearance = new ShaderAppearance();
         appearance.setCapability(ShaderAppearance.ALLOW_SHADER_PROGRAM_WRITE);
         Color3f gray = new Color3f((float) (1.0 / 255) * Color.darkGray.getRed(), (float) (1.0 / 255) *Color.darkGray.getGreen(), (float) (1.0 / 255) *Color.darkGray.getBlue());
-        appearance.setMaterial(new Material(gray, gray, gray, gray, 1.0f));
+        Material mat = new Material(gray, gray, gray, gray, 1.0f);
+//        mat.setDiffuseColor(Color.darkGray.getRed(), Color.darkGray.getGreen(), Color.darkGray.getBlue(), 1);
+        appearance.setMaterial(mat);
+
+        appearance.setTransparencyAttributes(new TransparencyAttributes(TransparencyAttributes.FASTEST, 0.2f));
 
         float xl = maxX - minX;
         float yl = maxY - minY;

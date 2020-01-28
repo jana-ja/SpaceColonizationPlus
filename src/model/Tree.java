@@ -178,7 +178,8 @@ public class Tree {
     }
 
     public double calculateBoundsPercentDings(List<Obstacle> obstacles) {
-        //wie viel prozent sind überhaupt am tag iwann in der sonne
+        //TODO guck ich ob auf schattenseite von sich selbst liegt?
+        //wie viel prozent sind durchschnittlich übern tag in der sonne
         BoundingBox bounds = calculateBounds();
         Point3d lower = new Point3d();
         bounds.getLower(lower);
@@ -216,9 +217,9 @@ public class Tree {
                 points.add(new Point3d(j, upper.getY(), i));
             }
         }
-
         List<SunPosition> sunPositions = SunCalculator.positionsForDay(150, 1.0); //TODO
-
+//        List<SunPosition> sunPositions = new ArrayList<>();// SunCalculator.positionsForDay(150, 1.0); //TODO
+//        sunPositions.add(new SunPosition(Math.toRadians(90), Math.toRadians(50)));
 //        AtomicInteger count = new AtomicInteger();
 //        AtomicBoolean stop = new AtomicBoolean(false);
 ////        points.forEach(point -> {
@@ -243,20 +244,23 @@ public class Tree {
                 if (inSun.get())
                     tmp.getAndIncrement();
             });
-            avg.set(tmp.doubleValue() / this.getNodes().getAll().size() * 100);
+            avg.set(tmp.doubleValue() / points.size() * 100);
 //            System.out.println(avg.get() + "%");
             gesamt.updateAndGet(v -> new Double((double) (v + avg.get())));
             tmp.set(0);
 
         });
         gesamt.set(gesamt.get() / sunPositions.size());
-        System.out.println(gesamt + "% gesamt");
+        System.out.println(gesamt + "% area gesamt");
         return gesamt.get();
 //        return result;
     }
 
     public double nodesInLight(List<Obstacle> obstacles) {
-        List<SunPosition> sunPositions = SunCalculator.positionsForDay(160, 1.0); //TODO welcher tag?
+        List<SunPosition> sunPositions = SunCalculator.positionsForDay(150, 1.0); //TODO
+
+//        List<SunPosition> sunPositions = new ArrayList<>();// SunCalculator.positionsForDay(160, 1.0); //TODO welcher tag?
+//        sunPositions.add(new SunPosition(Math.toRadians(90), Math.toRadians(50)));
 
         AtomicReference<Double> avg = new AtomicReference<>(0.0);
         AtomicInteger tmp = new AtomicInteger();
@@ -279,7 +283,7 @@ public class Tree {
 
         });
         gesamt.set(gesamt.get() / sunPositions.size());
-        System.out.println(gesamt + "% gesamt");
+        System.out.println(gesamt + "% nodes gesamt");
         return gesamt.get();
     }
 

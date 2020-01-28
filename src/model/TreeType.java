@@ -9,6 +9,7 @@ public enum TreeType {
     VERTEILUNG1(3.0,0.02, 2*0.04,50.0,200,1.0, FINGERHUT), //gleichmäßig vs mehr am rand bild: gleichmäßig //TODO: hier muss ich punkte von umbrella benutzen
     VERTEILUNG2(3.0,0.02, 2*0.04,50.0,200,1.0, TreeShape.UMBRELLA2), //gleichmäßig vs mehr am rand bild: rand
     BSP5(2.0,0.04, 2*0.03,80.0,100,0.6, FINGERHUT),//skelett zeigen
+    EVAL(2.0,0.02, 2*0.02,80.0,300,0.6, ROUND),
     MENGE1(2.0,0.04, 2*0.03,80.0,100,0.6, FINGERHUT),//menge
     MENGE2(2.0,0.04, 2*0.03,80.0,300,0.6, FINGERHUT),//menge
     POSTPRO(2.0,0.02, 2*0.03,80.0,80,0.6, ROUND),//bild bei postprocessing an dem alle sachen gezeigt werden. mit savefile postpr

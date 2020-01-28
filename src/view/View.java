@@ -264,6 +264,7 @@ public class View extends Applet implements ViewInterface {
 //        PointLight pointLight = new PointLight(true, dlColor, new Point3f(0,1.5f,0), new Point3f(5,0,0));
         sunLight = new DirectionalLight(dlColor, dir);
         sunLight.setInfluencingBounds(bounds);
+        sunLight.setCapability(DirectionalLight.ALLOW_DIRECTION_WRITE);
 
         // add the lights to the parent BranchGroup
         bg.addChild(ambLight);
