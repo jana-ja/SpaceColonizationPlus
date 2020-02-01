@@ -1,6 +1,5 @@
 package controller;
 
-import com.jogamp.nativewindow.util.Point;
 import model.*;
 import org.apache.commons.math.ArgumentOutsideDomainException;
 import org.apache.commons.math.analysis.interpolation.SplineInterpolator;
@@ -57,6 +56,10 @@ class SpaceColonization {
 //        Application.evaluierung(String.valueOf(SHIFTFACTOR));
     }
 
+    void startSpaceColonization(){
+        lastAttractionMap = null;
+    }
+
     /**
      * Performs one step of space colonization.
      * Adds nodes to the tree according to influence of attraction points from the point cloud.
@@ -67,6 +70,7 @@ class SpaceColonization {
     boolean spaceColonize(Tree tree, PointCloud pointCloud, List<Obstacle> obstacles, double factor) {
 
         alles = new Point3D(0, 0, 0);
+
 
         marker = true;
         if (pointCloud.isEmpty())
@@ -115,7 +119,7 @@ class SpaceColonization {
         List<SunPosition> sunPositions = SunCalculator.positionsForDay(150, 1.0); //TODO
 
 //        List<SunPosition> sunPositions = new ArrayList<>();
-//        sunPositions.add(new SunPosition(Math.toRadians(90), Math.toRadians(50)));
+//        sunPositions.add(new SunPosition(Math.toRadians(180), Math.toRadians(50)));
 
 
         attractionMap.forEach((node, attractionPoints) -> {
@@ -208,9 +212,12 @@ class SpaceColonization {
 //            shiftVector.setY(shiftVector.getY() * FACTOR * (float) tree.calculateBoundsPercentDings(obstacles) / 100.0f); //TODO iwie sonnenintensität einbsuen
             shiftVector.setY(0);
             shiftVector = new Point3D(0.009f, 0, 0);
+//            System.out.println(alles);
             if(!SHIFTY)
                 alles.setY(0);
             alles.normalize();
+//            System.out.println(alles.azimuthPur());
+
             alles.multTo((float)factor);//SHIFTFACTOR);
             pointCloud.shift(alles);
 //            pointCloud.shift2(lastAvgNode, avgNode);

@@ -160,13 +160,30 @@ public class Point3D {
 //        end += (this.x < 0)? "W" : "E";
 //        return (ergebnis) + end;
 
+
+
+
+
+
+
+//        Point3D normal = this.normalized();
+//        double azimut = Math.toDegrees(Math.asin(normal.getX() / Math.cos(Math.asin(normal.getY()))));
+//        if (Double.isNaN(azimut)) //dann auf int casten damits in range ist für arcsin
+//            azimut = Math.toDegrees(Math.asin((int) (normal.getX() / Math.cos(Math.asin(normal.getY())))));
+//        azimut = Math.round(azimut * 1000.0) / 1000.0;
         Point3D normal = this.normalized();
-        double azimut = Math.toDegrees(Math.asin(normal.getX() / Math.cos(Math.asin(normal.getY()))));
-        if (Double.isNaN(azimut)) //dann auf int casten damits in range ist für arcsin
-            azimut = Math.toDegrees(Math.asin((int) (normal.getX() / Math.cos(Math.asin(normal.getY())))));
+        float derenX = -normal.getZ();
+        float derenY = normal.getX();
+        double azimut;
+        azimut = Math.acos(derenX / Math.sqrt(derenX * derenX + derenY * derenY));
+        if(Double.isNaN(azimut)) //dann auf int casten damits in range ist für arcsin
+            azimut = Math.acos((int)(derenX / Math.sqrt(derenX * derenX + derenY * derenY)));
+        if (derenY < 0)
+            azimut = 2 * Math.PI - azimut;
+        azimut = Math.toDegrees(azimut);
         azimut = Math.round(azimut * 1000.0) / 1000.0;
 
-        String end = (azimut >= 90) ? "N" : "S";
+        String end = (azimut >= 90 && azimut <= 270) ? "S" : "N";
         end += (this.x < 0) ? "W" : "E";
         return (azimut) + end;
 

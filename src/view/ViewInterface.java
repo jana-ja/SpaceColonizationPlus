@@ -3,7 +3,6 @@ package view;
 import model.SunPosition;
 import org.jogamp.java3d.Bounds;
 import org.jogamp.java3d.BranchGroup;
-import org.jogamp.vecmath.Color3f;
 
 import java.awt.*;
 

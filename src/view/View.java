@@ -39,7 +39,7 @@ public class View extends Applet implements ViewInterface {
     private DirectionalLight sunLight;
 
 
-    private final BoundingSphere bounds = new BoundingSphere(new Point3d(0, 0, 0), 100);
+    private final BoundingSphere bounds = new BoundingSphere(new org.jogamp.vecmath.Point3d(0, 0, 0), 100);
 
 
     public View(int screenWidth, int screenHeight) {
@@ -250,13 +250,13 @@ public class View extends Applet implements ViewInterface {
 
     private BoundingSphere getBoundingSphere() {
         //TODO
-        return new BoundingSphere(new Point3d(0.0, 0.0, 0.0), 200.0);
+        return new BoundingSphere(new org.jogamp.vecmath.Point3d(0.0, 0.0, 0.0), 200.0);
     }
 
     private void addLights(BranchGroup bg) {
 
         Color3f dlColor = new Color3f(0.7f, 0.7f, 0.7f);
-        Vector3f dir = new Vector3f(-1.0f, -0.2f, 1.0f);
+        Vector3f dir = new Vector3f(0.0f, -0.0f, -1.0f);
         Color3f alColor = new Color3f(0.4f, 0.4f, 0.4f);
 
         AmbientLight ambLight = new AmbientLight(alColor);
@@ -354,7 +354,7 @@ public class View extends Applet implements ViewInterface {
         this.sun.addChild(bg);
 
 
-        sunLight.setDirection((float)(ray.getX()), (float)(ray.getY()), (float)(ray.getZ()));
+//        sunLight.setDirection((float)(ray.getX()), (float)(ray.getY()), (float)(ray.getZ()));
 
     }
 
