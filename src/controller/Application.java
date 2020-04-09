@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.sun.istack.internal.Nullable;
 import model.*;
 import org.apache.commons.math.ArgumentOutsideDomainException;
+import org.apache.commons.math.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math.analysis.polynomials.PolynomialSplineFunction;
 import org.jogamp.java3d.*;
 import org.jogamp.java3d.utils.applet.MainFrame;
@@ -37,11 +38,11 @@ public class Application extends Applet {
     private static final double DECIMATE = 0.08;
     private static final int STEP = 1; //every x STEP is visualized
     private static final int STEPS = 900; //max number of space colonization iterations
-    private static final long DELAY = 0;
+    private static final long DELAY = 00;
     private static final boolean DEBUG = false;
-    private static final boolean SAVED = true;
-    private static final String NEXTFILE = "eval10";
-    private static final String SAVEFILE = "eval10"; //clud4m, cloud4m, cloud6m, cloud2, t2, ske (1.0), ver (4.0), postpr, popr2d, busch, sonne1, eval, eval2, eval3
+    private static final boolean SAVED = false;
+    private static final String NEXTFILE = "expo";
+    private static final String SAVEFILE = "exp"; //clud4m, cloud4m, cloud6m, cloud2, t2, ske (1.0), ver (4.0), postpr, popr2d, busch, sonne1, eval, eval2, eval3
     private static ShaderAppearance branchAppearance;
     public static final boolean TWO_D = false;
 
@@ -57,6 +58,7 @@ public class Application extends Applet {
 
     private static void run(double[] factors) throws InterruptedException {
 
+        Thread.sleep(10000);
 
 //        Thread.sleep(10000);
 //        putAttractionPoints(cloud);
@@ -86,8 +88,8 @@ public class Application extends Applet {
                 ViewInterface.log("   step " + i + "/" + STEPS);
                 if (i % STEP == 0) {
 //                putBranches(tree);
-//                putAttractionPoints(cloud);
-//                putSkeleton(dieserTree);
+                putAttractionPoints(cloud);
+                putSkeleton(dieserTree);
                 }
                 Thread.sleep(DELAY);
 
@@ -103,7 +105,7 @@ public class Application extends Applet {
 
 
             postprocessing(dieserTree);
-//            putBranches(dieserTree);
+            putBranches(dieserTree);
 
 
             //stats
@@ -188,6 +190,8 @@ public class Application extends Applet {
 
         //viereck
         Point3f[] quadArray = new Point3f[]{top1, ground1, ground2, top2};
+        //TODO
+//        Building.swapArray(quadArray);
         GeometryInfo vier = new GeometryInfo(GeometryInfo.QUAD_ARRAY);
         vier.setCoordinates(quadArray);
         ng.generateNormals(vier);
@@ -195,6 +199,8 @@ public class Application extends Applet {
 
         //dreieck1
         Point3f[] triangleArray1 = new Point3f[]{top1, base1, ground1};
+        //TODO
+//        Building.swapArray(triangleArray1);
         GeometryInfo drei1 = new GeometryInfo(GeometryInfo.TRIANGLE_ARRAY);
         drei1.setCoordinates(triangleArray1);
         ng.generateNormals(drei1);
@@ -202,6 +208,8 @@ public class Application extends Applet {
 
         //dreeick2
         Point3f[] triangleArray2 = new Point3f[]{top2, ground2, base2};
+        //TODO
+//        Building.swapArray(triangleArray2);
         GeometryInfo drei2 = new GeometryInfo(GeometryInfo.TRIANGLE_ARRAY);
         drei2.setCoordinates(triangleArray2);
         ng.generateNormals(drei2);
@@ -247,22 +255,31 @@ public class Application extends Applet {
 
         //coordinates
 //        view.addMarker(0, 0, 0, new Color3f(Color.black.getRed(),Color.black.getGreen(),Color.black.getBlue()), 0.02f);
-//        if (!PHOTO_MODE) {
+        if (!PHOTO_MODE) {
         view.addLine(new Point3D(0, 0, 0), new Point3D(10, 0, 0), Color.blue);
+        for (int i = 1; i <= 10; i++) {
+            view.addLine(new Point3D(i, 0, -0.05f), new Point3D(i, 0, 0.05f), Color.blue);
+        }
 //        view.addLine(new Point3D(0, 0, 0), new Point3D(0, 0, -10), Color.blue);
-        view.addLine(new Point3D(0, 0, 0), new Point3D(0, 10, 0), Color.green);
+        view.addLine(new Point3D(0, 0, 0), new Point3D(0, 10, 0), new Color(0,0.8f,0));
+        for (int i = 1; i <= 10; i++) {
+            view.addLine(new Point3D(0, i, -0.05f), new Point3D(0, i, 0.05f), new Color(0,0.8f,0));
+        }
         view.addLine(new Point3D(0, 0, 0), new Point3D(0, 0, 10), Color.red);
+        for (int i = 1; i <= 10; i++) {
+            view.addLine(new Point3D(-0.05f, 0, i), new Point3D(0.05f, 0, i), Color.red);
+        }
 //        view.addLine(new Point3D(0, 0, 0), new Point3D(10, 0, 0), Color.red);
 
-//        }
-
-//        //metermaß
-        int hoehe = 5;
-        float xPos = -1.5f;
-        view.addLine(new Point3D(xPos, 0, 0), new Point3D(xPos, hoehe, 0), Color.black);
-        for (int i = 0; i <= hoehe; i++) {
-            view.addLine(new Point3D(xPos - 0.05f, i, 0), new Point3D(xPos + 0.05f, i, 0), Color.black);
         }
+
+////        //metermaß
+//        int hoehe = 5;
+//        float xPos = -1.5f;
+//        view.addLine(new Point3D(xPos, 0, 0), new Point3D(xPos, hoehe, 0), Color.black);
+//        for (int i = 0; i <= hoehe; i++) {
+//            view.addLine(new Point3D(xPos - 0.05f, i, 0), new Point3D(xPos + 0.05f, i, 0), Color.black);
+//        }
     }
 
     private static void createScene() {
@@ -270,31 +287,58 @@ public class Application extends Applet {
         //tree
         Point3D verschiebung = new Point3D(0, 0, 0);
 
-//        Tree tree = new Tree(TreeType.BSP1, 3.0, verschiebung);
+        treelo = new Tree(TreeType.BSP1, 3.0, verschiebung);
 //        Tree tree = new Tree(TreeType.VERTEILUNG1, 3.0, verschiebung);
 //        Tree tree = new Tree(TreeType.VERTEILUNG2, 3.0, verschiebung);
 //        Tree tree = new Tree(TreeType.MENGE1, 3.0, verschiebung);
 //        Tree tree = new Tree(TreeType.MENGE2, 3.0, verschiebung);
 //        Tree tree = new Tree(TreeType.POSTPRO, 3.0, verschiebung);
 
-//        Tree tree = new Tree(TreeType.BUSCH, 3.4, verschiebung);
+//        treelo = new Tree(TreeType.BUSCH, 3.4, verschiebung);
 
-//        Tree tree = new Tree(TreeType.SONNE1, 4, verschiebung);
+//        treelo = new Tree(TreeType.SONNE1, 4, verschiebung);
 //        Tree tree = new Tree(TreeType.HINDERNISSE1, 5, verschiebung);
 
 //        treelo = new Tree(TreeType.BSP5, 2.0, verschiebung);
-        treelo = new Tree(TreeType.EVAL, 4.0, verschiebung);
+//        treelo = new Tree(TreeType.EVAL, 4, verschiebung);
+//        treelo = new Tree(TreeType.EVAL, 3, verschiebung);
+//        treelo = new Tree(TreeType.EVAL, 2, verschiebung);
+//        treelo = new Tree(TreeType.EVAL, 7.5, verschiebung);
 
 //        treelo = new Tree(TreeType.ERSTBILD, 3.0, verschiebung);
 //        Tree tree = new Tree(TreeType.PLATANE, 2.0, verschiebung);
-//        Tree tree = new Tree(TreeType.KORKHASE, 3.0, verschiebung);
+//        treelo = new Tree(TreeType.KORKHASE, 3.0, verschiebung);
+//        treelo = new Tree(TreeType.LANGER, 6.0, verschiebung);
+//        treelo = new Tree(TreeType.HAENGER, 4.0, verschiebung);
+//        treelo = new Tree(TreeType.TREE, 4.0, verschiebung);
 
         //obstacles
         obstacles = new ArrayList<>();
 //        //onw building
-//        Building southBuilding = new Building("south", new Point3D(-1.5f, 0, 2.0f), new Point3D(1.5f, 4, 1.0f));
+//        Building southBuilding = new Building("south", new Point3D(-1.5f, 0, 2.0f), new Point3D(1.5f, 3, 1.0f));
 //        obstacles.add(southBuilding);
 
+//        view.addMarker(-1.5f, 0, 2.0f, Color.BLACK, 0.02f);
+//        view.addMarker(1.5f, 3, 1.0f, Color.BLACK, 0.02f);
+//        view.addLine(new Point3D(-1.5f, 0, 2.0f), new Point3D(1.5f, 0, 2.0f), Color.BLACK);
+//        view.addLine(new Point3D(1.5f, 3, 1.0f), new Point3D(-1.5f, 3, 1.0f), Color.BLACK);
+//        view.addLine(new Point3D(1.5f, 3, 2.0f), new Point3D(-1.5f, 3, 2.0f), Color.BLACK);
+//        view.addLine(new Point3D(1.5f, 0, 1.0f), new Point3D(-1.5f, 0, 1.0f), Color.BLACK);
+//
+//        view.addLine(new Point3D(-1.5f, 0, 2.0f), new Point3D(-1.5f, 3, 2.0f), Color.BLACK);
+//        view.addLine(new Point3D(1.5f, 3, 1.0f), new Point3D(1.5f, 0, 1.0f), Color.BLACK);
+//        view.addLine(new Point3D(1.5f, 3, 2.0f), new Point3D(1.5f, 0, 2.0f), Color.BLACK);
+//        view.addLine(new Point3D(-1.5f, 3, 1.0f), new Point3D(-1.5f, 0, 1.0f), Color.BLACK);
+//
+//        view.addLine(new Point3D(-1.5f, 0, 2.0f), new Point3D(-1.5f, 0, 1.0f), Color.BLACK);
+//        view.addLine(new Point3D(1.5f, 3, 1.0f), new Point3D(1.5f, 3, 2.0f), Color.BLACK);
+//        view.addLine(new Point3D(-1.5f, 3, 1.0f), new Point3D(-1.5f, 3, 2.0f), Color.BLACK);
+//        view.addLine(new Point3D(1.5f, 0, 1.0f), new Point3D(1.5f, 0, 2.0f), Color.BLACK);
+//
+//
+//        view.addLine(new Point3D(2f,0,3), new Point3D(2f,0,-30), Color.red);
+//        view.addLine(new Point3D(2f,0,3), new Point3D(-10.5f,0,3), Color.blue);
+//        view.addLine(new Point3D(2f,0,3), new Point3D(2f,10,3), new Color(0,0.8f,0));
 
 //
         //east building
@@ -317,19 +361,52 @@ public class Application extends Applet {
 //        obstacles.add(bild1);
 //        Building bild2 = new Building("bild2", new Point3D(-1.5f, 0, 3.0f), new Point3D(0.5f, 4, 2.0f));
 //        obstacles.add(bild2);
-//        Building sonne1 = new Building("sonne1", new Point3D(1.0f, 0, -2f), new Point3D(2.0f, 4.0f, 2f));
+//        Building sonne1 = new Building("sonne1", new Point3D(2.0f, 0, -2f), new Point3D(4.0f, 4.0f, 2f));
 //        obstacles.add(sonne1);
 
-        SunPosition sp = new SunPosition(Math.toRadians(180), Math.toRadians(50));
-//        view.setSun(sp);
-//        Point3D pu1 = new Point3D(1.5f, 4, -2);
-//        Point3D pu2 = new Point3D(1.5f, 4, 2);
-//        putShadow(pu1, pu2, sp);
+
+//        SunPosition sp = new SunPosition(Math.toRadians(90), Math.toRadians(50));
+//
+//        Point3D pu1 = new Point3D(2f, 4, -2);
+//        Point3D pu2 = new Point3D(2f, 4, 2);
+//            putShadow(pu1, pu2, sp);
+
+
+//        List<SunPosition> sunPositions = SunCalculator.positionsForDay(126, 1.0); //TODO
+
+
+//        Point3D  vekko = new Point3D(0,0,0);
+//        Point3D  vekko2 = new Point3D(0,0,0);
+//        //durchschnitt höhenwinkel berechnen wie der bei shadow detraction vector sich ergibt
+//        sunPositions.forEach( sunPosition -> {
+//            vekko.addTo(sunPosition.calculateRayVector().mult(Math.toDegrees(sunPosition.getElevationRadians())/100));
+//            vekko2.addTo(sunPosition.calculateRayVector().mult(Math.toDegrees(sunPosition.getElevationRadians())));
+//        });
+//        System.out.println(vekko.azimuthPur());
+//        System.out.println(vekko2.azimuthPur());
+//        vekko.normalize();
+//        vekko2.normalize();
+//        System.out.println(vekko.elevationDegree());
+//        System.out.println(vekko2.elevationDegree());
+
+//        SunPosition sp = SunCalculator.midde(126);//sunPositions.size()/2 - 5);//new SunPosition(Math.toRadians(180), Math.toRadians(50));
+////        view.setSun(sp);
+////        Point3D pu1 = new Point3D(3f, 6, -2);
+////        Point3D pu2 = new Point3D(3f, 6, 2);
+//        Point3D pu1 = new Point3D(-3f, 8, 3);
+//        Point3D pu2 = new Point3D(3f, 8, 3);
+////        for(int l = 4; l < sunPositions.size()-8; l++){
+////            putShadow(pu1, pu2, sunPositions.get(l));
+////        }
+////        sunPositions.forEach(sunPos -> putShadow(pu1, pu2, sunPos));
+////        putShadow(pu1, pu2, sp);
 
         //view.addLine(pu, pu.add(sp.calculateRayVector().mult(-5)), Color.black);
         //eval dynamische szene
-        Building bild1 = new Building("eval", new Point3D(1.5f, 0, -1.5f), new Point3D(3.0f, 6.0f, 1.5f));
-        obstacles.add(bild1);
+        Building bild1 = new Building("eval", new Point3D(3f, 0, -2f), new Point3D(6f, 6.0f, 2f));
+////        obstacles.add(bild1);
+        Building bild2 = new Building("eval2", new Point3D(-3, 0, 3), new Point3D(3, 8, 6));
+//        obstacles.add(bild2);
 //        //TODO BAUM 5m
 //        Building bild1 = new Building("bild1", new Point3D(0.5f, 0, -2f), new Point3D(2.0f, 4.0f, 1f));
 //        obstacles.add(bild1);
@@ -395,6 +472,7 @@ public class Application extends Applet {
 
         cloud.updateWithObstacles(obstacles);
         pointCloud = cloud;
+        putAttractionPoints(pointCloud);
 
     }
 
@@ -411,6 +489,25 @@ public class Application extends Applet {
 
         initi();
         createScene();
+//        TreeType type = treelo.getType();
+//        double treeHeight = treelo.getHeight();
+//        double crownHeight = treeHeight * type.getTopPercentage() / 100;
+//        double treeRadius = type.getWidthPerHeight() * treeHeight / 2;
+//        Point3D[] points;
+//        points = new Point3D[]{
+//                new Point3D((float) (0.2 * treeRadius), (float) (treeHeight - crownHeight), 0),
+//                new Point3D((float) treeRadius, (float) (treeHeight - 0.3 * crownHeight), 0),
+//                new Point3D(0, (float) treeHeight, 0)};
+//        SplineInterpolator interpolator = new SplineInterpolator();
+//        double[] x = new double[points.length];
+//        double[] y = new double[points.length];
+//        for (int i = 0; i < points.length; i++) {
+//            x[i] = points[i].getX();
+//            y[i] = points[i].getY();
+//        }
+//        PolynomialSplineFunction splineFunction = interpolator.interpolate(y, x);
+//            Application.putSpline(splineFunction, points);
+
         run(factors);
 
 //        //shit testen triangle intersection
@@ -465,7 +562,7 @@ public class Application extends Applet {
         stats("average Node", avgNode.cardinalString());
         evaluierung(avgNode.shortString());
         evaluierung(avgNode.azimuthPur());
-        evaluierung(String.valueOf(avgNode.vectorLength()));
+        evaluierung(String.valueOf(new Point3D(avgNode.getX(),0,avgNode.getZ()).vectorLength()));
         if (!PHOTO_MODE)
             view.setSchwerpunkt(avgNode);
         avgNode.normalize();
@@ -491,7 +588,7 @@ public class Application extends Applet {
 
     public static void evaluierung(@Nullable String string) {
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter("E:\\Users\\JanaJ\\IdeaProjects\\jana.jansen\\evaluierung.txt", true));
+            BufferedWriter writer = new BufferedWriter(new FileWriter("E:\\Users\\JanaJ\\IdeaProjects\\jana.jansen\\eval_test.txt", true));
 
             if (string == null)
                 writer.newLine();
@@ -789,7 +886,7 @@ public class Application extends Applet {
             t.setTranslation(new Vector3d(node.getPoint().getX(), node.getPoint().getY(), node.getPoint().getZ()));
             tg.setTransform(t);
 
-            Sphere sphere = new Sphere(0.009f);
+            Sphere sphere = new Sphere(0.007f);
             sphere.setAppearance(app);
 
             tg.addChild(sphere);
@@ -1001,9 +1098,9 @@ public class Application extends Applet {
     }
 
     public static void putSpline(PolynomialSplineFunction function, Point3D[] points) {
-//        for (Point3D point : points) {
-//            view.addMarker(point.getX(), point.getY(), point.getZ());
-//        }
+        for (Point3D point : points) {
+            view.addMarker(point.getX(), point.getY(), point.getZ());
+        }
         double d = 0.01;
         double minY = points[0].getY();
         double maxY = points[points.length - 1].getY();

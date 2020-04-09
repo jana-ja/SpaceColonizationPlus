@@ -227,9 +227,10 @@ public class Tree {
                 points.add(new org.jogamp.vecmath.Point3d(j, upper.getY(), i));
             }
         }
-        List<SunPosition> sunPositions = SunCalculator.positionsForDay(150, 1.0); //TODO
+        List<SunPosition> sunPositions = SunCalculator.positionsForDay(126, 1.0); //TODO
 //        List<SunPosition> sunPositions = new ArrayList<>();// SunCalculator.positionsForDay(150, 1.0); //TODO
-//        sunPositions.add(new SunPosition(Math.toRadians(180), Math.toRadians(50)));
+//        sunPositions.add(new SunPosition(Math.toRadians(180), Math.toRadians(61)));
+
 //        AtomicInteger count = new AtomicInteger();
 //        AtomicBoolean stop = new AtomicBoolean(false);
 ////        points.forEach(point -> {
@@ -288,10 +289,10 @@ public class Tree {
 
     public double nodesInLight(List<Obstacle> obstacles, List<TruncatedCone> branches) {
         System.out.println("NODES");
-        List<SunPosition> sunPositions = SunCalculator.positionsForDay(150, 1.0); //TODO
+        List<SunPosition> sunPositions = SunCalculator.positionsForDay(126, 1.0); //TODO
 
 //        List<SunPosition> sunPositions = new ArrayList<>();// SunCalculator.positionsForDay(160, 1.0); //TODO welcher tag?
-//        sunPositions.add(new SunPosition(Math.toRadians(180), Math.toRadians(50)));
+//        sunPositions.add(new SunPosition(Math.toRadians(180), Math.toRadians(61)));
 
         AtomicReference<Double> avg = new AtomicReference<>(0.0);
         AtomicInteger tmp = new AtomicInteger();
@@ -443,9 +444,9 @@ public class Tree {
         //für jeden mittelpunkt gucken: schnitt mit hindernissen, schnitt mit anderen dreiecken
 
 
-        List<SunPosition> sunPositions = SunCalculator.positionsForDay(150, 1.0); //TODO
+        List<SunPosition> sunPositions = SunCalculator.positionsForDay(126, 1.0); //TODO
 //        List<SunPosition> sunPositions = new ArrayList<>();
-//        sunPositions.add(new SunPosition(Math.toRadians(180), Math.toRadians(50)));
+//        sunPositions.add(new SunPosition(Math.toRadians(180), Math.toRadians(61)));
 
         AtomicReference<Double> avg = new AtomicReference<>(0.0);
         AtomicInteger tmp = new AtomicInteger();

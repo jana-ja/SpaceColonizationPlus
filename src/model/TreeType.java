@@ -4,7 +4,7 @@ import static model.TreeShape.*;
 
 public enum TreeType {
     // radOfInf, nodeDist, killRad, topPercentage, attPointsPerHeight, widthPerHeight
-    BSP1(2.0,0.02, 2*0.03,80.0,400,0.6, ROUND),//rund spine pointcloud bild
+    BSP1(2.0,0.025, 2*0.03,80.0,400,0.6, ROUND),//rund spine pointcloud bild
     BSP2(2.0,0.02, 2*0.03,80.0,400,0.6, CONE), //cone spline pointcloud bild
     VERTEILUNG1(3.0,0.02, 2*0.04,50.0,200,1.0, FINGERHUT), //gleichmäßig vs mehr am rand bild: gleichmäßig //TODO: hier muss ich punkte von umbrella benutzen
     VERTEILUNG2(3.0,0.02, 2*0.04,50.0,200,1.0, TreeShape.UMBRELLA2), //gleichmäßig vs mehr am rand bild: rand
@@ -15,13 +15,16 @@ public enum TreeType {
     POSTPRO(2.0,0.02, 2*0.03,80.0,80,0.6, ROUND),//bild bei postprocessing an dem alle sachen gezeigt werden. mit savefile postpr
     ERSTBILD(3.0,0.02, 2*0.03,80.0,200,1.0, FINGERHUT),
     HINDERNISSE1(1.5,0.04, 2*0.03,80.0,200,0.6, FINGERHUT),
-    KORKHASE(0.36,0.02, 0.1,80.0,800,1.0, UMBRELLA2),
+    KORKHASE(0.4,0.02, 0.1,90.0,800,1.0, UMBRELLA2),
     BIRKE(2.0,0.01, 15*0.01,80.0,1000,0.4, ROUND),
 //    TREE(0.5,0.05, 2*0.05,70.0,1100,1.0), //killRad = 2*nodeDist
-    TREE(3.0,0.02, 2*0.03,90.0,600,0.6, CONE),
+    TREE(3.0,0.02, 2*0.03,90.0,400,0.6, CONE),
     PLATANE(7.0,0.02, 2*0.03,80.0,400,0.6, ROUND),
+    HAENGER(0.8,0.04, 2*0.04,80.0,400,0.8, ROUND),
+    LANGER(7.0,0.02, 2*0.06,90.0,400,0.25, ROUND),
+
     SONNE1(2.0,0.02, 2*0.05,80.0,300,0.6, ROUND),
-    BUSCH(7.0,0.02, 2*0.03,100.0,400,1, V),
+    BUSCH(1.0,0.02, 2*0.03,100.0,500,1, V),
     UMBRELLA(4.0,0.02, 2*0.03,50.0,700,1.4, TreeShape.UMBRELLA);//TODO redofInf mit treehight
 
 

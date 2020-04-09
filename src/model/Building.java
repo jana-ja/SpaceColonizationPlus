@@ -170,7 +170,7 @@ public class Building implements Obstacle {
 //        return new Shape3D(giBody.getGeometryArray(), appearance);
 //    }
 
-    static void swapArray(Point3f[] array) {
+    public static void swapArray(Point3f[] array) {
         for (int i = 0; i < array.length / 2; i++) {
             Point3f temp = array[i];
             array[i] = array[array.length - i - 1];

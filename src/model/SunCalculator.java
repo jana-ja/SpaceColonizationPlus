@@ -86,6 +86,27 @@ public class SunCalculator {
         return sunPositions;
     }
 
+    public static SunPosition midde(int day){
+
+        double lat = Math.toRadians(LAT);
+
+        double da = dayAngle(day);//winkel der schräge zwischen himmelshorizont und ekliptik an diesem tag? oder zu beginn dieses tages?
+        double decl = declination(da);
+
+        double s = sunset(lat, decl);
+        double sr = sunrise(lat, decl);
+
+        double t = (s+sr)/2.0;
+
+            double ha = hourAngle(t);
+            double e = elevationAngle(ha, lat, decl); //Höhenwinkel der Sonne
+            double a = azimuth(decl, lat, e, ha); //Azimuth
+
+
+
+        return new SunPosition(a,e);
+    }
+
 //    public static void test() {
 //        double lat = Math.toRadians(LAT);
 //

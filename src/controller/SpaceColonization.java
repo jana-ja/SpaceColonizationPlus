@@ -116,10 +116,11 @@ class SpaceColonization {
 //        else
 //            currentDay++;
 
-        List<SunPosition> sunPositions = SunCalculator.positionsForDay(150, 1.0); //TODO
-
-//        List<SunPosition> sunPositions = new ArrayList<>();
-//        sunPositions.add(new SunPosition(Math.toRadians(180), Math.toRadians(50)));
+//        List<SunPosition> sunPositions = SunCalculator.positionsForDay(126, 1.0); //TODO
+//
+        List<SunPosition> sunPositions = new ArrayList<>();
+//        sunPositions.add(new SunPosition(Math.toRadians(180), Math.toRadians(61)));
+        sunPositions.add(new SunPosition(Math.toRadians(90), Math.toRadians(50)));
 
 
         attractionMap.forEach((node, attractionPoints) -> {
@@ -347,10 +348,10 @@ class SpaceColonization {
             case UMBRELLA2:
                 lim = (int) (0.9 * type.getAttPointsPerHeight() * treeHeight); //prozent für rahmen
                 break;
-//            case V:
-//                lim = (int) ( /*0.4 **/ 0.05 * type.getAttPointsPerHeight() * treeHeight); //prozent für rahmen
-//                break;
-//            case UMBRELLA:
+            case V:
+                lim = (int) ( /*0.4 **/ 0.2 * type.getAttPointsPerHeight() * treeHeight); //prozent für rahmen
+                break;
+            case UMBRELLA:
             default:
                 lim = (int) (type.getAttPointsPerHeight() * treeHeight);
                 break;
@@ -459,7 +460,7 @@ class SpaceColonization {
                         new Point3D(0, (float) treeHeight, 0)};
                 break;
             case V:
-                thickness = 0.1;
+                thickness = 0.25;
                 points = new Point3D[]{
                         new Point3D((float) (0.2 * treeRadius), (float) (treeHeight - crownHeight), 0),
                         new Point3D((float) treeRadius, (float) (treeHeight - 0.3 * crownHeight), 0),
@@ -509,15 +510,15 @@ class SpaceColonization {
         switch (type.getTreeShape()) {
             case UMBRELLA2:
             case UMBRELLA:
-//            case V:
+            case V:
                 //wenn indicator true ist dannmach ich bei umbrella den rahmen, wenn es false ist mach ich überall, dann muss ich xformindistance nicht ändern
                 if (indicator) {//wenn indicator true dann rahmen
 
 //                    //TODO für V busch
-////                    if(point3D.getY() < (float) (treeHeight - 0.5 * crownHeight)){
+                    if(point3D.getY() < (float) (treeHeight - 0.6 * crownHeight)){
 //                    if(point3D.getY() > (float) (treeHeight - 0.9 * crownHeight)){
-//                        return false;
-//                    }
+                        return false;
+                    }
                     //alle punkte um thickness % in richtung mittelpunkt der krone achse
                     Point3D crownMid = new Point3D(rootCoordinates.getX(), (float) (treeHeight - crownHeight * 0.5), rootCoordinates.getZ());
                     for (Point3D point : points) {
@@ -547,10 +548,10 @@ class SpaceColonization {
                             SplineInterpolator interpolator = new SplineInterpolator();
                             //x und y getauscht weil ich f(y)=x will
                             PolynomialSplineFunction splineFunction = interpolator.interpolate(y, x);
-                            if (bah) {
-                                Application.putSpline(splineFunction, points);
-                                bah = false;
-                            }
+//                            if (bah) {
+//                                Application.putSpline(splineFunction, points);
+//                                bah = false;
+//                            }
                             try {
                                 xForMinDistance = (float) splineFunction.value(point3D.getY());
                             } catch (ArgumentOutsideDomainException e) {

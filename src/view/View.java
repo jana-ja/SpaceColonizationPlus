@@ -256,7 +256,8 @@ public class View extends Applet implements ViewInterface {
     private void addLights(BranchGroup bg) {
 
         Color3f dlColor = new Color3f(0.7f, 0.7f, 0.7f);
-        Vector3f dir = new Vector3f(0.0f, -0.0f, -1.0f);
+//        Vector3f dir = new Vector3f(0.0f, -0.0f, -1.0f);
+        Vector3f dir = new Vector3f(-1f, -0.0f, 1.0f);
         Color3f alColor = new Color3f(0.4f, 0.4f, 0.4f);
 
         AmbientLight ambLight = new AmbientLight(alColor);
@@ -373,7 +374,7 @@ public class View extends Applet implements ViewInterface {
     @Override
     public void addLine(Point3D one, Point3D two, Color color){
         Appearance app = new Appearance();
-        Color3f color3f = new Color3f(color.getRed(),color.getGreen(),color.getBlue());
+        Color3f color3f = new Color3f((float) (1.0 / 255) * color.getRed(),(float) (1.0 / 255) * color.getGreen(),(float) (1.0 / 255) * color.getBlue());
         ColoringAttributes att = new ColoringAttributes();
         att.setColor(color3f);
         app.setColoringAttributes(att);
