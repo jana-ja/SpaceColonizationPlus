@@ -1,7 +1,7 @@
 package model;
 
-import org.apache.commons.math.ArgumentOutsideDomainException;
-import org.apache.commons.math.analysis.polynomials.PolynomialSplineFunction;
+//import org.apache.commons.math.ArgumentOutsideDomainException;
+import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import view.Point3D;
 
 import java.util.*;
@@ -63,7 +63,7 @@ public class PointCloud {
         List<Point3D> additional = new ArrayList<>();
 
         attractionPoints.forEach(ap -> {
-            try {
+//            try {
                 double radius = function.value(ap.getY()); //radius an der höhe
 
                 //wenn abstand zu lastAvg < radius && abstan dzu avg > radius dann muss der rüber
@@ -77,9 +77,9 @@ public class PointCloud {
                     copy.addTo(shiftVector);
                     additional.add(copy);
                 }
-            } catch (ArgumentOutsideDomainException e) {
-                e.printStackTrace();
-            }
+//            } catch (ArgumentOutsideDomainException e) {
+//                e.printStackTrace();
+//            }
         });
 
         this.getAttractionPoints().addAll(additional);

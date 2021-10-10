@@ -1,16 +1,18 @@
 package model;
 
-import org.jogamp.java3d.BoundingBox;
-import org.jogamp.java3d.Shape3D;
-import org.jogamp.java3d.utils.geometry.GeometryInfo;
-import org.jogamp.vecmath.Point3d;
-import org.jogamp.vecmath.Point3f;
-import org.jogamp.vecmath.Vector3d;
-import quickhull3d.QuickHull3D;
+import com.github.quickhull3d.QuickHull3D;
+import com.sun.j3d.utils.geometry.GeometryInfo;
+//import quickhull3d.QuickHull3D;
 import view.Point3D;
 import view.View;
 import view.ViewInterface;
 
+import javax.media.j3d.BoundingBox;
+import javax.media.j3d.Shape3D;
+import javax.vecmath.Point3d;
+//einfach nur point3f nehmen, warum nehm ich beide??? TODO
+import javax.vecmath.Point3f;
+import javax.vecmath.Vector3d;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -191,40 +193,40 @@ public class Tree {
         //TODO guck ich ob auf schattenseite von sich selbst liegt?
         //wie viel prozent sind durchschnittlich übern tag in der sonne
         BoundingBox bounds = calculateBounds();
-        org.jogamp.vecmath.Point3d lower = new org.jogamp.vecmath.Point3d();
+        Point3d lower = new Point3d();
         bounds.getLower(lower);
-        org.jogamp.vecmath.Point3d upper = new org.jogamp.vecmath.Point3d();
+        Point3d upper = new Point3d();
         bounds.getUpper(upper);
         double samplingRate = 0.1;
-        List<org.jogamp.vecmath.Point3d> points = new ArrayList<>();
+        List<Point3d> points = new ArrayList<>();
         //vorne
         for (double i = lower.getY(); i <= upper.getY(); i += samplingRate) {
             for (double j = lower.getX(); j <= upper.getX(); j += samplingRate) {
-                points.add(new org.jogamp.vecmath.Point3d(j, i, lower.getZ()));
+                points.add(new Point3d(j, i, lower.getZ()));
             }
         }
         //links
         for (double i = lower.getY(); i <= upper.getY(); i += samplingRate) {
             for (double j = lower.getZ(); j <= upper.getZ(); j += samplingRate) {
-                points.add(new org.jogamp.vecmath.Point3d(lower.getX(), i, j));
+                points.add(new Point3d(lower.getX(), i, j));
             }
         }
         //hinten
         for (double i = lower.getY(); i <= upper.getY(); i += samplingRate) {
             for (double j = lower.getX(); j <= upper.getX(); j += samplingRate) {
-                points.add(new org.jogamp.vecmath.Point3d(j, i, upper.getZ()));
+                points.add(new Point3d(j, i, upper.getZ()));
             }
         }
         //rechts
         for (double i = lower.getY(); i <= upper.getY(); i += samplingRate) {
             for (double j = lower.getZ(); j <= upper.getZ(); j += samplingRate) {
-                points.add(new org.jogamp.vecmath.Point3d(upper.getX(), i, j));
+                points.add(new Point3d(upper.getX(), i, j));
             }
         }
         //upper
         for (double i = lower.getZ(); i <= upper.getZ(); i += samplingRate) {
             for (double j = lower.getX(); j <= upper.getX(); j += samplingRate) {
-                points.add(new org.jogamp.vecmath.Point3d(j, upper.getY(), i));
+                points.add(new Point3d(j, upper.getY(), i));
             }
         }
         List<SunPosition> sunPositions = SunCalculator.positionsForDay(126, 1.0); //TODO
@@ -254,7 +256,7 @@ public class Tree {
                 rayMinus.normalize();
 //                rayMinus.scale(-1);
                 rayMinus.scale(0.01);
-                org.jogamp.vecmath.Point3d testPoint = new org.jogamp.vecmath.Point3d(point);
+                Point3d testPoint = new Point3d(point);
                 testPoint.add(rayMinus);
                 rayMinus.scale(100);
                 if(bounds.intersect(testPoint, rayMinus)){
@@ -336,8 +338,8 @@ public class Tree {
     }
 
     private BoundingBox calculateBounds() {
-        org.jogamp.vecmath.Point3d upper = new org.jogamp.vecmath.Point3d(Float.MIN_VALUE, Float.MIN_VALUE, Float.MIN_VALUE);
-        org.jogamp.vecmath.Point3d lower = new org.jogamp.vecmath.Point3d(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
+        Point3d upper = new Point3d(Float.MIN_VALUE, Float.MIN_VALUE, Float.MIN_VALUE);
+        Point3d lower = new Point3d(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
         this.getNodes().getAll().forEach(node -> {
             if (node.getPoint().getX() > upper.getX())
                 upper.setX(node.getPoint().getX());
@@ -373,10 +375,10 @@ public class Tree {
 //            nodes.remove(akt);
 //            akt = akt.getTreeChildren().get(0);
 //        }
-        quickhull3d.Point3d[] points = new quickhull3d.Point3d[nodes.size()];
+        com.github.quickhull3d.Point3d[] points = new com.github.quickhull3d.Point3d[nodes.size()];
         for (int i = 0; i < points.length; i++) {
             Point3D point = this.getNodes().getAll().get(i).getPoint();
-            points[i] = new quickhull3d.Point3d(point.getX(), point.getY(), point.getZ());
+            points[i] = new com.github.quickhull3d.Point3d(point.getX(), point.getY(), point.getZ());
         }
         return new QuickHull3D(points);
 
@@ -391,17 +393,17 @@ public class Tree {
         List<Triangle> triangles = new ArrayList<>();
         List<Point3d> points = new ArrayList<>();
         int[][] faces = hull.getFaces();
-        quickhull3d.Point3d[] vertices = hull.getVertices();
+        com.github.quickhull3d.Point3d[] vertices = hull.getVertices();
         for (int i1 = 0; i1 < faces.length; i1++) {
             GeometryInfo giFace = new GeometryInfo(GeometryInfo.TRIANGLE_STRIP_ARRAY);
             int[] stripcount = new int[]{faces[i1].length};
             giFace.setStripCounts(stripcount);
-            org.jogamp.vecmath.Point3d[] diePoints = new org.jogamp.vecmath.Point3d[faces[i1].length];
+            Point3d[] diePoints = new Point3d[faces[i1].length];
             double bigX = 0.0, bigY =0.0 ,bigZ = 0.0;
             for (int i2 = 0; i2 < faces[i1].length; i2++) {
 
-                quickhull3d.Point3d vertex = vertices[faces[i1][i2]];
-                diePoints[i2] = new org.jogamp.vecmath.Point3d(vertex.x, vertex.y, vertex.z);
+                com.github.quickhull3d.Point3d vertex = vertices[faces[i1][i2]];
+                diePoints[i2] = new Point3d(vertex.x, vertex.y, vertex.z);
                 bigX+=vertex.x;
                 bigY+=vertex.y;
                 bigZ+=vertex.z;

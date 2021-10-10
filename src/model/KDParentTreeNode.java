@@ -1,8 +1,8 @@
 package model;
 
-import org.jogamp.vecmath.Point3f;
 import view.Point3D;
 
+import javax.vecmath.Point3f;
 import java.util.ArrayList;
 import java.util.List;
 

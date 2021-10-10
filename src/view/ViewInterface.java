@@ -1,9 +1,10 @@
 package view;
 
 import model.SunPosition;
-import org.jogamp.java3d.Bounds;
-import org.jogamp.java3d.BranchGroup;
 
+import javax.media.j3d.Bounds;
+//import javax.media.j3d.BranchGroup;
+import javax.media.j3d.BranchGroup;
 import java.awt.*;
 
 public interface ViewInterface {

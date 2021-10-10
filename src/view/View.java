@@ -3,18 +3,23 @@ package view;
 import java.applet.Applet;
 import java.awt.*;
 
+import com.sun.j3d.utils.universe.SimpleUniverse;
 import controller.Application;
 import model.SunPosition;
-import org.jogamp.java3d.*;
-import org.jogamp.java3d.utils.geometry.GeometryInfo;
-import org.jogamp.java3d.utils.geometry.NormalGenerator;
-import org.jogamp.java3d.utils.geometry.Sphere;
-import org.jogamp.java3d.utils.image.TextureLoader;
-import org.jogamp.java3d.utils.universe.MultiTransformGroup;
-import org.jogamp.java3d.utils.universe.SimpleUniverse;
-import org.jogamp.java3d.utils.universe.Viewer;
-import org.jogamp.java3d.utils.universe.ViewingPlatform;
-import org.jogamp.vecmath.*;
+
+import com.sun.j3d.utils.geometry.GeometryInfo;
+import com.sun.j3d.utils.geometry.NormalGenerator;
+import com.sun.j3d.utils.geometry.Sphere;
+import com.sun.j3d.utils.image.TextureLoader;
+import com.sun.j3d.utils.universe.MultiTransformGroup;
+import com.sun.j3d.utils.universe.Viewer;
+import com.sun.j3d.utils.universe.ViewingPlatform;
+//import org.scijava.java3d.Canvas3D;
+//import org.scijava.vecmath.Vector3d;
+
+import javax.media.j3d.*;
+import javax.vecmath.*;
+
 
 public class View extends Applet implements ViewInterface {
 
@@ -39,11 +44,12 @@ public class View extends Applet implements ViewInterface {
     private DirectionalLight sunLight;
 
 
-    private final BoundingSphere bounds = new BoundingSphere(new org.jogamp.vecmath.Point3d(0, 0, 0), 100);
+    private final BoundingSphere bounds = new BoundingSphere(new Point3d(0, 0, 0), 100);
 
 
     public View(int screenWidth, int screenHeight) {
-
+        System.out.printf("loli");
+        System.out.printf(System.getProperty("java.library.path"));
         sunLight = new DirectionalLight();
         screenHeight = (int)(0.9*screenHeight);
         this.setBackground(Color.gray);
@@ -72,6 +78,7 @@ public class View extends Applet implements ViewInterface {
 
         // create a SimpleUniverse from the ViewingPlatform and Viewer
         SimpleUniverse u = new SimpleUniverse(vp, viewer);
+
 
         //create View2
         Canvas3D firstPerson = new Canvas3D(SimpleUniverse.getPreferredConfiguration());
@@ -159,8 +166,8 @@ public class View extends Applet implements ViewInterface {
 
         // create an Appearance and load a texture
         Appearance app = new Appearance();
-        Texture tex = new TextureLoader(View.class.getClassLoader().getResource("grass.jpg").getPath(), this).getTexture();
-        app.setTexture(tex);
+//        Texture tex = new TextureLoader(View.class.getClassLoader().getResource("dirt.jpg").getPath(), this).getTexture();
+//        app.setTexture(tex);
 
         int nItem = 0;
 
@@ -250,7 +257,7 @@ public class View extends Applet implements ViewInterface {
 
     private BoundingSphere getBoundingSphere() {
         //TODO
-        return new BoundingSphere(new org.jogamp.vecmath.Point3d(0.0, 0.0, 0.0), 200.0);
+        return new BoundingSphere(new Point3d(0.0, 0.0, 0.0), 200.0);
     }
 
     private void addLights(BranchGroup bg) {

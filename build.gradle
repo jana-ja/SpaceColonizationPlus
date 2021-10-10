@@ -1,0 +1,51 @@
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+}
+
+plugins {
+    id 'java'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven { url "https://jitpack.io" }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src']
+        }
+        resources{
+            srcDirs = ['res']
+        }
+    }
+}
+
+dependencies {
+    compile 'junit:junit:4.12'
+    implementation 'com.google.code.gson:gson:2.8.8'
+    implementation 'org.apache.commons:commons-math3:3.0'
+    implementation 'com.github.quickhull3d:quickhull3d:1.0.0'
+//    implementation files('libs/vecmath.jar')
+//    implementation files('libs/j3dutils.jar')
+//    implementation files('libs/j3dcore.jar')
+//    implementation files('libs/toxiclibscore.jar')
+    implementation fileTree(dir: 'libs', include :'*.jar')
+//    runtime files('libs/j3dcore-ogl.dll')
+//    runtime fileTree(dir: 'libs', exclude :'*.jar')
+}
+
+tasks.withType(JavaExec){
+    systemProperty "java.library.path", "libs"
+}
+//test{
+//    systemProperty "java.library.path", "libs"
+//}

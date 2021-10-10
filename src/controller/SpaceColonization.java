@@ -1,9 +1,9 @@
 package controller;
 
 import model.*;
-import org.apache.commons.math.ArgumentOutsideDomainException;
-import org.apache.commons.math.analysis.interpolation.SplineInterpolator;
-import org.apache.commons.math.analysis.polynomials.PolynomialSplineFunction;
+//import org.apache.commons.math.ArgumentOutsideDomainException;
+import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
+import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import view.Point3D;
 import view.ViewInterface;
 
@@ -496,12 +496,12 @@ class SpaceColonization {
                 Application.putSpline(splineFunction, points);
                 bah = false;
             }
-            try {
+//            try {
                 xForMaxDistance = (float) splineFunction.value(point3D.getY());
-            } catch (ArgumentOutsideDomainException e) {
-                xForMaxDistance = 0;
-                e.printStackTrace();
-            }
+//            } catch (ArgumentOutsideDomainException e) {
+//                xForMaxDistance = 0;
+//                e.printStackTrace();
+//            }
         }
 
         double minDistanceMaxY;
@@ -552,11 +552,11 @@ class SpaceColonization {
 //                                Application.putSpline(splineFunction, points);
 //                                bah = false;
 //                            }
-                            try {
+//                            try {
                                 xForMinDistance = (float) splineFunction.value(point3D.getY());
-                            } catch (ArgumentOutsideDomainException e) {
-                                e.printStackTrace();
-                            }
+//                            } catch (ArgumentOutsideDomainException e) {
+//                                e.printStackTrace();
+//                            }
                         }
                     }
                 }

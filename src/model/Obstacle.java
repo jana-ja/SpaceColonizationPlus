@@ -1,8 +1,9 @@
 package model;
 
-import org.jogamp.java3d.Texture;
-import org.jogamp.java3d.TransformGroup;
 import view.Point3D;
+
+import javax.media.j3d.Texture;
+import javax.media.j3d.TransformGroup;
 
 public interface Obstacle {
     String getName();

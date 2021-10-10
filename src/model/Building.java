@@ -1,10 +1,10 @@
 package model;
 
-import org.jogamp.java3d.*;
-import org.jogamp.java3d.utils.geometry.Box;
-import org.jogamp.vecmath.*;
+import com.sun.j3d.utils.geometry.Box;
 import view.Point3D;
 
+import javax.media.j3d.*;
+import javax.vecmath.*;
 import java.awt.*;
 
 
@@ -31,7 +31,7 @@ public class Building implements Obstacle {
         maxY = Math.max(corner1.getY(), corner2.getY());
         minY = Math.min(corner1.getY(), corner2.getY());
 
-        bounds = new BoundingBox(new org.jogamp.vecmath.Point3d(minX, minY, minZ), new org.jogamp.vecmath.Point3d(maxX, maxY, maxZ));
+        bounds = new BoundingBox(new Point3d(minX, minY, minZ), new Point3d(maxX, maxY, maxZ));
     }
 
     public Building(Point3D corner1, Point3D corner2) {
@@ -74,8 +74,8 @@ public class Building implements Obstacle {
 
     private TexCoordGeneration generateTexCoord(Shape3D shape) {
         BoundingBox bb = new BoundingBox(shape.getBounds());
-        org.jogamp.vecmath.Point3d lower = new org.jogamp.vecmath.Point3d();
-        org.jogamp.vecmath.Point3d upper = new org.jogamp.vecmath.Point3d();
+        Point3d lower = new Point3d();
+        Point3d upper = new Point3d();
         bb.getLower(lower);
         bb.getUpper(upper);
 
@@ -107,7 +107,7 @@ public class Building implements Obstacle {
 
     @Override
     public boolean isInside(Point3D point) {
-        return bounds.intersect(new org.jogamp.vecmath.Point3d(point.getX(), point.getY(), point.getZ()));
+        return bounds.intersect(new Point3d(point.getX(), point.getY(), point.getZ()));
     }
 
 //    @Override
@@ -215,7 +215,7 @@ public class Building implements Obstacle {
         Vector3d ray = sunPos.calculateRayVector3d();
         ray.normalize();
 
-        return bounds.intersect(new org.jogamp.vecmath.Point3d(node.getX(), node.getY(), node.getZ()), ray);
+        return bounds.intersect(new Point3d(node.getX(), node.getY(), node.getZ()), ray);
     }
 
     @Override

@@ -1,20 +1,31 @@
 package controller;
 
 import com.google.gson.Gson;
-import com.sun.istack.internal.Nullable;
 import model.*;
-import org.apache.commons.math.ArgumentOutsideDomainException;
-import org.apache.commons.math.analysis.interpolation.SplineInterpolator;
-import org.apache.commons.math.analysis.polynomials.PolynomialSplineFunction;
-import org.jogamp.java3d.*;
-import org.jogamp.java3d.utils.applet.MainFrame;
-import org.jogamp.java3d.utils.geometry.GeometryInfo;
-import org.jogamp.java3d.utils.geometry.NormalGenerator;
-import org.jogamp.java3d.utils.geometry.Sphere;
-import org.jogamp.java3d.utils.image.TextureLoader;
-import org.jogamp.vecmath.*;
-import toxi.geom.Spline3D;
+//import org.apache.commons.math3.exception.ArgumentOutsideDomainException;
+import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
+import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
+import com.sun.j3d.utils.applet.MainFrame;
+import com.sun.j3d.utils.geometry.GeometryInfo;
+import com.sun.j3d.utils.geometry.NormalGenerator;
+import com.sun.j3d.utils.geometry.Sphere;
+import com.sun.j3d.utils.image.TextureLoader;
+//import org.jogamp.java3d.utils.applet.MainFrame;
+//import org.jogamp.java3d.utils.geometry.GeometryInfo;
+//import org.jogamp.java3d.utils.geometry.NormalGenerator;
+//import org.jogamp.java3d.utils.geometry.Sphere;
+//import org.jogamp.java3d.utils.image.TextureLoader;
+import javax.media.j3d.*;
+import javax.vecmath.*;
+//import org.jogamp.vecmath.*;
+
+
+//import org.scijava.java3d.*;
+import toxi.geom.LineStrip3D;
+import toxi.geom.Spline3D;//Spline3D;
 import toxi.geom.Vec3D;
+//import com.sun.istack.internal.Nullable;
+
 import view.Point3D;
 import view.View;
 import view.ViewInterface;
@@ -436,7 +447,7 @@ public class Application extends Applet {
         if (SAVED) {
             List<Point3D> aps = new ArrayList<>();
             try {
-                BufferedReader reader = new BufferedReader(new FileReader("E:\\Users\\JanaJ\\IdeaProjects\\jana.jansen\\" + SAVEFILE + ".txt"));
+                BufferedReader reader = new BufferedReader(new FileReader("D:\\Users\\JanaJ\\IdeaProjects\\jana.jansen\\" + SAVEFILE + ".txt"));
                 String st;
                 Gson gson = new Gson();
                 while ((st = reader.readLine()) != null)
@@ -449,7 +460,7 @@ public class Application extends Applet {
             cloud = colo.generatePointCloud(treelo);
             Gson gson = new Gson();
             try {
-                BufferedWriter writer = new BufferedWriter(new FileWriter("E:\\Users\\JanaJ\\IdeaProjects\\jana.jansen\\" + NEXTFILE + ".txt"));
+                BufferedWriter writer = new BufferedWriter(new FileWriter("D:\\Users\\JanaJ\\IdeaProjects\\jana.jansen\\" + NEXTFILE + ".txt"));
                 cloud.getAttractionPoints().forEach(ap -> {
                     String json = gson.toJson(ap);
                     try {
@@ -586,9 +597,9 @@ public class Application extends Applet {
         ViewInterface.log(description + ": " + value);
     }
 
-    public static void evaluierung(@Nullable String string) {
+    public static void evaluierung(String string) {//@Nullable
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter("E:\\Users\\JanaJ\\IdeaProjects\\jana.jansen\\eval_test.txt", true));
+            BufferedWriter writer = new BufferedWriter(new FileWriter("D:\\Users\\JanaJ\\IdeaProjects\\jana.jansen\\eval_test.txt", true));
 
             if (string == null)
                 writer.newLine();
@@ -601,9 +612,9 @@ public class Application extends Applet {
         }
     }
 
-    private static void printToStats(@Nullable String string) {
+    private static void printToStats(String string) {//@Nullable
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter("E:\\Users\\JanaJ\\IdeaProjects\\jana.jansen\\stats.txt", true));
+            BufferedWriter writer = new BufferedWriter(new FileWriter("D:\\Users\\JanaJ\\IdeaProjects\\jana.jansen\\stats.txt", true));
 
             if (string == null)
                 writer.newLine();
@@ -983,14 +994,24 @@ public class Application extends Applet {
                 //wenn ast zu kurz zum subdividen mit splines dann parent von vorher einhängen
                 //problem: parent soll nicht verändert werden und auch nicht subdivided dazwischen
 
-                Vec3D[] astPoints = new Vec3D[ast.size()];
-                for (int i = 0; i < astPoints.length; i++) {
-                    astPoints[i] = new Vec3D(ast.get(i).getPoint().getX(), ast.get(i).getPoint().getY(), ast.get(i).getPoint().getZ());
+
+                //die haben die die struktur verändert, getDecimatedVertices war früher von Spline3D und ist jetzt von LineStrip3D, müsste aber trz noch die vertices auf dem spline zurückgeben!
+                //ich mache also astPoints zu nem LineStrip3D (ist da ne liste und kein array)
+//                Vec3D[] astPoints = new Vec3D[ast.size()];
+//                for (int i = 0; i < astPoints.length; i++) {
+//                    astPoints[i] = new Vec3D(ast.get(i).getPoint().getX(), ast.get(i).getPoint().getY(), ast.get(i).getPoint().getZ());
+//                }
+
+                LineStrip3D astLineStrip = new LineStrip3D();
+                for (int i = 0; i < ast.size(); i++){
+                    astLineStrip.add(new Vec3D(ast.get(i).getPoint().getX(), ast.get(i).getPoint().getY(), ast.get(i).getPoint().getZ()));
                 }
 
-                Spline3D spline3D = new Spline3D(astPoints);
+//                Spline3D spline3D = new Spline3D(astPoints);
                 try {
-                    List<Vec3D> subdivided = spline3D.getDecimatedVertices((float) tree.getType().getNodeDist(), true);
+//                    List<Vec3D> subdivided = spline3D.getDecimatedVertices((float) tree.getType().getNodeDist(),true);
+                    List<Vec3D> subdivided = astLineStrip.getDecimatedVertices((float) tree.getType().getNodeDist(),true);
+
 
                     List<Point3D> subbi = new ArrayList<>();
                     AtomicBoolean da = new AtomicBoolean(false);
@@ -1040,13 +1061,19 @@ public class Application extends Applet {
                     System.err.println("ArrayIndexOutOfBounds bei curve subdivision");
                 }
             } else if (ast.size() >= 3) {
-                Vec3D[] astPoints = new Vec3D[ast.size()];
-                for (int i = 0; i < astPoints.length; i++) {
-                    astPoints[i] = new Vec3D(ast.get(i).getPoint().getX(), ast.get(i).getPoint().getY(), ast.get(i).getPoint().getZ());
+                //hier durch änderung in toxiclibs die gleichen änderungen wie in dem if fall hier drüber
+//                Vec3D[] astPoints = new Vec3D[ast.size()];
+//                for (int i = 0; i < astPoints.length; i++) {
+//                    astPoints[i] = new Vec3D(ast.get(i).getPoint().getX(), ast.get(i).getPoint().getY(), ast.get(i).getPoint().getZ());
+//                }
+                LineStrip3D astLineStrip = new LineStrip3D();
+                for (int i = 0; i < ast.size(); i++){
+                    astLineStrip.add(new Vec3D(ast.get(i).getPoint().getX(), ast.get(i).getPoint().getY(), ast.get(i).getPoint().getZ()));
                 }
 
-                Spline3D spline3D = new Spline3D(astPoints);
-                List<Vec3D> subdivided = spline3D.getDecimatedVertices((float) tree.getType().getNodeDist(), true);
+//                Spline3D spline3D = new Spline3D(astPoints);
+//                List<Vec3D> subdivided = spline3D.getDecimatedVertices((float) tree.getType().getNodeDist(), true);
+                List<Vec3D> subdivided = astLineStrip.getDecimatedVertices((float) tree.getType().getNodeDist(), true);
                 List<Point3D> subbi = new ArrayList<>();
                 subdivided.forEach(punkt -> subbi.add(new Point3D(punkt.getComponent(0), punkt.getComponent(1), punkt.getComponent(2))));
 
@@ -1108,13 +1135,13 @@ public class Application extends Applet {
         System.out.println(maxY);
         Point3D one = points[0];
         for (double i = minY; i <= maxY; i += d) {
-            try {
+//            try {
                 Point3D two = new Point3D((float) function.value(i), (float) i, 0);
                 view.addLine(one, two, Color.black);
                 one = two;
-            } catch (ArgumentOutsideDomainException e) {
-                e.printStackTrace();
-            }
+//            } catch (ArgumentOutsideDomainException e) {
+//                e.printStackTrace();
+//            }
 
         }
     }

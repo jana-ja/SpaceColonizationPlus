@@ -1,9 +1,6 @@
 package model;
 
-
-import org.jogamp.vecmath.Point3d;
-import org.jogamp.vecmath.Vector3d;
-import view.Point3D;
+import javax.vecmath.*;
 
 public class Triangle {
 
@@ -21,7 +18,7 @@ public class Triangle {
         calculatePlaneNormal();
     }
 
-    public Triangle(org.jogamp.vecmath.Point3d[] point3ds){
+    public Triangle(Point3d[] point3ds){
         if(point3ds.length!=3)
             throw new IllegalArgumentException("whuaaaa");
         p1 = point3ds[0];

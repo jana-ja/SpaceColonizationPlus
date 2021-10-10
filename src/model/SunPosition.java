@@ -2,7 +2,7 @@ package model;
 
 import view.Point3D;
 
-import org.jogamp.vecmath.Vector3d;
+import javax.vecmath.Vector3d;
 
 public class SunPosition {
     private double azimuthRadians;
