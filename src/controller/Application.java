@@ -5,19 +5,13 @@ import model.*;
 //import org.apache.commons.math3.exception.ArgumentOutsideDomainException;
 import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
-import com.sun.j3d.utils.applet.MainFrame;
-import com.sun.j3d.utils.geometry.GeometryInfo;
-import com.sun.j3d.utils.geometry.NormalGenerator;
-import com.sun.j3d.utils.geometry.Sphere;
-import com.sun.j3d.utils.image.TextureLoader;
-//import org.jogamp.java3d.utils.applet.MainFrame;
-//import org.jogamp.java3d.utils.geometry.GeometryInfo;
-//import org.jogamp.java3d.utils.geometry.NormalGenerator;
-//import org.jogamp.java3d.utils.geometry.Sphere;
-//import org.jogamp.java3d.utils.image.TextureLoader;
-import javax.media.j3d.*;
-import javax.vecmath.*;
-//import org.jogamp.vecmath.*;
+import org.jogamp.java3d.*;
+import org.jogamp.java3d.utils.applet.MainFrame;
+import org.jogamp.java3d.utils.geometry.GeometryInfo;
+import org.jogamp.java3d.utils.geometry.NormalGenerator;
+import org.jogamp.java3d.utils.geometry.Sphere;
+import org.jogamp.java3d.utils.image.TextureLoader;
+import org.jogamp.vecmath.*;
 
 
 //import org.scijava.java3d.*;

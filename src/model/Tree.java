@@ -1,18 +1,16 @@
 package model;
 
 import com.github.quickhull3d.QuickHull3D;
-import com.sun.j3d.utils.geometry.GeometryInfo;
-//import quickhull3d.QuickHull3D;
+import org.jogamp.java3d.BoundingBox;
+import org.jogamp.java3d.Shape3D;
+import org.jogamp.java3d.utils.geometry.GeometryInfo;
+import org.jogamp.vecmath.Point3d;
+//einfach nur point3f nehmen, warum nehm ich beide??? TODO
+import org.jogamp.vecmath.Point3f;
+import org.jogamp.vecmath.Vector3d;
 import view.Point3D;
-import view.View;
 import view.ViewInterface;
 
-import javax.media.j3d.BoundingBox;
-import javax.media.j3d.Shape3D;
-import javax.vecmath.Point3d;
-//einfach nur point3f nehmen, warum nehm ich beide??? TODO
-import javax.vecmath.Point3f;
-import javax.vecmath.Vector3d;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Comparator;

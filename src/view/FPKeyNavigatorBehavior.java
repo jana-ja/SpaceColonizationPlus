@@ -38,10 +38,9 @@
  */
 
 package view;
-        import com.sun.j3d.internal.J3dUtilsI18N;
 
-        import javax.media.j3d.*;
-
+        import org.jogamp.java3d.*;
+        import org.jogamp.java3d.internal.J3dUtilsI18N;
 
         import java.awt.AWTEvent;
         import java.awt.Component;
@@ -92,18 +91,14 @@ class FPKeyNavigatorBehavior extends Behavior implements KeyListener {
      *  Override Behavior's stimulus method to handle the event.
      */
     @Override
-    public void processStimulus(Enumeration enumCriteria) {
-//        Iterator<WakeupCriterion> criteria = enumCriteria.asIterator();
+    public void processStimulus(Iterator<WakeupCriterion> criteria) {
         WakeupOnAWTEvent ev;
-//        WakeupCriterion genericEvt;
         Object genericEvt;
         AWTEvent[] events;
         boolean sawFrame = false;
 
-//        while (criteria.hasNext()) {
-            while (enumCriteria.hasMoreElements()) {
-//            genericEvt = criteria.next();
-                genericEvt = enumCriteria.nextElement();
+        while (criteria.hasNext()) {
+            genericEvt = criteria.next();
             if (genericEvt instanceof WakeupOnAWTEvent) {
                 ev = (WakeupOnAWTEvent) genericEvt;
                 events = ev.getAWTEvent();

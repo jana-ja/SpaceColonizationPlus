@@ -1,7 +1,7 @@
 package view;
 
 
-import javax.vecmath.Matrix3d;
+import org.jogamp.vecmath.Matrix3d;
 
 public class Point3D {
 

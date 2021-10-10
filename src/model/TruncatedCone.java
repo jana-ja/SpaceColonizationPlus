@@ -1,15 +1,14 @@
 package model;
 
-import com.sun.j3d.utils.geometry.GeometryInfo;
-import com.sun.j3d.utils.geometry.NormalGenerator;
-
-import javax.media.j3d.Shape3D;
-import javax.vecmath.*;
+import org.jogamp.java3d.Appearance;
+import org.jogamp.java3d.Group;
+import org.jogamp.java3d.Shape3D;
+import org.jogamp.java3d.utils.geometry.GeometryInfo;
+import org.jogamp.java3d.utils.geometry.NormalGenerator;
+import org.jogamp.vecmath.Matrix3d;
+import org.jogamp.vecmath.Point3f;
 import view.Point3D;
 
-import javax.media.j3d.Appearance;
-import javax.media.j3d.Group;
-import javax.vecmath.Point3f;
 
 
 public class TruncatedCone extends Group {

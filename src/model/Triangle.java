@@ -1,6 +1,6 @@
 package model;
 
-import javax.vecmath.*;
+import org.jogamp.vecmath.*;
 
 public class Triangle {
 

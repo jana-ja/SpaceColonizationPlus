@@ -1,10 +1,10 @@
 package model;
 
-import com.sun.j3d.utils.geometry.Box;
+import org.jogamp.java3d.*;
+import org.jogamp.java3d.utils.geometry.Box;
+import org.jogamp.vecmath.*;
 import view.Point3D;
 
-import javax.media.j3d.*;
-import javax.vecmath.*;
 import java.awt.*;
 
 

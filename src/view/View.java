@@ -3,22 +3,17 @@ package view;
 import java.applet.Applet;
 import java.awt.*;
 
-import com.sun.j3d.utils.universe.SimpleUniverse;
 import controller.Application;
 import model.SunPosition;
-
-import com.sun.j3d.utils.geometry.GeometryInfo;
-import com.sun.j3d.utils.geometry.NormalGenerator;
-import com.sun.j3d.utils.geometry.Sphere;
-import com.sun.j3d.utils.image.TextureLoader;
-import com.sun.j3d.utils.universe.MultiTransformGroup;
-import com.sun.j3d.utils.universe.Viewer;
-import com.sun.j3d.utils.universe.ViewingPlatform;
-//import org.scijava.java3d.Canvas3D;
-//import org.scijava.vecmath.Vector3d;
-
-import javax.media.j3d.*;
-import javax.vecmath.*;
+import org.jogamp.java3d.*;
+import org.jogamp.java3d.utils.geometry.GeometryInfo;
+import org.jogamp.java3d.utils.geometry.NormalGenerator;
+import org.jogamp.java3d.utils.geometry.Sphere;
+import org.jogamp.java3d.utils.universe.MultiTransformGroup;
+import org.jogamp.java3d.utils.universe.SimpleUniverse;
+import org.jogamp.java3d.utils.universe.Viewer;
+import org.jogamp.java3d.utils.universe.ViewingPlatform;
+import org.jogamp.vecmath.*;
 
 
 public class View extends Applet implements ViewInterface {
